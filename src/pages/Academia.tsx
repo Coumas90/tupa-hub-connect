@@ -10,8 +10,11 @@ import {
   Award,
   BookOpen,
   Users,
-  Star
+  Star,
+  X,
+  ChevronRight
 } from 'lucide-react';
+import { useState } from 'react';
 
 const courses = [
   {
@@ -85,6 +88,200 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function Academia() {
+  const [cursoActivo, setCursoActivo] = useState<any>(null);
+  const [preguntaActual, setPreguntaActual] = useState(0);
+  const [respuestas, setRespuestas] = useState<{[key: number]: string}>({});
+  const [mostrandoResultados, setMostrandoResultados] = useState(false);
+
+  const preguntas = [
+    {
+      id: 1,
+      pregunta: "¿Cuál es el ratio ideal para espresso?",
+      opciones: ["1:1", "1:2", "1:3", "1:4"],
+      correcta: "1:2"
+    },
+    {
+      id: 2,
+      pregunta: "¿A qué temperatura debe estar el agua para espresso?",
+      opciones: ["85°C", "90°C", "93°C", "98°C"],
+      correcta: "93°C"
+    },
+    {
+      id: 3,
+      pregunta: "¿Cuánto debe durar la extracción de un espresso?",
+      opciones: ["15-20 segundos", "25-30 segundos", "35-40 segundos", "45-50 segundos"],
+      correcta: "25-30 segundos"
+    }
+  ];
+
+  const abrirCurso = (curso: any) => {
+    setCursoActivo(curso);
+    setPreguntaActual(0);
+    setRespuestas({});
+    setMostrandoResultados(false);
+  };
+
+  const responderPregunta = (respuesta: string) => {
+    setRespuestas({
+      ...respuestas,
+      [preguntaActual]: respuesta
+    });
+  };
+
+  const siguientePregunta = () => {
+    if (preguntaActual < preguntas.length - 1) {
+      setPreguntaActual(preguntaActual + 1);
+    } else {
+      setMostrandoResultados(true);
+    }
+  };
+
+  const calcularPuntaje = () => {
+    let correctas = 0;
+    preguntas.forEach((pregunta, index) => {
+      if (respuestas[index] === pregunta.correcta) {
+        correctas++;
+      }
+    });
+    return Math.round((correctas / preguntas.length) * 100);
+  };
+
+  const generarCertificado = () => {
+    const puntaje = calcularPuntaje();
+    if (puntaje >= 70) {
+      alert(`¡Felicitaciones! Has aprobado con ${puntaje}% de aciertos. Tu certificado será enviado por email.`);
+    } else {
+      alert(`Necesitas al menos 70% para aprobar. Obtuviste ${puntaje}%. Puedes reintentar el curso.`);
+    }
+    setCursoActivo(null);
+  };
+
+  if (cursoActivo) {
+    if (mostrandoResultados) {
+      const puntaje = calcularPuntaje();
+      return (
+        <div className="p-6 space-y-6">
+          <Card className="max-w-2xl mx-auto shadow-soft">
+            <CardHeader className="bg-gradient-light rounded-t-lg text-center">
+              <CardTitle className="text-2xl">Resultados del Quiz</CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 text-center">
+              <div className="space-y-6">
+                <div className="p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg">
+                  <h3 className="text-3xl font-bold text-primary mb-2">{puntaje}%</h3>
+                  <p className="text-muted-foreground">
+                    {puntaje >= 70 ? '¡Excelente trabajo!' : 'Necesitas mejorar un poco más'}
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  {preguntas.map((pregunta, index) => (
+                    <div key={pregunta.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="text-sm">Pregunta {index + 1}</span>
+                      <div className="flex items-center space-x-2">
+                        {respuestas[index] === pregunta.correcta ? (
+                          <CheckCircle className="h-5 w-5 text-success" />
+                        ) : (
+                          <X className="h-5 w-5 text-destructive" />
+                        )}
+                        <span className="text-sm">
+                          {respuestas[index] === pregunta.correcta ? 'Correcta' : 'Incorrecta'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex space-x-3">
+                  {puntaje >= 70 ? (
+                    <Button 
+                      onClick={generarCertificado}
+                      className="flex-1 bg-gradient-primary hover:bg-primary/90"
+                    >
+                      <Award className="h-4 w-4 mr-2" />
+                      Generar Certificado
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => {setCursoActivo(null);}}
+                      className="flex-1 bg-gradient-primary hover:bg-primary/90"
+                    >
+                      Reintentar Curso
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setCursoActivo(null)}>
+                    Volver a Cursos
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-6 space-y-6">
+        <Card className="max-w-2xl mx-auto shadow-soft">
+          <CardHeader className="bg-gradient-light rounded-t-lg">
+            <div className="flex justify-between items-center">
+              <CardTitle>{cursoActivo.titulo}</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => setCursoActivo(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="flex-1 bg-muted rounded-full h-2">
+                <div 
+                  className="bg-gradient-primary h-2 rounded-full transition-all"
+                  style={{ width: `${((preguntaActual + 1) / preguntas.length) * 100}%` }}
+                />
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {preguntaActual + 1} de {preguntas.length}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold mb-4">
+                {preguntas[preguntaActual].pregunta}
+              </h3>
+              
+              <div className="space-y-3">
+                {preguntas[preguntaActual].opciones.map((opcion, index) => (
+                  <Button
+                    key={index}
+                    variant={respuestas[preguntaActual] === opcion ? "default" : "outline"}
+                    className={`w-full text-left justify-start h-auto p-4 ${
+                      respuestas[preguntaActual] === opcion ? "bg-gradient-primary" : ""
+                    }`}
+                    onClick={() => responderPregunta(opcion)}
+                  >
+                    <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center mr-3 flex-shrink-0">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    {opcion}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={siguientePregunta}
+                  disabled={!respuestas[preguntaActual]}
+                  className="bg-gradient-primary hover:bg-primary/90"
+                >
+                  {preguntaActual < preguntas.length - 1 ? 'Siguiente' : 'Finalizar Quiz'}
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

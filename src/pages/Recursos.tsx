@@ -1,0 +1,299 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import {
+  Download,
+  FileText,
+  Image,
+  Video,
+  Book,
+  Search,
+  Filter,
+  Star,
+  Eye,
+  Coffee,
+  Users,
+  Megaphone
+} from 'lucide-react';
+import { useState } from 'react';
+
+const recursos = [
+  {
+    id: 1,
+    titulo: 'Manual Técnico Espresso',
+    categoria: 'Técnico',
+    tipo: 'PDF',
+    descripcion: 'Guía completa para preparación perfecta de espresso',
+    tamaño: '2.4 MB',
+    fecha: '2024-06-01',
+    descargas: 247,
+    destacado: true,
+    icono: Coffee
+  },
+  {
+    id: 2,
+    titulo: 'Flyer Promocional Junio',
+    categoria: 'Marketing',
+    tipo: 'PNG',
+    descripcion: 'Material promocional para redes sociales',
+    tamaño: '1.8 MB',
+    fecha: '2024-06-15',
+    descargas: 89,
+    destacado: false,
+    icono: Megaphone
+  },
+  {
+    id: 3,
+    titulo: 'Video Técnica V60',
+    categoria: 'Técnico',
+    tipo: 'MP4',
+    descripcion: 'Demostración paso a paso método V60',
+    tamaño: '12.5 MB',
+    fecha: '2024-05-28',
+    descargas: 156,
+    destacado: true,
+    icono: Video
+  },
+  {
+    id: 4,
+    titulo: 'Carta QR Digital',
+    categoria: 'QR',
+    tipo: 'PDF',
+    descripcion: 'Menú digital con códigos QR personalizados',
+    tamaño: '890 KB',
+    fecha: '2024-06-10',
+    descargas: 73,
+    destacado: false,
+    icono: Image
+  },
+  {
+    id: 5,
+    titulo: 'Manual Capacitación Baristas',
+    categoria: 'Técnico',
+    tipo: 'PDF',
+    descripcion: 'Programa completo de entrenamiento para personal',
+    tamaño: '4.2 MB',
+    fecha: '2024-05-15',
+    descargas: 312,
+    destacado: true,
+    icono: Users
+  },
+  {
+    id: 6,
+    titulo: 'Pack Flyers Temporada',
+    categoria: 'Marketing',
+    tipo: 'ZIP',
+    descripcion: 'Colección completa de materiales estacionales',
+    tamaño: '8.7 MB',
+    fecha: '2024-06-05',
+    descargas: 45,
+    destacado: false,
+    icono: Megaphone
+  }
+];
+
+const categorias = ['Todos', 'Técnico', 'Marketing', 'QR', 'Flyers'];
+
+export default function Recursos() {
+  const [busqueda, setBusqueda] = useState('');
+  const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
+
+  const recursosFiltrados = recursos.filter(recurso => {
+    const coincideBusqueda = recurso.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            recurso.descripcion.toLowerCase().includes(busqueda.toLowerCase());
+    const coincideCategoria = categoriaFiltro === 'Todos' || recurso.categoria === categoriaFiltro;
+    
+    return coincideBusqueda && coincideCategoria;
+  });
+
+  const getIconoTipo = (tipo: string) => {
+    switch (tipo) {
+      case 'PDF': return FileText;
+      case 'PNG': case 'JPG': return Image;
+      case 'MP4': return Video;
+      case 'ZIP': return Book;
+      default: return FileText;
+    }
+  };
+
+  const getTipoColor = (tipo: string) => {
+    switch (tipo) {
+      case 'PDF': return 'bg-red-100 text-red-700 border-red-200';
+      case 'PNG': case 'JPG': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'MP4': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'ZIP': return 'bg-green-100 text-green-700 border-green-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Biblioteca de Recursos</h1>
+          <p className="text-muted-foreground">Materiales técnicos, marketing y herramientas especializadas</p>
+        </div>
+        <Button variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Descargar Todo
+        </Button>
+      </div>
+
+      {/* Filtros */}
+      <Card className="shadow-soft">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar recursos..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {categorias.map((categoria) => (
+                <Button
+                  key={categoria}
+                  variant={categoriaFiltro === categoria ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategoriaFiltro(categoria)}
+                  className={categoriaFiltro === categoria ? "bg-gradient-primary" : ""}
+                >
+                  <Filter className="h-4 w-4 mr-1" />
+                  {categoria}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recursos Destacados */}
+      {categoriaFiltro === 'Todos' && busqueda === '' && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Star className="h-5 w-5 mr-2 text-accent" />
+            Recursos Destacados
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {recursos.filter(r => r.destacado).map((recurso) => {
+              const IconoTipo = getIconoTipo(recurso.tipo);
+              return (
+                <Card key={recurso.id} className="shadow-warm border-accent/20 hover:shadow-glow transition-shadow">
+                  <CardHeader className="bg-gradient-light rounded-t-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-accent/10 rounded-lg">
+                          <recurso.icono className="h-5 w-5 text-accent" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{recurso.titulo}</CardTitle>
+                          <Badge variant="secondary" className="mt-1">
+                            {recurso.categoria}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Badge className={`${getTipoColor(recurso.tipo)} border`}>
+                        {recurso.tipo}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground mb-4">{recurso.descripcion}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{recurso.tamaño}</span>
+                      <span>{recurso.fecha}</span>
+                      <span className="flex items-center">
+                        <Eye className="h-3 w-3 mr-1" />
+                        {recurso.descargas}
+                      </span>
+                    </div>
+                    <Button className="w-full bg-gradient-primary hover:bg-primary/90">
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Todos los Recursos */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">
+          {categoriaFiltro === 'Todos' ? 'Todos los Recursos' : `Categoría: ${categoriaFiltro}`}
+          <span className="text-sm text-muted-foreground ml-2">({recursosFiltrados.length} recursos)</span>
+        </h2>
+        
+        <div className="space-y-4">
+          {recursosFiltrados.map((recurso) => {
+            const IconoTipo = getIconoTipo(recurso.tipo);
+            return (
+              <Card key={recurso.id} className="shadow-soft hover:shadow-warm transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className="p-3 bg-secondary/10 rounded-lg">
+                        <recurso.icono className="h-6 w-6 text-secondary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-1">
+                          <h3 className="font-semibold text-lg">{recurso.titulo}</h3>
+                          {recurso.destacado && (
+                            <Star className="h-4 w-4 text-accent fill-accent" />
+                          )}
+                          <Badge className={`${getTipoColor(recurso.tipo)} border`}>
+                            {recurso.tipo}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{recurso.descripcion}</p>
+                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                          <Badge variant="outline">{recurso.categoria}</Badge>
+                          <span>{recurso.tamaño}</span>
+                          <span>{recurso.fecha}</span>
+                          <span className="flex items-center">
+                            <Eye className="h-3 w-3 mr-1" />
+                            {recurso.descargas} descargas
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Vista
+                      </Button>
+                      <Button size="sm" className="bg-gradient-primary hover:bg-primary/90">
+                        <Download className="h-4 w-4 mr-1" />
+                        Descargar
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {recursosFiltrados.length === 0 && (
+          <Card className="text-center p-8">
+            <CardContent>
+              <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No se encontraron recursos</h3>
+              <p className="text-muted-foreground">Intenta con otros términos de búsqueda o cambia el filtro de categoría</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
