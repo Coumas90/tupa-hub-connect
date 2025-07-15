@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Academia', href: '/academia', icon: GraduationCap },
   { name: 'Consumo', href: '/consumo', icon: BarChart3 },
   { name: 'Recursos', href: '/recursos', icon: FileText },
-  { name: 'Mi Equipo', href: '/equipo', icon: Users },
+  { name: 'Mi Equipo', href: '/mi-equipo', icon: Users },
   { name: 'Reposición', href: '/reposicion', icon: Package },
   { name: 'Barista Pool', href: '/barista-pool', icon: Clock },
   { name: 'FAQ', href: '/faq', icon: HelpCircle },

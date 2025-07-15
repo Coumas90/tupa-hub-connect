@@ -141,8 +141,8 @@ export default function BaristaPool() {
   const baristsasFiltrados = baristasDisponibles.filter(barista => {
     const coincideBusqueda = barista.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                             barista.especialidades.some(esp => esp.toLowerCase().includes(busqueda.toLowerCase()));
-    const coincideEspecialidad = !filtroEspecialidad || barista.especialidades.includes(filtroEspecialidad);
-    const coincideUbicacion = !filtroUbicacion || barista.ubicacion.includes(filtroUbicacion);
+    const coincideEspecialidad = !filtroEspecialidad || filtroEspecialidad === 'todas' || barista.especialidades.includes(filtroEspecialidad);
+    const coincideUbicacion = !filtroUbicacion || filtroUbicacion === 'todas' || barista.ubicacion.includes(filtroUbicacion);
     
     return coincideBusqueda && coincideEspecialidad && coincideUbicacion;
   });
@@ -203,7 +203,7 @@ export default function BaristaPool() {
                     <SelectValue placeholder="Especialidad" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="todas">Todas</SelectItem>
                     <SelectItem value="Espresso">Espresso</SelectItem>
                     <SelectItem value="Filtrado">Filtrado</SelectItem>
                     <SelectItem value="Latte Art">Latte Art</SelectItem>
@@ -215,7 +215,7 @@ export default function BaristaPool() {
                     <SelectValue placeholder="Ubicación" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="todas">Todas</SelectItem>
                     <SelectItem value="Palermo">Palermo</SelectItem>
                     <SelectItem value="Villa Crespo">Villa Crespo</SelectItem>
                     <SelectItem value="San Telmo">San Telmo</SelectItem>
