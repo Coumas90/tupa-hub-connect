@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import {
   Download,
   FileText,
@@ -129,111 +130,54 @@ export default function Recursos() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Biblioteca de Recursos</h1>
-          <p className="text-muted-foreground">Materiales técnicos, marketing y herramientas especializadas</p>
+    <ModuleAccessGuard module="Recursos" requiredRole="barista">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Biblioteca de Recursos</h1>
+            <p className="text-muted-foreground">Materiales técnicos, marketing y herramientas especializadas</p>
+          </div>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Descargar Todo
+          </Button>
         </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Descargar Todo
-        </Button>
-      </div>
 
-      {/* Filtros */}
-      <Card className="shadow-soft">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar recursos..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Filtros */}
+        <Card className="shadow-soft">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar recursos..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {categorias.map((categoria) => (
+                  <Button
+                    key={categoria}
+                    variant={categoriaFiltro === categoria ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCategoriaFiltro(categoria)}
+                    className={categoriaFiltro === categoria ? "bg-gradient-primary" : ""}
+                  >
+                    <Filter className="h-4 w-4 mr-1" />
+                    {categoria}
+                  </Button>
+                ))}
               </div>
             </div>
-            <div className="flex gap-2">
-              {categorias.map((categoria) => (
-                <Button
-                  key={categoria}
-                  variant={categoriaFiltro === categoria ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCategoriaFiltro(categoria)}
-                  className={categoriaFiltro === categoria ? "bg-gradient-primary" : ""}
-                >
-                  <Filter className="h-4 w-4 mr-1" />
-                  {categoria}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Recursos Destacados */}
-      {categoriaFiltro === 'Todos' && busqueda === '' && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Star className="h-5 w-5 mr-2 text-accent" />
-            Recursos Destacados
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {recursos.filter(r => r.destacado).map((recurso) => {
-              const IconoTipo = getIconoTipo(recurso.tipo);
-              return (
-                <Card key={recurso.id} className="shadow-warm border-accent/20 hover:shadow-glow transition-shadow">
-                  <CardHeader className="bg-gradient-light rounded-t-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-accent/10 rounded-lg">
-                          <recurso.icono className="h-5 w-5 text-accent" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{recurso.titulo}</CardTitle>
-                          <Badge variant="secondary" className="mt-1">
-                            {recurso.categoria}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Badge className={`${getTipoColor(recurso.tipo)} border`}>
-                        {recurso.tipo}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground mb-4">{recurso.descripcion}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                      <span>{recurso.tamaño}</span>
-                      <span>{recurso.fecha}</span>
-                      <span className="flex items-center">
-                        <Eye className="h-3 w-3 mr-1" />
-                        {recurso.descargas}
-                      </span>
-                    </div>
-                    <Button className="w-full bg-gradient-primary hover:bg-primary/90">
-                      <Download className="h-4 w-4 mr-2" />
-                      Descargar
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Todos los Recursos */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">
-          {categoriaFiltro === 'Todos' ? 'Todos los Recursos' : `Categoría: ${categoriaFiltro}`}
-          <span className="text-sm text-muted-foreground ml-2">({recursosFiltrados.length} recursos)</span>
-        </h2>
-        
+        {/* Lista de Recursos */}
         <div className="space-y-4">
           {recursosFiltrados.map((recurso) => {
             const IconoTipo = getIconoTipo(recurso.tipo);
@@ -283,17 +227,7 @@ export default function Recursos() {
             );
           })}
         </div>
-
-        {recursosFiltrados.length === 0 && (
-          <Card className="text-center p-8">
-            <CardContent>
-              <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No se encontraron recursos</h3>
-              <p className="text-muted-foreground">Intenta con otros términos de búsqueda o cambia el filtro de categoría</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
-    </div>
+    </ModuleAccessGuard>
   );
 }
