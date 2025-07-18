@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+import WeatherCard from '@/components/WeatherCard';
 import { useNavigate } from 'react-router-dom';
 import {
   Coffee,
@@ -33,8 +34,13 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Café del Mes */}
-        <Card className="shadow-warm border-accent/20">
+        {/* Clima y Café del Mes */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <WeatherCard />
+          </div>
+          <div className="lg:col-span-2">
+            <Card className="shadow-warm border-accent/20 h-full">
           <CardHeader className="bg-gradient-light rounded-t-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -86,8 +92,10 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          </div>
+        </div>
 
         {/* Acciones Rápidas */}
         <div>
