@@ -93,7 +93,7 @@ export default function Academia() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [score, setScore] = useState(0);
 
-  const startCourse = (course) => {
+  const startCourse = (course: any) => {
     setSelectedCourse(course);
     setShowQuiz(false);
     setCurrentQuestion(0);
@@ -127,45 +127,85 @@ export default function Academia() {
   };
 
   const generateCertificate = () => {
-    // Crear elemento de certificado para descargar
-    const certificateContent = `
-      CERTIFICADO DE FINALIZACIÓN
-      
-      Se otorga a: [Nombre del Usuario]
-      Por completar exitosamente el curso:
-      ${selectedCourse.title}
-      
-      Puntuación: ${score}/${selectedCourse.quiz.questions.length}
-      Fecha: ${new Date().toLocaleDateString()}
-      Instructor: ${selectedCourse.instructor}
-      
-      TUPÁ Hub - Academia Cafetera
+    // Crear HTML mejorado para el certificado
+    const certificateHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Certificado TUPÁ Hub</title>
+      <style>
+        body { 
+          font-family: 'Georgia', serif; 
+          background: linear-gradient(135deg, #f8f4f1, #ede7e1);
+          margin: 0; 
+          padding: 40px;
+          color: #2c1810;
+        }
+        .certificate {
+          max-width: 800px;
+          margin: 0 auto;
+          background: white;
+          border: 8px solid #b5651d;
+          border-radius: 20px;
+          padding: 60px;
+          text-align: center;
+          box-shadow: 0 15px 40px rgba(181, 101, 29, 0.2);
+        }
+        .logo { color: #b5651d; font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+        .title { font-size: 36px; color: #2c1810; margin: 30px 0; font-weight: bold; }
+        .recipient { font-size: 28px; color: #b5651d; margin: 30px 0; font-style: italic; }
+        .course { font-size: 24px; color: #2c1810; margin: 20px 0; font-weight: bold; }
+        .details { font-size: 16px; color: #666; margin: 30px 0; line-height: 1.8; }
+        .signature { margin-top: 60px; font-size: 14px; color: #999; }
+      </style>
+    </head>
+    <body>
+      <div class="certificate">
+        <div class="logo">☕ TUPÁ HUB</div>
+        <div class="title">CERTIFICADO DE FINALIZACIÓN</div>
+        <div class="recipient">Se otorga a: Usuario TUPÁ</div>
+        <div>Por completar exitosamente el curso:</div>
+        <div class="course">${selectedCourse?.title}</div>
+        <div class="details">
+          Puntuación Obtenida: ${score}/${selectedCourse?.quiz.questions.length} (${Math.round((score / selectedCourse?.quiz.questions.length) * 100)}%)<br>
+          Instructor: ${selectedCourse?.instructor}<br>
+          Fecha de Finalización: ${new Date().toLocaleDateString('es-AR')}<br>
+          Duración del Curso: ${selectedCourse?.duration}
+        </div>
+        <div class="signature">
+          TUPÁ Hub - Academia Cafetera Profesional<br>
+          Certificación avalada por Specialty Coffee Association (SCA)
+        </div>
+      </div>
+    </body>
+    </html>
     `;
 
-    const blob = new Blob([certificateContent], { type: 'text/plain' });
+    const blob = new Blob([certificateHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `certificado-${selectedCourse.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    a.download = `certificado-${selectedCourse?.title.toLowerCase().replace(/\s+/g, '-')}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  const getDifficultyColor = (difficulty) => {
+  const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Principiante': return 'bg-green-100 text-green-700 border-green-200';
-      case 'Intermedio': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'Avanzado': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'Principiante': return 'bg-success/10 text-success border-success/20';
+      case 'Intermedio': return 'bg-warning/10 text-warning border-warning/20';
+      case 'Avanzado': return 'bg-destructive/10 text-destructive border-destructive/20';
+      default: return 'bg-muted/10 text-muted-foreground border-muted/20';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="h-5 w-5 text-green-600" />;
-      case 'in-progress': return <Clock className="h-5 w-5 text-yellow-600" />;
+      case 'completed': return <CheckCircle className="h-5 w-5 text-success" />;
+      case 'in-progress': return <Clock className="h-5 w-5 text-warning" />;
       default: return <Play className="h-5 w-5 text-primary" />;
     }
   };
@@ -204,14 +244,14 @@ export default function Academia() {
               </Card>
               <Card className="shadow-soft">
                 <CardContent className="p-4 text-center">
-                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success" />
                   <div className="text-xl font-bold">{courses.filter(c => c.status === 'completed').length}</div>
                   <div className="text-sm text-muted-foreground">Completados</div>
                 </CardContent>
               </Card>
               <Card className="shadow-soft">
                 <CardContent className="p-4 text-center">
-                  <Clock className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                  <Clock className="h-8 w-8 mx-auto mb-2 text-warning" />
                   <div className="text-xl font-bold">{courses.filter(c => c.status === 'in-progress').length}</div>
                   <div className="text-sm text-muted-foreground">En Progreso</div>
                 </CardContent>
@@ -248,7 +288,7 @@ export default function Academia() {
                           </div>
                         </div>
                         {course.status === 'completed' && (
-                          <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-5 w-5 text-accent fill-accent" />
                         )}
                       </div>
                     </CardHeader>
@@ -420,15 +460,15 @@ export default function Academia() {
           <div className="space-y-6">
             <Card className="shadow-glow max-w-2xl mx-auto">
               <CardHeader className="text-center bg-gradient-light rounded-t-lg">
-                <div className="p-4 bg-green-100 rounded-full mx-auto w-fit mb-4">
-                  <Award className="h-12 w-12 text-green-600" />
+                <div className="p-4 bg-success/10 rounded-full mx-auto w-fit mb-4">
+                  <Award className="h-12 w-12 text-success" />
                 </div>
                 <CardTitle className="text-2xl">¡Quiz Completado!</CardTitle>
                 <p className="text-muted-foreground">Has finalizado el quiz de certificación</p>
               </CardHeader>
               <CardContent className="p-6 space-y-6 text-center">
                 <div className="space-y-2">
-                  <div className="text-4xl font-bold text-green-600">
+                  <div className="text-4xl font-bold text-success">
                     {score}/{selectedCourse.quiz.questions.length}
                   </div>
                   <div className="text-muted-foreground">
@@ -438,10 +478,10 @@ export default function Academia() {
 
                 {score >= selectedCourse.quiz.questions.length * 0.7 ? (
                   <div className="space-y-4">
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                      <p className="text-green-800 font-semibold">¡Felicitaciones!</p>
-                      <p className="text-green-700 text-sm">
+                    <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+                      <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
+                      <p className="text-success font-semibold">¡Felicitaciones!</p>
+                      <p className="text-success/80 text-sm">
                         Has aprobado el curso. Tu certificado está listo para descargar.
                       </p>
                     </div>
@@ -456,10 +496,10 @@ export default function Academia() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <Clock className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                      <p className="text-yellow-800 font-semibold">Casi lo logras</p>
-                      <p className="text-yellow-700 text-sm">
+                    <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
+                      <Clock className="h-8 w-8 text-warning mx-auto mb-2" />
+                      <p className="text-warning font-semibold">Casi lo logras</p>
+                      <p className="text-warning/80 text-sm">
                         Necesitas al menos 70% para obtener el certificado. ¡Inténtalo de nuevo!
                       </p>
                     </div>

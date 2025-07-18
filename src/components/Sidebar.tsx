@@ -84,7 +84,7 @@ export function Sidebar() {
       <div className="p-4 border-t border-white/10">
         {!isCollapsed && (
           <div className="text-sm text-white/70">
-            <p className="font-medium">Cafetería Demo</p>
+            <p className="font-medium">Café TUPÁ</p>
             <p>Plan Premium</p>
           </div>
         )}

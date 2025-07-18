@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 const recipes = [
@@ -69,6 +70,7 @@ const recipes = [
 ];
 
 export default function Recetas() {
+  const { toast } = useToast();
   const [recipeList, setRecipeList] = useState(recipes);
   const [activeRecipe, setActiveRecipe] = useState(recipes.find(r => r.isActive));
   const [showForm, setShowForm] = useState(false);
@@ -88,7 +90,7 @@ export default function Recetas() {
     const recipe = {
       id: recipeList.length + 1,
       ...newRecipe,
-      creator: 'Usuario Actual', // En producción vendría del contexto de auth
+      creator: 'Usuario TUPÁ', // En producción vendría del contexto de auth
       isOfficial: false,
       isActive: false
     };
@@ -105,18 +107,26 @@ export default function Recetas() {
       notes: ''
     });
     setShowForm(false);
+    toast({
+      title: "Receta creada exitosamente",
+      description: `La receta "${recipe.name}" fue añadida a tu colección.`,
+    });
   };
 
-  const setAsActive = (recipe) => {
+  const setAsActive = (recipe: any) => {
     const updatedRecipes = recipeList.map(r => ({
       ...r,
       isActive: r.id === recipe.id
     }));
     setRecipeList(updatedRecipes);
     setActiveRecipe(recipe);
+    toast({
+      title: "Receta activada",
+      description: `"${recipe.name}" es ahora la receta activa para todo el equipo.`,
+    });
   };
 
-  const downloadRecipe = (recipe) => {
+  const downloadRecipe = (recipe: any) => {
     const content = `
 RECETA: ${recipe.name}
 Método: ${recipe.method}

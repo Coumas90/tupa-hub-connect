@@ -14,12 +14,18 @@ const NotFound = () => {
 
   return (
     <ModuleAccessGuard module="Página no encontrada" requiredRole="usuario">
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">404</h1>
-          <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-          <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-            Return to Home
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-6">
+          <h1 className="text-6xl font-bold text-primary">404</h1>
+          <p className="text-xl text-muted-foreground">Oops! Página no encontrada</p>
+          <p className="text-muted-foreground">
+            La página que estás buscando no existe o fue movida.
+          </p>
+          <a 
+            href="/" 
+            className="inline-block px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Volver al Inicio
           </a>
         </div>
       </div>

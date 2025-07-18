@@ -113,6 +113,8 @@ const faqData = [
   }
 ];
 
+import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+
 export default function FAQ() {
   const [busqueda, setBusqueda] = useState('');
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -132,7 +134,8 @@ export default function FAQ() {
   const preguntasPopulares = faqData.filter(item => item.popular);
 
   return (
-    <div className="p-6 space-y-6">
+    <ModuleAccessGuard module="FAQ" requiredRole="usuario">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-4">
         <div>
@@ -357,6 +360,7 @@ export default function FAQ() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ModuleAccessGuard>
   );
 }

@@ -104,6 +104,8 @@ const turnos = [
   }
 ];
 
+import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+
 export default function BaristaPool() {
   const [filtroEspecialidad, setFiltroEspecialidad] = useState('');
   const [filtroUbicacion, setFiltroUbicacion] = useState('');
@@ -166,7 +168,8 @@ export default function BaristaPool() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <ModuleAccessGuard module="Barista Pool" requiredRole="encargado">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -482,6 +485,7 @@ export default function BaristaPool() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </ModuleAccessGuard>
   );
 }

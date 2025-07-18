@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+import { useNavigate } from 'react-router-dom';
 import {
   Coffee,
   Package,
@@ -15,6 +16,8 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   return (
     <ModuleAccessGuard module="Dashboard" requiredRole="cliente">
       <div className="p-6 space-y-6">
@@ -90,7 +93,10 @@ export default function Dashboard() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+              onClick={() => navigate('/recetas')}
+            >
               <CardContent className="p-6 text-center">
                 <div className="p-4 bg-primary/10 rounded-full mx-auto mb-4 w-fit">
                   <Coffee className="h-8 w-8 text-primary" />
@@ -100,7 +106,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+              onClick={() => navigate('/reposicion')}
+            >
               <CardContent className="p-6 text-center">
                 <div className="p-4 bg-destructive/10 rounded-full mx-auto mb-4 w-fit">
                   <Package className="h-8 w-8 text-destructive" />
@@ -110,7 +119,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+              onClick={() => navigate('/academia')}
+            >
               <CardContent className="p-6 text-center">
                 <div className="p-4 bg-accent/10 rounded-full mx-auto mb-4 w-fit">
                   <GraduationCap className="h-8 w-8 text-accent" />
@@ -120,7 +132,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+              onClick={() => navigate('/recursos')}
+            >
               <CardContent className="p-6 text-center">
                 <div className="p-4 bg-secondary/10 rounded-full mx-auto mb-4 w-fit">
                   <FileText className="h-8 w-8 text-secondary" />
@@ -134,7 +149,10 @@ export default function Dashboard() {
 
         {/* Grid de Estadísticas */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="shadow-soft">
+          <Card 
+            className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+            onClick={() => navigate('/consumo')}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">Consumo Mensual</CardTitle>
@@ -148,7 +166,10 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft">
+          <Card 
+            className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+            onClick={() => navigate('/academia')}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">Progreso Academia</CardTitle>
@@ -162,7 +183,10 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft">
+          <Card 
+            className="shadow-soft hover:shadow-warm transition-shadow cursor-pointer"
+            onClick={() => navigate('/mi-equipo')}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">Baristas Activos</CardTitle>

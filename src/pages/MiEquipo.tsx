@@ -84,6 +84,8 @@ const miembrosEquipo = [
   }
 ];
 
+import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+
 export default function MiEquipo() {
   const [vistaDetallada, setVistaDetallada] = useState(false);
 
@@ -110,7 +112,8 @@ export default function MiEquipo() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <ModuleAccessGuard module="Mi Equipo" requiredRole="encargado">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -396,6 +399,7 @@ export default function MiEquipo() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ModuleAccessGuard>
   );
 }

@@ -112,7 +112,7 @@ const Consumo = (): JSX.Element => {
               </div>
             </CardHeader>
             <CardContent>
-              <Badge className="bg-green-100 text-green-700 border-green-200">Óptimo</Badge>
+              <Badge className="bg-success/10 text-success border-success/20">Óptimo</Badge>
               <p className="text-xs text-muted-foreground mt-1">Stock suficiente</p>
             </CardContent>
           </Card>
@@ -202,7 +202,7 @@ const Consumo = (): JSX.Element => {
                     <div className="font-semibold">{purchase.cantidad}</div>
                     <div className="text-sm text-muted-foreground">{purchase.precio}</div>
                   </div>
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                  <Badge className="bg-success/10 text-success border-success/20">
                     {purchase.estado}
                   </Badge>
                 </div>

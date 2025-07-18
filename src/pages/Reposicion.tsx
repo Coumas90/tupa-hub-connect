@@ -59,6 +59,8 @@ const historialReposiciones = [
   }
 ];
 
+import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+
 export default function Reposicion() {
   const [variedadSeleccionada, setVariedadSeleccionada] = useState('');
   const [cantidad, setCantidad] = useState('');
@@ -105,7 +107,8 @@ export default function Reposicion() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <ModuleAccessGuard module="Reposición" requiredRole="encargado">
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -339,6 +342,7 @@ export default function Reposicion() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ModuleAccessGuard>
   );
 }
