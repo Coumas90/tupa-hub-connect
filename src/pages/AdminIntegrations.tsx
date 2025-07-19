@@ -10,11 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Edit, Download, Filter, Activity, AlertCircle } from 'lucide-react';
+import { RefreshCw, Edit, Download, Filter, Activity, AlertCircle, Eye, Settings, TrendingUp, Calendar, Users } from 'lucide-react';
 import { syncClientPOS } from '@/lib/integrations/pos/sync.core';
 import { getAvailablePOSTypes } from '@/lib/integrations/pos/pos.registry';
 import { integrationLogger } from '@/lib/integrations/logger';
 import LogsAndMonitoring from '@/components/LogsAndMonitoring';
+import { Link } from 'react-router-dom';
 
 interface Client {
   id: string;
@@ -28,6 +29,7 @@ interface Client {
   api_endpoint?: string;
   active: boolean;
   error_message?: string;
+  events_last_7_days?: number;
 }
 
 export default function AdminIntegrations() {
@@ -51,7 +53,8 @@ export default function AdminIntegrations() {
         simulation_mode: true,
         sync_frequency: 30,
         api_key: 'fudo_key_***',
-        active: true
+        active: true,
+        events_last_7_days: 156
       },
       {
         id: 'client_002',
@@ -63,7 +66,8 @@ export default function AdminIntegrations() {
         sync_frequency: 15,
         api_endpoint: 'https://api.bistrosoft.example.com',
         active: true,
-        error_message: 'API authentication failed'
+        error_message: 'API authentication failed',
+        events_last_7_days: 89
       },
       {
         id: 'client_003',
@@ -73,7 +77,8 @@ export default function AdminIntegrations() {
         sync_status: 'never',
         simulation_mode: true,
         sync_frequency: 60,
-        active: false
+        active: false,
+        events_last_7_days: 0
       },
       {
         id: 'client_004',
@@ -83,7 +88,8 @@ export default function AdminIntegrations() {
         sync_status: 'pending',
         simulation_mode: false,
         sync_frequency: 20,
-        active: true
+        active: true,
+        events_last_7_days: 67
       }
     ];
 
@@ -246,119 +252,186 @@ export default function AdminIntegrations() {
           </div>
 
           {selectedTab === 'overview' ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Estado de Integraciones</CardTitle>
-                <CardDescription>
-                  {filteredClients.length} cliente(s) {filter !== 'all' ? `con estado: ${filter}` : 'total'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>POS</TableHead>
-                      <TableHead>Último Sync</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Modo</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients.map((client) => {
-                      const circuitState = integrationLogger.getCircuitState(client.id);
-                      const isPaused = circuitState?.is_paused || false;
-                      
-                      return (
-                        <TableRow key={client.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <div className="font-medium">{client.name}</div>
-                                <div className="text-sm text-muted-foreground">{client.id}</div>
-                              </div>
-                              {isPaused && (
-                                <div className="w-4 h-4 text-red-500" title="Circuit breaker active">
-                                  <AlertCircle className="w-4 h-4" />
+            <>
+              {/* Metrics Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <div>
+                        <div className="text-2xl font-bold text-blue-600">{clients.length}</div>
+                        <div className="text-sm text-muted-foreground">Clientes Total</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {clients.filter(c => c.sync_status === 'ok').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Operativos</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                      <div>
+                        <div className="text-2xl font-bold text-red-600">
+                          {clients.filter(c => c.sync_status === 'error').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Con Errores</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-purple-600" />
+                      <div>
+                        <div className="text-2xl font-bold text-purple-600">
+                          {clients.reduce((sum, c) => sum + (c.events_last_7_days || 0), 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Eventos (7 días)</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Estado de Integraciones</CardTitle>
+                  <CardDescription>
+                    {filteredClients.length} cliente(s) {filter !== 'all' ? `con estado: ${filter}` : 'total'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>POS</TableHead>
+                        <TableHead>Último Sync</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Eventos (7d)</TableHead>
+                        <TableHead>Modo</TableHead>
+                        <TableHead>Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClients.map((client) => {
+                        const circuitState = integrationLogger.getCircuitState(client.id);
+                        const isPaused = circuitState?.is_paused || false;
+                        
+                        return (
+                          <TableRow key={client.id} className={!client.active ? 'opacity-60' : ''}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div>
+                                  <div className="font-medium">{client.name}</div>
+                                  <div className="text-sm text-muted-foreground">{client.id}</div>
                                 </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{client.pos_type.toUpperCase()}</Badge>
-                          </TableCell>
-                          <TableCell>{formatLastSync(client.last_sync)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getStatusBadge(client.sync_status, client.error_message)}
-                              {isPaused && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleResetCircuitBreaker(client.id)}
-                                  className="text-xs"
-                                >
-                                  Reset
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={client.simulation_mode ? "secondary" : "default"}>
-                              {client.simulation_mode ? "Simulación" : "Producción"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleForceSync(client.id)}
-                                disabled={syncingClient === client.id || isPaused}
-                              >
-                                {syncingClient === client.id ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
+                                {isPaused && (
+                                  <div className="w-4 h-4 text-red-500" title="Circuit breaker active">
+                                    <AlertCircle className="w-4 h-4" />
+                                  </div>
                                 )}
-                              </Button>
-                              
-                              <Dialog>
-                                <DialogTrigger asChild>
+                                {!client.active && (
+                                  <Badge variant="outline" className="text-xs">Inactivo</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{client.pos_type.toUpperCase()}</Badge>
+                            </TableCell>
+                            <TableCell>{formatLastSync(client.last_sync)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getStatusBadge(client.sync_status, client.error_message)}
+                                {isPaused && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingClient(client)}
+                                    onClick={() => handleResetCircuitBreaker(client.id)}
+                                    className="text-xs"
                                   >
-                                    <Edit className="w-4 h-4" />
+                                    Reset
                                   </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl">
-                                  <DialogHeader>
-                                    <DialogTitle>Editar Configuración - {client.name}</DialogTitle>
-                                    <DialogDescription>
-                                      Modifica la configuración de integración POS para este cliente
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  
-                                  <ClientEditForm 
-                                    client={client} 
-                                    availablePOSTypes={availablePOSTypes}
-                                    onSave={handleSaveClient}
-                                    onCancel={() => setEditingClient(null)}
-                                  />
-                                </DialogContent>
-                              </Dialog>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-center">
+                                <div className="font-mono text-sm">
+                                  {client.events_last_7_days || 0}
+                                </div>
+                                <div className="text-xs text-muted-foreground">eventos</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={client.simulation_mode ? "secondary" : "default"}>
+                                {client.simulation_mode ? "Simulación" : "Producción"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleForceSync(client.id)}
+                                  disabled={syncingClient === client.id || isPaused || !client.active}
+                                  title="Forzar sincronización"
+                                >
+                                  {syncingClient === client.id ? (
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  asChild
+                                  title="Ver logs"
+                                >
+                                  <Link to={`/admin/integrations/logs/${client.id}`}>
+                                    <Eye className="w-4 h-4" />
+                                  </Link>
+                                </Button>
+                                
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  asChild
+                                  title="Configurar"
+                                >
+                                  <Link to={`/admin/integrations/${client.id}`}>
+                                    <Settings className="w-4 h-4" />
+                                  </Link>
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
           ) : (
             <LogsAndMonitoring />
           )}

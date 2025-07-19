@@ -15,6 +15,8 @@ import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import AdminIntegrations from "./pages/AdminIntegrations";
+import ClientLogs from "./pages/ClientLogs";
+import ClientConfiguration from "./pages/ClientConfiguration";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="barista-pool" element={<BaristaPool />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="admin/integrations" element={<AdminIntegrations />} />
+            <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
+            <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           </Route>
           <Route path="*" element={<NotFound />} />
