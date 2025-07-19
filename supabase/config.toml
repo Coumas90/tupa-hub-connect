@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.csp-violation-report]
 verify_jwt = false
+
+[functions.refresh-token-test]
+verify_jwt = false
