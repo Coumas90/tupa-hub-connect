@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { sanitizeInput } from '@/utils/FormUtils';
 import { useParams, Link } from 'react-router-dom';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -279,7 +280,7 @@ export default function ClientConfiguration() {
                     <Input
                       id="name"
                       value={config.name}
-                      onChange={(e) => setConfig({ ...config, name: e.target.value })}
+                      onChange={(e) => setConfig({ ...config, name: sanitizeInput(e.target.value) })}
                     />
                   </div>
 
@@ -307,7 +308,7 @@ export default function ClientConfiguration() {
                     <Input
                       id="api_endpoint"
                       value={config.api_endpoint || ''}
-                      onChange={(e) => setConfig({ ...config, api_endpoint: e.target.value })}
+                      onChange={(e) => setConfig({ ...config, api_endpoint: sanitizeInput(e.target.value) })}
                       placeholder="https://api.example.com"
                     />
                   </div>
@@ -318,7 +319,7 @@ export default function ClientConfiguration() {
                       id="api_key"
                       type="password"
                       value={config.api_key || ''}
-                      onChange={(e) => setConfig({ ...config, api_key: e.target.value })}
+                      onChange={(e) => setConfig({ ...config, api_key: sanitizeInput(e.target.value) })}
                       placeholder="Ingresa la API key"
                     />
                   </div>

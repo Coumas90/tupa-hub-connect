@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeInput } from '@/utils/FormUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +123,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   type="email"
                   placeholder="tu@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(sanitizeInput(e.target.value))}
                   className="pl-10"
                   disabled={loading}
                 />
@@ -138,7 +139,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   type="password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(sanitizeInput(e.target.value))}
                   className="pl-10"
                   disabled={loading}
                 />

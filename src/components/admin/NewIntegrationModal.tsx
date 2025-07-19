@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeInput } from '@/utils/FormUtils';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -280,7 +281,7 @@ export default function NewIntegrationModal({
                     id="api_key"
                     type="password"
                     value={formData.api_key}
-                    onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, api_key: sanitizeInput(e.target.value) }))}
                     placeholder="Ingrese la API Key"
                     className="flex-1"
                   />

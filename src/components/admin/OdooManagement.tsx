@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeInput } from '@/utils/FormUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -194,7 +195,7 @@ export default function OdooManagement() {
               <Input
                 id="odoo_url"
                 value={odooConfig.odoo_url}
-                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_url: e.target.value }))}
+                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_url: sanitizeInput(e.target.value) }))}
                 className="col-span-3"
               />
             </div>
@@ -206,7 +207,7 @@ export default function OdooManagement() {
               <Input
                 id="odoo_username"
                 value={odooConfig.odoo_username}
-                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_username: e.target.value }))}
+                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_username: sanitizeInput(e.target.value) }))}
                 className="col-span-3"
               />
             </div>
@@ -219,7 +220,7 @@ export default function OdooManagement() {
                 id="odoo_password"
                 type="password"
                 value={odooConfig.odoo_password}
-                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_password: e.target.value }))}
+                onChange={(e) => setOdooConfig(prev => ({ ...prev, odoo_password: sanitizeInput(e.target.value) }))}
                 className="col-span-3"
                 placeholder="••••••••"
               />

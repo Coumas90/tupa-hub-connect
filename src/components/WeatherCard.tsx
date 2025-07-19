@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { sanitizeInput } from '@/utils/FormUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -122,7 +123,7 @@ export default function WeatherCard() {
               type="password"
               placeholder="Ingresá tu API key de WeatherAPI"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(e) => setApiKey(sanitizeInput(e.target.value))}
             />
             <Button onClick={saveApiKey} disabled={!apiKey.trim()}>
               Guardar
