@@ -16,6 +16,7 @@ import Reposicion from "./pages/Reposicion";
 import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import LoginPage from "./pages/LoginPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="admin/integrations" element={<AdminIntegrations />} />
             <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
             <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
+            <Route path="auth" element={<LoginPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           </Route>
           <Route path="*" element={<NotFound />} />
