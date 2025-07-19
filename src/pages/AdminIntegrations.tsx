@@ -1,198 +1,73 @@
 import { useState, useEffect } from 'react';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Edit, Download, Filter, Activity, AlertCircle, Eye, Settings, TrendingUp, Calendar, Users } from 'lucide-react';
-import { syncClientPOS } from '@/lib/integrations/pos/sync.core';
-import { getAvailablePOSTypes } from '@/lib/integrations/pos/pos.registry';
-import { integrationLogger } from '@/lib/integrations/logger';
+import { Filter, Activity, AlertCircle, TrendingUp, Calendar, Users, CheckCircle, Clock } from 'lucide-react';
 import LogsAndMonitoring from '@/components/LogsAndMonitoring';
-import { Link } from 'react-router-dom';
+import IntegrationTable from '@/components/admin/IntegrationTable';
+import { getLogStats } from '@/lib/api/logs';
+import { supabase } from '@/integrations/supabase/client';
 
-interface Client {
-  id: string;
-  name: string;
-  pos_type: string;
-  last_sync?: string;
-  sync_status: 'ok' | 'error' | 'pending' | 'never';
-  simulation_mode: boolean;
-  sync_frequency: number;
-  api_key?: string;
-  api_endpoint?: string;
-  active: boolean;
-  error_message?: string;
-  events_last_7_days?: number;
+interface DashboardStats {
+  totalClients: number;
+  activeClients: number;
+  clientsWithErrors: number;
+  eventsLast24h: number;
 }
 
 export default function AdminIntegrations() {
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [syncingClient, setSyncingClient] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'ok' | 'error' | 'pending'>('all');
+  const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
   const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring'>('overview');
+  const [stats, setStats] = useState<DashboardStats>({
+    totalClients: 0,
+    activeClients: 0,
+    clientsWithErrors: 0,
+    eventsLast24h: 0
+  });
   const { toast } = useToast();
 
-  // Mock data - en producción vendría de Supabase
+  // Fetch dashboard statistics
   useEffect(() => {
-    const mockClients: Client[] = [
-      {
-        id: 'client_001',
-        name: 'Café Central - Villa Urquiza',
-        pos_type: 'fudo',
-        last_sync: '2024-01-19T10:30:00Z',
-        sync_status: 'ok',
-        simulation_mode: true,
-        sync_frequency: 30,
-        api_key: 'fudo_key_***',
-        active: true,
-        events_last_7_days: 156
-      },
-      {
-        id: 'client_002',
-        name: 'Bistro Norte - Palermo',
-        pos_type: 'bistrosoft',
-        last_sync: '2024-01-19T09:15:00Z',
-        sync_status: 'error',
-        simulation_mode: false,
-        sync_frequency: 15,
-        api_endpoint: 'https://api.bistrosoft.example.com',
-        active: true,
-        error_message: 'API authentication failed',
-        events_last_7_days: 89
-      },
-      {
-        id: 'client_003',
-        name: 'Tostado Express - Centro',
-        pos_type: 'fudo',
-        last_sync: undefined,
-        sync_status: 'never',
-        simulation_mode: true,
-        sync_frequency: 60,
-        active: false,
-        events_last_7_days: 0
-      },
-      {
-        id: 'client_004',
-        name: 'Coffee Lab - Recoleta',
-        pos_type: 'bistrosoft',
-        last_sync: '2024-01-19T08:45:00Z',
-        sync_status: 'pending',
-        simulation_mode: false,
-        sync_frequency: 20,
-        active: true,
-        events_last_7_days: 67
-      }
-    ];
-
-    setTimeout(() => {
-      setClients(mockClients);
-      setLoading(false);
-    }, 500);
+    fetchStats();
   }, []);
 
-  const handleForceSync = async (clientId: string) => {
-    setSyncingClient(clientId);
+  const fetchStats = async () => {
     try {
-      const result = await syncClientPOS(clientId);
+      setLoading(true);
       
-      if (result.success) {
-        toast({
-          title: "Sincronización exitosa",
-          description: `${result.message} - ${result.recordsProcessed || 0} registros procesados`,
-        });
+      // Fetch client configs count
+      const { data: configs, error: configsError } = await supabase
+        .from('client_configs')
+        .select('id, simulation_mode');
 
-        // Actualizar estado del cliente
-        setClients(prev => prev.map(client => 
-          client.id === clientId 
-            ? { ...client, sync_status: 'ok', last_sync: result.timestamp, error_message: undefined }
-            : client
-        ));
-      } else {
-        throw new Error(result.message);
-      }
+      if (configsError) throw configsError;
+
+      // Fetch log statistics
+      const logStats = await getLogStats();
+
+      // Calculate dashboard stats
+      const dashboardStats: DashboardStats = {
+        totalClients: configs?.length || 0,
+        activeClients: logStats.success,
+        clientsWithErrors: logStats.error,
+        eventsLast24h: logStats.last24Hours
+      };
+
+      setStats(dashboardStats);
     } catch (error) {
+      console.error('Error fetching stats:', error);
       toast({
-        title: "Error en sincronización",
-        description: error instanceof Error ? error.message : "Error desconocido",
+        title: "Error",
+        description: "Failed to load dashboard statistics",
         variant: "destructive",
       });
-
-      setClients(prev => prev.map(client => 
-        client.id === clientId 
-          ? { ...client, sync_status: 'error', error_message: error instanceof Error ? error.message : "Error desconocido" }
-          : client
-      ));
     } finally {
-      setSyncingClient(null);
+      setLoading(false);
     }
   };
-
-  const handleResetCircuitBreaker = (clientId: string) => {
-    integrationLogger.resetCircuitBreaker(clientId, 'Manual reset from admin panel');
-    
-    // Update client status
-    setClients(prev => prev.map(client => 
-      client.id === clientId 
-        ? { ...client, sync_status: 'ok', error_message: undefined }
-        : client
-    ));
-    
-    toast({
-      title: "Circuit Breaker Reset",
-      description: `Integration re-enabled for client ${clientId}`,
-    });
-  };
-
-  const handleSaveClient = (updatedClient: Client) => {
-    setClients(prev => prev.map(client => 
-      client.id === updatedClient.id ? updatedClient : client
-    ));
-    setEditingClient(null);
-    
-    toast({
-      title: "Cliente actualizado",
-      description: `Configuración de ${updatedClient.name} guardada exitosamente`,
-    });
-  };
-
-  const getStatusBadge = (status: Client['sync_status'], errorMessage?: string) => {
-    switch (status) {
-      case 'ok':
-        return <Badge variant="default" className="bg-green-500">✅ OK</Badge>;
-      case 'error':
-        return (
-          <Badge variant="destructive" title={errorMessage}>
-            ❌ Error
-          </Badge>
-        );
-      case 'pending':
-        return <Badge variant="secondary">⏳ Pendiente</Badge>;
-      case 'never':
-        return <Badge variant="outline">Sin sincronizar</Badge>;
-      default:
-        return <Badge variant="outline">Desconocido</Badge>;
-    }
-  };
-
-  const formatLastSync = (timestamp?: string) => {
-    if (!timestamp) return 'Nunca';
-    return new Date(timestamp).toLocaleString('es-AR');
-  };
-
-  const filteredClients = clients.filter(client => 
-    filter === 'all' || client.sync_status === filter
-  );
-
-  const availablePOSTypes = getAvailablePOSTypes();
 
   if (loading) {
     return (
@@ -209,349 +84,117 @@ export default function AdminIntegrations() {
   }
 
   return (
-      <ModuleAccessGuard requiredRole="admin">
-        <div className="container mx-auto p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Administración de Integraciones POS</h1>
-              <p className="text-muted-foreground">
-                Gestiona las conexiones POS y sincronizaciones de todos los clientes
-              </p>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant={selectedTab === 'overview' ? 'default' : 'outline'}
-                onClick={() => setSelectedTab('overview')}
-              >
-                Overview
-              </Button>
-              <Button
-                variant={selectedTab === 'monitoring' ? 'default' : 'outline'}
-                onClick={() => setSelectedTab('monitoring')}
-              >
-                <Activity className="w-4 h-4 mr-2" />
-                Monitoring
-              </Button>
-              
-              {selectedTab === 'overview' && (
-                <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="ok">OK</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+    <ModuleAccessGuard requiredRole="admin">
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Administración de Integraciones POS</h1>
+            <p className="text-muted-foreground">
+              Gestiona las conexiones POS y sincronizaciones de todos los clientes
+            </p>
           </div>
+          
+          <div className="flex gap-2">
+            <Button
+              variant={selectedTab === 'overview' ? 'default' : 'outline'}
+              onClick={() => setSelectedTab('overview')}
+            >
+              Overview
+            </Button>
+            <Button
+              variant={selectedTab === 'monitoring' ? 'default' : 'outline'}
+              onClick={() => setSelectedTab('monitoring')}
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Monitoring
+            </Button>
+            
+            {selectedTab === 'overview' && (
+              <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+                <SelectTrigger className="w-40">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="success">Exitoso</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </div>
 
-          {selectedTab === 'overview' ? (
-            <>
-              {/* Metrics Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <div className="text-2xl font-bold text-blue-600">{clients.length}</div>
-                        <div className="text-sm text-muted-foreground">Clientes Total</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <div>
-                        <div className="text-2xl font-bold text-green-600">
-                          {clients.filter(c => c.sync_status === 'ok').length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Operativos</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                      <div>
-                        <div className="text-2xl font-bold text-red-600">
-                          {clients.filter(c => c.sync_status === 'error').length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Con Errores</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-purple-600" />
-                      <div>
-                        <div className="text-2xl font-bold text-purple-600">
-                          {clients.reduce((sum, c) => sum + (c.events_last_7_days || 0), 0)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Eventos (7 días)</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
+        {selectedTab === 'overview' ? (
+          <>
+            {/* Metrics Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Estado de Integraciones</CardTitle>
-                  <CardDescription>
-                    {filteredClients.length} cliente(s) {filter !== 'all' ? `con estado: ${filter}` : 'total'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>POS</TableHead>
-                        <TableHead>Último Sync</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Eventos (7d)</TableHead>
-                        <TableHead>Modo</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredClients.map((client) => {
-                        const circuitState = integrationLogger.getCircuitState(client.id);
-                        const isPaused = circuitState?.is_paused || false;
-                        
-                        return (
-                          <TableRow key={client.id} className={!client.active ? 'opacity-60' : ''}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div>
-                                  <div className="font-medium">{client.name}</div>
-                                  <div className="text-sm text-muted-foreground">{client.id}</div>
-                                </div>
-                                {isPaused && (
-                                  <div className="w-4 h-4 text-red-500" title="Circuit breaker active">
-                                    <AlertCircle className="w-4 h-4" />
-                                  </div>
-                                )}
-                                {!client.active && (
-                                  <Badge variant="outline" className="text-xs">Inactivo</Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{client.pos_type.toUpperCase()}</Badge>
-                            </TableCell>
-                            <TableCell>{formatLastSync(client.last_sync)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {getStatusBadge(client.sync_status, client.error_message)}
-                                {isPaused && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleResetCircuitBreaker(client.id)}
-                                    className="text-xs"
-                                  >
-                                    Reset
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-center">
-                                <div className="font-mono text-sm">
-                                  {client.events_last_7_days || 0}
-                                </div>
-                                <div className="text-xs text-muted-foreground">eventos</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={client.simulation_mode ? "secondary" : "default"}>
-                                {client.simulation_mode ? "Simulación" : "Producción"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleForceSync(client.id)}
-                                  disabled={syncingClient === client.id || isPaused || !client.active}
-                                  title="Forzar sincronización"
-                                >
-                                  {syncingClient === client.id ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="w-4 h-4" />
-                                  )}
-                                </Button>
-                                
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  asChild
-                                  title="Ver logs"
-                                >
-                                  <Link to={`/admin/integrations/logs/${client.id}`}>
-                                    <Eye className="w-4 h-4" />
-                                  </Link>
-                                </Button>
-                                
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  asChild
-                                  title="Configurar"
-                                >
-                                  <Link to={`/admin/integrations/${client.id}`}>
-                                    <Settings className="w-4 h-4" />
-                                  </Link>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{stats.totalClients}</div>
+                      <div className="text-sm text-muted-foreground">Clientes Total</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            </>
-          ) : (
-            <LogsAndMonitoring />
-          )}
-        </div>
-      </ModuleAccessGuard>
-  );
-}
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{stats.activeClients}</div>
+                      <div className="text-sm text-muted-foreground">Operativos</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">{stats.clientsWithErrors}</div>
+                      <div className="text-sm text-muted-foreground">Con Errores</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-purple-600">{stats.eventsLast24h}</div>
+                      <div className="text-sm text-muted-foreground">Eventos (24h)</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-interface ClientEditFormProps {
-  client: Client;
-  availablePOSTypes: Array<{ type: string; name: string; version: string; features: string[] }>;
-  onSave: (client: Client) => void;
-  onCancel: () => void;
-}
-
-function ClientEditForm({ client, availablePOSTypes, onSave, onCancel }: ClientEditFormProps) {
-  const [formData, setFormData] = useState<Client>(client);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nombre del Cliente</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="pos_type">Tipo de POS</Label>
-          <Select 
-            value={formData.pos_type} 
-            onValueChange={(value) => setFormData(prev => ({ ...prev, pos_type: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availablePOSTypes.map((pos) => (
-                <SelectItem key={pos.type} value={pos.type}>
-                  {pos.name} ({pos.version})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Estado de Integraciones</CardTitle>
+                <CardDescription>
+                  Gestión de configuraciones POS y monitoreo de sincronizaciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <IntegrationTable filter={filter} />
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <LogsAndMonitoring />
+        )}
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="api_key">API Key</Label>
-          <Input
-            id="api_key"
-            type="password"
-            value={formData.api_key || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
-            placeholder="Ingresa la API key"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="api_endpoint">API Endpoint</Label>
-          <Input
-            id="api_endpoint"
-            value={formData.api_endpoint || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, api_endpoint: e.target.value }))}
-            placeholder="https://api.example.com"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="sync_frequency">Frecuencia de Sync (minutos)</Label>
-          <Input
-            id="sync_frequency"
-            type="number"
-            value={formData.sync_frequency}
-            onChange={(e) => setFormData(prev => ({ ...prev, sync_frequency: parseInt(e.target.value) }))}
-            min="5"
-            max="1440"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2 mt-6">
-            <Switch
-              id="simulation_mode"
-              checked={formData.simulation_mode}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, simulation_mode: checked }))}
-            />
-            <Label htmlFor="simulation_mode">Modo Simulación</Label>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="active"
-          checked={formData.active}
-          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
-        />
-        <Label htmlFor="active">Cliente Activo</Label>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">
-          Guardar Cambios
-        </Button>
-      </div>
-    </form>
+    </ModuleAccessGuard>
   );
 }
