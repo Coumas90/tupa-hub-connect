@@ -3,105 +3,254 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   AlertTriangle, 
   CheckCircle, 
   Clock, 
   RefreshCw, 
   Download, 
-  Play,
-  Pause,
+  Search,
   XCircle,
-  Activity
+  Activity,
+  Calendar,
+  AlertCircle,
+  Mail,
+  ExternalLink
 } from 'lucide-react';
-import { integrationLogger, type IntegrationLog, type ClientCircuitState } from '@/lib/integrations/logger';
-import { retryQueue, type RetryJob } from '@/lib/integrations/retryQueue';
+import { downloadLogsCSV } from '@/lib/api/logs';
 
-interface LogsAndMonitoringProps {
-  clientId?: string;
+interface IntegrationLog {
+  id: string;
+  client_id: string;
+  pos_type: string;
+  operation: string;
+  status: 'success' | 'error' | 'pending';
+  events_count: number;
+  error_message?: string;
+  created_at: string;
 }
 
-export default function LogsAndMonitoring({ clientId }: LogsAndMonitoringProps) {
+interface HealthMetrics {
+  totalErrors24h: number;
+  activeIntegrations: number;
+  lastSyncs: number;
+  staleIntegrations: number;
+}
+
+export default function LogsAndMonitoring() {
   const [logs, setLogs] = useState<IntegrationLog[]>([]);
-  const [circuitStates, setCircuitStates] = useState<ClientCircuitState[]>([]);
-  const [retryJobs, setRetryJobs] = useState<RetryJob[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<IntegrationLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics>({
+    totalErrors24h: 0,
+    activeIntegrations: 0,
+    lastSyncs: 0,
+    staleIntegrations: 0
+  });
+  
+  // Filters
+  const [clientFilter, setClientFilter] = useState('');
+  const [posTypeFilter, setPosTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const { toast } = useToast();
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 5000); // Refresh every 5 seconds
+    const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [clientId]);
+  }, []);
 
-  const loadData = () => {
-    if (clientId) {
-      setLogs(integrationLogger.getLogsForClient(clientId, 100));
-      const circuitState = integrationLogger.getCircuitState(clientId);
-      setCircuitStates(circuitState ? [circuitState] : []);
-      setRetryJobs(retryQueue.getJobsForClient(clientId));
-    } else {
-      setLogs(integrationLogger.getAllLogs(200));
-      setCircuitStates(integrationLogger.getAllCircuitStates());
-      setRetryJobs(retryQueue.getAllJobs());
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    applyFilters();
+  }, [logs, clientFilter, posTypeFilter, statusFilter, searchTerm]);
 
-  const handleResetCircuitBreaker = (clientId: string) => {
-    integrationLogger.resetCircuitBreaker(clientId, 'Manual reset from monitoring dashboard');
-    loadData();
-    toast({
-      title: "Circuit Breaker Reset",
-      description: `Integration re-enabled for client ${clientId}`,
-    });
-  };
+  const loadData = async () => {
+    try {
+      setLoading(true);
 
-  const handleCancelRetryJob = (jobId: string) => {
-    const success = retryQueue.cancelJob(jobId);
-    if (success) {
-      loadData();
+      // Fetch integration logs from Supabase
+      const { data: logsData, error: logsError } = await supabase
+        .from('integration_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (logsError) throw logsError;
+
+      // Fetch client configs for active integrations count
+      const { data: configsData, error: configsError } = await supabase
+        .from('client_configs')
+        .select('*');
+
+      if (configsError) throw configsError;
+
+      setLogs((logsData || []) as IntegrationLog[]);
+      
+      // Calculate health metrics
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      const errors24h = (logsData || []).filter(log => 
+        log.status === 'error' && new Date(log.created_at) > twentyFourHoursAgo
+      ).length;
+
+      const activeIntegrations = (configsData || []).filter(config => 
+        config.pos_type !== 'none'
+      ).length;
+
+      const recentSyncs = (logsData || []).filter(log => 
+        log.status === 'success' && new Date(log.created_at) > twentyFourHoursAgo
+      ).length;
+
+      // Find integrations that haven't synced in 24h
+      const latestSyncsByClient = new Map();
+      (logsData || []).forEach(log => {
+        if (!latestSyncsByClient.has(log.client_id) || 
+            new Date(log.created_at) > new Date(latestSyncsByClient.get(log.client_id).created_at)) {
+          latestSyncsByClient.set(log.client_id, log);
+        }
+      });
+
+      const staleIntegrations = Array.from(latestSyncsByClient.values()).filter(log => 
+        new Date(log.created_at) < twentyFourHoursAgo
+      ).length;
+
+      setHealthMetrics({
+        totalErrors24h: errors24h,
+        activeIntegrations,
+        lastSyncs: recentSyncs,
+        staleIntegrations
+      });
+
+    } catch (error) {
+      console.error('Error loading monitoring data:', error);
       toast({
-        title: "Retry Job Cancelled",
-        description: `Job ${jobId} has been cancelled`,
+        title: "Error",
+        description: "Failed to load monitoring data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = logs;
+
+    if (clientFilter) {
+      filtered = filtered.filter(log => log.client_id.includes(clientFilter));
+    }
+
+    if (posTypeFilter) {
+      filtered = filtered.filter(log => log.pos_type === posTypeFilter);
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(log => log.status === statusFilter);
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(log => 
+        log.client_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.operation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.error_message && log.error_message.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    setFilteredLogs(filtered);
+  };
+
+  const handleForceSync = async (clientId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-client-pos', {
+        body: { client_id: clientId }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Sincronización iniciada",
+          description: `Sincronización forzada para ${clientId}`,
+        });
+        // Refresh data after a short delay
+        setTimeout(loadData, 2000);
+      } else {
+        throw new Error(data?.error || 'Error en sincronización');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error iniciando sincronización",
+        variant: "destructive",
       });
     }
   };
 
-  const getStatusIcon = (status: IntegrationLog['status']) => {
+  const handleNotifyTeam = async (clientId: string, errorMessage: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('notify-team', {
+        body: {
+          client_id: clientId,
+          error_count: filteredLogs.filter(log => log.client_id === clientId && log.status === 'error').length,
+          error_message: errorMessage
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Notificación enviada",
+          description: `Equipo notificado sobre errores en ${clientId}`,
+        });
+      } else {
+        throw new Error(data?.error || 'Error enviando notificación');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error enviando notificación",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportLogs = async () => {
+    try {
+      // Use a generic client ID to export all logs
+      await downloadLogsCSV('all');
+      toast({
+        title: "Descarga iniciada",
+        description: "Los logs se están descargando como CSV",
+      });
+    } catch (error) {
+      toast({
+        title: "Error en descarga",
+        description: "No se pudieron descargar los logs",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'error':
         return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'info':
-        return <Activity className="w-4 h-4 text-blue-500" />;
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Activity className="w-4 h-4 text-gray-500" />;
     }
-  };
-
-  const getOperationBadge = (operation: string) => {
-    const colors = {
-      fetch: 'bg-blue-100 text-blue-800',
-      map: 'bg-purple-100 text-purple-800',
-      sync: 'bg-green-100 text-green-800',
-      auth: 'bg-orange-100 text-orange-800',
-      retry: 'bg-yellow-100 text-yellow-800',
-      circuit_break: 'bg-red-100 text-red-800',
-      alert: 'bg-red-100 text-red-800'
-    };
-    
-    return (
-      <Badge variant="outline" className={colors[operation as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-        {operation.toUpperCase()}
-      </Badge>
-    );
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -115,44 +264,33 @@ export default function LogsAndMonitoring({ clientId }: LogsAndMonitoringProps) 
     });
   };
 
-  const exportLogs = () => {
-    const csvContent = [
-      ['Timestamp', 'Client ID', 'Source', 'Operation', 'Status', 'Message'],
-      ...logs.map(log => [
-        formatTimestamp(log.timestamp),
-        log.client_id,
-        log.source,
-        log.operation,
-        log.status,
-        log.message
-      ])
-    ]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now.getTime() - time.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `integration-logs-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({
-      title: "Logs Exported",
-      description: "Integration logs have been downloaded as CSV",
-    });
+    if (diffDays > 0) {
+      return `${diffDays}d ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours}h ago`;
+    } else {
+      return 'Recent';
+    }
   };
+
+  const uniqueClients = [...new Set(logs.map(log => log.client_id))];
+  const uniquePosTypes = [...new Set(logs.map(log => log.pos_type))];
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Loading monitoring data...</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 animate-spin" />
+            Cargando datos de monitoreo...
+          </CardTitle>
         </CardHeader>
       </Card>
     );
@@ -162,207 +300,237 @@ export default function LogsAndMonitoring({ clientId }: LogsAndMonitoringProps) 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Integration Monitoring</h2>
+          <h2 className="text-2xl font-bold">Monitor de Integraciones</h2>
           <p className="text-muted-foreground">
-            Real-time logs, circuit breakers, and retry queue status
+            Monitoreo en tiempo real de la salud de las integraciones POS
           </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={loadData} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            Actualizar
           </Button>
-          <Button onClick={exportLogs} variant="outline" size="sm">
+          <Button onClick={handleExportLogs} variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
-            Export Logs
+            Exportar CSV
           </Button>
+          {healthMetrics.totalErrors24h > 5 && (
+            <Button 
+              onClick={() => handleNotifyTeam('all', `${healthMetrics.totalErrors24h} errores en las últimas 24 horas`)}
+              variant="destructive" 
+              size="sm"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Notificar Equipo
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Circuit Breakers Status */}
-      {circuitStates.length > 0 && (
+      {/* Health Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              Circuit Breakers
-            </CardTitle>
-            <CardDescription>
-              Status of fault tolerance mechanisms per client
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {circuitStates.map((state) => (
-                <Card key={state.client_id} className={state.is_paused ? 'border-red-200' : 'border-green-200'}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{state.client_id}</span>
-                      {state.is_paused ? (
-                        <Badge variant="destructive">
-                          <Pause className="w-3 h-3 mr-1" />
-                          Paused
-                        </Badge>
-                      ) : (
-                        <Badge variant="default" className="bg-green-500">
-                          <Play className="w-3 h-3 mr-1" />
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground mb-3">
-                      <div>Failures: {state.consecutive_failures}</div>
-                      {state.last_failure_timestamp && (
-                        <div>Last failure: {formatTimestamp(state.last_failure_timestamp)}</div>
-                      )}
-                      {state.pause_reason && (
-                        <div className="text-red-600">Reason: {state.pause_reason}</div>
-                      )}
-                    </div>
-
-                    {state.is_paused && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleResetCircuitBreaker(state.client_id)}
-                        className="w-full"
-                      >
-                        Reset Circuit Breaker
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <div>
+                <div className="text-2xl font-bold text-red-600">{healthMetrics.totalErrors24h}</div>
+                <div className="text-sm text-muted-foreground">Errores (24h)</div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <div>
+                <div className="text-2xl font-bold text-green-600">{healthMetrics.activeIntegrations}</div>
+                <div className="text-sm text-muted-foreground">Integraciones Activas</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-500" />
+              <div>
+                <div className="text-2xl font-bold text-blue-600">{healthMetrics.lastSyncs}</div>
+                <div className="text-sm text-muted-foreground">Syncs Exitosos (24h)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              <div>
+                <div className="text-2xl font-bold text-orange-600">{healthMetrics.staleIntegrations}</div>
+                <div className="text-sm text-muted-foreground">Sin Sync (+24h)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Tabs defaultValue="logs" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="logs">Integration Logs</TabsTrigger>
-          <TabsTrigger value="retries">Retry Queue ({retryJobs.length})</TabsTrigger>
-        </TabsList>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros de Búsqueda</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Buscar</label>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                <Input
+                  placeholder="Cliente, operación..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-1 block">Cliente</label>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los clientes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los clientes</SelectItem>
+                  {uniqueClients.map(client => (
+                    <SelectItem key={client} value={client}>{client}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-1 block">Tipo POS</label>
+              <Select value={posTypeFilter} onValueChange={setPosTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los tipos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los tipos</SelectItem>
+                  {uniquePosTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type.toUpperCase()}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-1 block">Estado</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los estados</SelectItem>
+                  <SelectItem value="success">Exitoso</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="logs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Integration Logs</CardTitle>
-              <CardDescription>
-                Real-time log of all integration operations ({logs.length} entries)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Operation</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-mono text-sm">
-                          {formatTimestamp(log.timestamp)}
-                        </TableCell>
-                        <TableCell>{log.client_id}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{log.source.toUpperCase()}</Badge>
-                        </TableCell>
-                        <TableCell>{getOperationBadge(log.operation)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(log.status)}
-                            <span className="capitalize">{log.status}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-md">
-                          <div className="truncate" title={log.message}>
-                            {log.message}
-                          </div>
-                          {log.duration_ms && (
-                            <div className="text-xs text-muted-foreground">
-                              {log.duration_ms}ms
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="retries">
-          <Card>
-            <CardHeader>
-              <CardTitle>Retry Queue</CardTitle>
-              <CardDescription>
-                Automatic retry jobs with exponential backoff
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {retryJobs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No retry jobs in queue
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Client ID</TableHead>
-                      <TableHead>Operation</TableHead>
-                      <TableHead>Attempt</TableHead>
-                      <TableHead>Next Retry</TableHead>
-                      <TableHead>Last Error</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {retryJobs.map((job) => (
-                      <TableRow key={job.id}>
-                        <TableCell>{job.client_id}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{job.operation.toUpperCase()}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {job.attempt} / {job.max_attempts}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {formatTimestamp(job.next_retry_at)}
-                        </TableCell>
-                        <TableCell className="max-w-sm">
-                          <div className="truncate" title={job.last_error}>
-                            {job.last_error || 'N/A'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleCancelRetryJob(job.id)}
-                          >
-                            Cancel
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Logs Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Logs de Integración ({filteredLogs.length} registros)</CardTitle>
+          <CardDescription>
+            Historial completo de operaciones de sincronización
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[600px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>POS</TableHead>
+                  <TableHead>Operación</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Eventos</TableHead>
+                  <TableHead>Mensaje</TableHead>
+                  <TableHead>Tiempo</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLogs.map((log) => (
+                  <TableRow key={log.id} className={log.status === 'error' ? 'bg-red-50' : ''}>
+                    <TableCell className="font-mono text-sm">
+                      {formatTimestamp(log.created_at)}
+                    </TableCell>
+                    <TableCell className="font-medium">{log.client_id}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{log.pos_type.toUpperCase()}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{log.operation}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(log.status)}
+                        <span className="capitalize">{log.status}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline">{log.events_count}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <div className="truncate" title={log.error_message || 'Operación completada'}>
+                        {log.error_message || 'Operación completada'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {getTimeAgo(log.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {log.status === 'error' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleForceSync(log.client_id)}
+                              title="Forzar sincronización"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleNotifyTeam(log.client_id, log.error_message || 'Error sin especificar')}
+                              title="Notificar al equipo"
+                            >
+                              <Mail className="w-3 h-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 }

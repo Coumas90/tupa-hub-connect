@@ -1,1 +1,13 @@
 project_id = "hmmaubkxfewzlypywqff"
+
+[functions.sync-client-pos]
+verify_jwt = false
+
+[functions.test-pos-connection]
+verify_jwt = false
+
+[functions.test-odoo-connection]
+verify_jwt = false
+
+[functions.notify-team]
+verify_jwt = false
