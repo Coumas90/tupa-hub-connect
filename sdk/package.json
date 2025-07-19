@@ -1,0 +1,67 @@
+{
+  "name": "@tupa/hub-sdk",
+  "version": "1.1.0",
+  "description": "Official SDK for integrating with TUPÁ Hub API - Type-safe, robust POS and third-party integrations",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "docs": "typedoc src/index.ts --out docs",
+    "prepublishOnly": "npm run build && npm run test && npm run lint"
+  },
+  "keywords": [
+    "tupahub",
+    "pos",
+    "point-of-sale",
+    "integration",
+    "sdk",
+    "api",
+    "typescript",
+    "fudo",
+    "bistrosoft",
+    "retail",
+    "restaurant",
+    "sales"
+  ],
+  "author": "TUPÁ Hub Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tupahub/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/tupahub/sdk/issues"
+  },
+  "homepage": "https://docs.tupahub.com",
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "tsup": "^8.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "typedoc": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

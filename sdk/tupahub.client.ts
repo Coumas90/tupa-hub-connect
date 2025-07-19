@@ -1,6 +1,13 @@
 import { TupaConfig, SalePayload, ClientPayload, Product, TupaResponse } from './types';
 import { TupaHubError } from './utils/errors';
 import { createLogger } from './utils/logger';
+import { 
+  validateSalePayload, 
+  validateClientPayload, 
+  validateTupaConfig, 
+  validateProductListParams,
+  type ValidatedProductListParams 
+} from './schemas';
 
 /**
  * TUPÁ Hub SDK Client
@@ -11,11 +18,14 @@ export class TupaHubClient {
   private logger: ReturnType<typeof createLogger>;
 
   constructor(config: TupaConfig) {
+    // Validate config using Zod schema
+    const validatedConfig = validateTupaConfig(config);
+    
     this.config = {
       version: 'v1',
       timeout: 30000,
       maxRetries: 3,
-      ...config
+      ...validatedConfig
     };
     
     this.logger = createLogger('TupaHubClient');
@@ -107,10 +117,13 @@ export class TupaHubClient {
    * @returns Promise with created sale response
    */
   async createSale(salePayload: SalePayload): Promise<TupaResponse<SalePayload>> {
-    this.logger.info('Creating sale', { saleId: salePayload.id });
+    // Validate input using Zod schema
+    const validatedPayload = validateSalePayload(salePayload);
+    
+    this.logger.info('Creating sale', { saleId: validatedPayload.id });
     return this.makeRequest<SalePayload>('/sales', {
       method: 'POST',
-      body: JSON.stringify(salePayload)
+      body: JSON.stringify(validatedPayload)
     });
   }
 
@@ -129,17 +142,15 @@ export class TupaHubClient {
    * @param params Optional query parameters
    * @returns Promise with products list
    */
-  async listProducts(params?: {
-    category?: string;
-    active?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<TupaResponse<Product[]>> {
-    this.logger.info('Listing products', { params });
+  async listProducts(params?: ValidatedProductListParams): Promise<TupaResponse<Product[]>> {
+    // Validate params if provided
+    const validatedParams = params ? validateProductListParams(params) : undefined;
     
-    const queryString = params ? 
+    this.logger.info('Listing products', { params: validatedParams });
+    
+    const queryString = validatedParams ? 
       '?' + new URLSearchParams(
-        Object.entries(params)
+        Object.entries(validatedParams)
           .filter(([_, value]) => value !== undefined)
           .map(([key, value]) => [key, String(value)])
       ).toString() : '';
@@ -154,6 +165,11 @@ export class TupaHubClient {
    * @returns Promise with updated client response
    */
   async updateClient(clientId: string, clientData: Partial<ClientPayload>): Promise<TupaResponse<ClientPayload>> {
+    // Validate partial client data
+    if (Object.keys(clientData).length === 0) {
+      throw new TupaHubError('INVALID_INPUT', 'Client data cannot be empty');
+    }
+    
     this.logger.info('Updating client', { clientId });
     return this.makeRequest<ClientPayload>(`/clients/${encodeURIComponent(clientId)}`, {
       method: 'PUT',
