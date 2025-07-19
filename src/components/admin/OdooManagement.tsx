@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Settings, TestTube, ExternalLink, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function OdooManagement() {
@@ -37,17 +38,28 @@ export default function OdooManagement() {
     try {
       setTesting(true);
       
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Conexión Odoo exitosa",
-        description: "La conexión con Odoo se estableció correctamente",
+      const { data, error } = await supabase.functions.invoke('test-odoo-connection', {
+        body: {
+          odoo_url: odooConfig.odoo_url,
+          odoo_username: odooConfig.odoo_username,
+          odoo_password: odooConfig.odoo_password || 'demo-password'
+        }
       });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Conexión Odoo exitosa",
+          description: `${data.message} - Versión: ${data.server_info?.version}`,
+        });
+      } else {
+        throw new Error(data?.error || 'Error de conexión con Odoo');
+      }
     } catch (error) {
       toast({
         title: "Error de conexión",
-        description: "No se pudo establecer conexión con Odoo",
+        description: error instanceof Error ? error.message : "No se pudo establecer conexión con Odoo",
         variant: "destructive",
       });
     } finally {

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Edit, Download, Eye, Settings, AlertCircle, CheckCircle, Clock, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { syncClientPOS } from '@/integrations/syncClientPOS';
+
 import ClientEditModal from './ClientEditModal';
 import { downloadLogsCSV } from '@/lib/api/logs';
 
@@ -45,10 +45,10 @@ export default function IntegrationTable({ filter }: IntegrationTableProps) {
 
   // Fetch client configurations and latest logs
   useEffect(() => {
-    fetchData();
+    fetchClients();
   }, []);
 
-  const fetchData = async () => {
+  const fetchClients = async () => {
     try {
       setLoading(true);
       
@@ -93,52 +93,29 @@ export default function IntegrationTable({ filter }: IntegrationTableProps) {
   const handleForceSync = async (clientId: string) => {
     setSyncingClient(clientId);
     try {
-      // Log the sync start
-      await supabase.from('integration_logs').insert({
-        client_id: clientId,
-        pos_type: configs.find(c => c.client_id === clientId)?.pos_type || 'unknown',
-        operation: 'manual_sync',
-        status: 'pending',
-        events_count: 0
+      const { data, error } = await supabase.functions.invoke('sync-client-pos', {
+        body: { client_id: clientId }
       });
 
-      // Call the sync function
-      await syncClientPOS(clientId);
+      if (error) throw error;
 
-      // Log success
-      await supabase.from('integration_logs').insert({
-        client_id: clientId,
-        pos_type: configs.find(c => c.client_id === clientId)?.pos_type || 'unknown',
-        operation: 'manual_sync',
-        status: 'success',
-        events_count: 0
-      });
-
-      toast({
-        title: "Sincronización exitosa",
-        description: `Cliente ${clientId} sincronizado correctamente`,
-      });
+      if (data?.success) {
+        toast({
+          title: "Sincronización exitosa",
+          description: `Cliente ${clientId} sincronizado: ${data.events_count} eventos procesados`,
+        });
+      } else {
+        throw new Error(data?.error || 'Error desconocido en sincronización');
+      }
 
       // Refresh data
-      await fetchData();
+      await fetchClients();
     } catch (error) {
-      // Log error
-      await supabase.from('integration_logs').insert({
-        client_id: clientId,
-        pos_type: configs.find(c => c.client_id === clientId)?.pos_type || 'unknown',
-        operation: 'manual_sync',
-        status: 'error',
-        events_count: 0,
-        error_message: error instanceof Error ? error.message : 'Unknown error'
-      });
-
       toast({
         title: "Error en sincronización",
         description: error instanceof Error ? error.message : "Error desconocido",
         variant: "destructive",
       });
-
-      await fetchData();
     } finally {
       setSyncingClient(null);
     }
@@ -316,7 +293,7 @@ export default function IntegrationTable({ filter }: IntegrationTableProps) {
         <ClientEditModal
           isOpen={!!editingClient}
           client={editingClient}
-          onUpdate={fetchData}
+          onUpdate={fetchClients}
           onClose={() => setEditingClient(null)}
         />
       )}

@@ -58,17 +58,28 @@ export default function ClientEditModal({
     try {
       setTesting(true);
       
-      // Simulate connection test - in real implementation this would call testPOSConnection
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Conexión exitosa",
-        description: `Conexión con ${formData.pos_type} establecida correctamente`,
+      const { data, error } = await supabase.functions.invoke('test-pos-connection', {
+        body: {
+          pos_type: formData.pos_type,
+          api_key: formData.api_key,
+          client_id: client.client_id
+        }
       });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Conexión exitosa",
+          description: `${data.message} - Versión: ${data.version}`,
+        });
+      } else {
+        throw new Error(data?.error || 'Error de conexión');
+      }
     } catch (error) {
       toast({
         title: "Error de conexión",
-        description: "No se pudo establecer conexión con el POS",
+        description: error instanceof Error ? error.message : "No se pudo establecer conexión con el POS",
         variant: "destructive",
       });
     } finally {
