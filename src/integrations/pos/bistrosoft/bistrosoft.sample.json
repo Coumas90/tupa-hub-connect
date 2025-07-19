@@ -1,0 +1,30 @@
+[
+  { 
+    "id": "bistro_001", 
+    "total": 3200,
+    "date": "2024-01-19T14:30:00Z",
+    "items": [
+      {
+        "id": "item_001",
+        "name": "Café Americano",
+        "quantity": 2,
+        "price": 1600,
+        "category": "beverages"
+      }
+    ]
+  },
+  { 
+    "id": "bistro_002", 
+    "total": 4500,
+    "date": "2024-01-19T15:15:00Z",
+    "items": [
+      {
+        "id": "item_002", 
+        "name": "Sandwich Club",
+        "quantity": 1,
+        "price": 4500,
+        "category": "food"
+      }
+    ]
+  }
+]
