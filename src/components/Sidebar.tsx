@@ -13,7 +13,8 @@ import {
   Clock,
   GraduationCap,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 
 const navigation = [
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Reposición', href: '/reposicion', icon: Package },
   { name: 'Barista Pool', href: '/barista-pool', icon: Clock },
   { name: 'FAQ', href: '/faq', icon: HelpCircle },
+  { name: 'Admin POS', href: '/admin/integrations', icon: Settings },
 ];
 
 export function Sidebar() {

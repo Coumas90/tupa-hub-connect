@@ -14,6 +14,7 @@ import Reposicion from "./pages/Reposicion";
 import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import AdminIntegrations from "./pages/AdminIntegrations";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="reposicion" element={<Reposicion />} />
             <Route path="barista-pool" element={<BaristaPool />} />
             <Route path="faq" element={<FAQ />} />
+            <Route path="admin/integrations" element={<AdminIntegrations />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           </Route>
           <Route path="*" element={<NotFound />} />
