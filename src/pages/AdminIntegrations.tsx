@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Filter, Activity, AlertCircle, Users, CheckCircle, Clock, Settings, Plus } from 'lucide-react';
 import LogsAndMonitoring from '@/components/LogsAndMonitoring';
 import IntegrationTable from '@/components/admin/IntegrationTable';
+import IntegrationMonitoring from '@/components/admin/IntegrationMonitoring';
 import NewIntegrationModal from '@/components/admin/NewIntegrationModal';
 import OdooManagement from '@/components/admin/OdooManagement';
 import { getLogStats } from '@/lib/api/logs';
@@ -209,7 +210,7 @@ export default function AdminIntegrations() {
             <OdooManagement />
           </>
         ) : (
-          <LogsAndMonitoring />
+          <IntegrationMonitoring />
         )}
 
         <NewIntegrationModal 
