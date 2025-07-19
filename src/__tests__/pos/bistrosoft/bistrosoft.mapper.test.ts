@@ -123,8 +123,8 @@ describe('BistrosoftMapper', () => {
             codigo: 'PROD_001',
             nombre: 'Test Product',
             cantidad: 1,
-            precio_unitario: 1500
-            // No category provided
+            precio_unitario: 1500,
+            categoria: '' // Empty category to test the default
           }
         ],
         forma_pago: 'efectivo',

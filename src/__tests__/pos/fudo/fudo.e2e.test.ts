@@ -67,7 +67,7 @@ describe('Fudo End-to-End Integration', () => {
       const mockClientConfig = {
         id: mockClientId,
         name: 'Test Café',
-        pos_type: 'fudo',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
         sync_frequency: 30,
         active: true
@@ -107,8 +107,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should handle mapper transformation correctly', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -160,8 +162,10 @@ describe('Fudo End-to-End Integration', () => {
 
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -192,8 +196,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should handle unsupported POS type', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'unsupported_pos',
+        name: 'Test Café',
+        pos_type: 'unsupported_pos' as any,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -209,8 +215,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should handle Odoo sync failures', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -235,8 +243,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should handle mock data loading failures', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -257,8 +267,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should enqueue sync task in production mode', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: false,
+        sync_frequency: 30,
         active: true
       }
 
@@ -285,8 +297,10 @@ describe('Fudo End-to-End Integration', () => {
     it('should maintain data integrity through full pipeline', async () => {
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
@@ -332,8 +346,10 @@ describe('Fudo End-to-End Integration', () => {
 
       const mockClientConfig = {
         id: mockClientId,
-        pos_type: 'fudo',
+        name: 'Test Café',
+        pos_type: 'fudo' as const,
         simulation_mode: true,
+        sync_frequency: 30,
         active: true
       }
 
