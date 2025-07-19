@@ -24,7 +24,7 @@ export async function storeParsedSales(clientId: string, sales: TupaSalesData[])
   // En producción, esto insertaría en Supabase
   salesStorage.push(...storedSales);
   
-  console.log(`Stored ${sales.length} sales records for client ${clientId}`);
+  // Sales stored successfully
 }
 
 export async function getSalesForClient(clientId: string, limit = 50): Promise<StoredSale[]> {

@@ -96,13 +96,7 @@ export default function Reposicion() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí iría la integración con webhook n8n/Odoo
-    console.log('Enviando reposición:', {
-      variedad: variedadSeleccionada,
-      cantidad,
-      observaciones,
-      tipoEntrega,
-      total: calcularTotal()
-    });
+    // Reposición enviada exitosamente
     alert('Reposición solicitada exitosamente. Recibirás confirmación por email.');
   };
 

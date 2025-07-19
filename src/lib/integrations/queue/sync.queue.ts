@@ -28,7 +28,7 @@ export async function enqueueSyncTask(clientId: string, taskType: SyncTask['task
   
   taskQueue.push(task);
   
-  console.log(`Enqueued sync task ${taskId} for client ${clientId} (${taskType})`);
+  // Task enqueued successfully
   
   // En producción, esto triggearía el worker/queue processor
   processTaskAsync(taskId);
@@ -62,11 +62,9 @@ async function processTaskAsync(taskId: string): Promise<void> {
     
     if (success) {
       task.status = 'completed';
-      console.log(`Task ${taskId} completed successfully`);
     } else {
       task.status = 'failed';
       task.error_message = 'Simulated processing error';
-      console.log(`Task ${taskId} failed: ${task.error_message}`);
     }
   }, 1000);
 }

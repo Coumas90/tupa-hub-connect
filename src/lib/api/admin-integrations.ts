@@ -54,7 +54,6 @@ export async function updateClientConfig(
   
   try {
     // En producción, esto actualizaría Supabase
-    console.log(`Updating client ${clientId} with:`, updates);
     
     return {
       success: true,

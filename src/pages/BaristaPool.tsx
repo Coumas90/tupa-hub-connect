@@ -157,12 +157,7 @@ export default function BaristaPool() {
   const handleSubmitSolicitud = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí iría la integración con webhook
-    console.log('Enviando solicitud de barista:', {
-      fecha: fechaSolicitud,
-      horarioInicio,
-      horarioFin,
-      observaciones
-    });
+    // Solicitud enviada exitosamente
     alert('Solicitud enviada exitosamente. Recibirás confirmación en breve.');
     setMostrandoSolicitud(false);
   };

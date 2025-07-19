@@ -79,8 +79,7 @@ class IntegrationLogger {
     this.updateCircuitBreaker(logEntry.client_id, logEntry.status);
     this.saveToStorage();
 
-    // Console log for debugging
-    console.log(`[${fullLogEntry.source}] ${fullLogEntry.operation}: ${fullLogEntry.message}`, fullLogEntry);
+    // Production logging would send to monitoring service
 
     // Check if we need to send alerts
     if (logEntry.status === 'error') {

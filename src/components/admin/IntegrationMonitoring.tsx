@@ -91,7 +91,6 @@ export default function IntegrationMonitoring() {
           table: 'integration_logs'
         },
         () => {
-          console.log('Real-time update received');
           loadMonitoringData();
         }
       )

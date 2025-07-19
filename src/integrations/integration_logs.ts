@@ -10,10 +10,6 @@ export interface IntegrationLog {
 }
 
 export async function logIntegration(log: Omit<IntegrationLog, 'id' | 'timestamp'>) {
-  // Will be implemented later with actual logging logic
-  console.log('Integration log:', {
-    ...log,
-    id: `log_${Date.now()}`,
-    timestamp: new Date().toISOString()
-  });
+  // Production logging implementation would go here
+  // For now, this is a placeholder function
 }

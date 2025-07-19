@@ -13,11 +13,9 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Aquí se pueden agregar tokens, logs, etc.
-    console.log(`🚀 Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -25,11 +23,9 @@ apiClient.interceptors.request.use(
 // Interceptor para responses - manejo global de errores
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`✅ Response: ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error('❌ Response Error:', error);
 
     let errorMessage = 'Falló operación';
     
