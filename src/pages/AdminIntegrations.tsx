@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Edit, Download, Filter } from 'lucide-react';
+import { RefreshCw, Edit, Download, Filter, Activity, AlertCircle } from 'lucide-react';
 import { syncClientPOS } from '@/lib/integrations/pos/sync.core';
 import { getAvailablePOSTypes } from '@/lib/integrations/pos/pos.registry';
+import { integrationLogger } from '@/lib/integrations/logger';
+import LogsAndMonitoring from '@/components/LogsAndMonitoring';
 
 interface Client {
   id: string;
@@ -34,6 +36,7 @@ export default function AdminIntegrations() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [syncingClient, setSyncingClient] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'ok' | 'error' | 'pending'>('all');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring'>('overview');
   const { toast } = useToast();
 
   // Mock data - en producción vendría de Supabase
@@ -71,6 +74,16 @@ export default function AdminIntegrations() {
         simulation_mode: true,
         sync_frequency: 60,
         active: false
+      },
+      {
+        id: 'client_004',
+        name: 'Coffee Lab - Recoleta',
+        pos_type: 'bistrosoft',
+        last_sync: '2024-01-19T08:45:00Z',
+        sync_status: 'pending',
+        simulation_mode: false,
+        sync_frequency: 20,
+        active: true
       }
     ];
 
@@ -94,7 +107,7 @@ export default function AdminIntegrations() {
         // Actualizar estado del cliente
         setClients(prev => prev.map(client => 
           client.id === clientId 
-            ? { ...client, sync_status: 'ok', last_sync: result.timestamp }
+            ? { ...client, sync_status: 'ok', last_sync: result.timestamp, error_message: undefined }
             : client
         ));
       } else {
@@ -115,6 +128,22 @@ export default function AdminIntegrations() {
     } finally {
       setSyncingClient(null);
     }
+  };
+
+  const handleResetCircuitBreaker = (clientId: string) => {
+    integrationLogger.resetCircuitBreaker(clientId, 'Manual reset from admin panel');
+    
+    // Update client status
+    setClients(prev => prev.map(client => 
+      client.id === clientId 
+        ? { ...client, sync_status: 'ok', error_message: undefined }
+        : client
+    ));
+    
+    toast({
+      title: "Circuit Breaker Reset",
+      description: `Integration re-enabled for client ${clientId}`,
+    });
   };
 
   const handleSaveClient = (updatedClient: Client) => {
@@ -174,121 +203,167 @@ export default function AdminIntegrations() {
   }
 
   return (
-    <ModuleAccessGuard requiredRole="admin">
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Administración de Integraciones POS</h1>
-            <p className="text-muted-foreground">
-              Gestiona las conexiones POS y sincronizaciones de todos los clientes
-            </p>
+      <ModuleAccessGuard requiredRole="admin">
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Administración de Integraciones POS</h1>
+              <p className="text-muted-foreground">
+                Gestiona las conexiones POS y sincronizaciones de todos los clientes
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={selectedTab === 'overview' ? 'default' : 'outline'}
+                onClick={() => setSelectedTab('overview')}
+              >
+                Overview
+              </Button>
+              <Button
+                variant={selectedTab === 'monitoring' ? 'default' : 'outline'}
+                onClick={() => setSelectedTab('monitoring')}
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                Monitoring
+              </Button>
+              
+              {selectedTab === 'overview' && (
+                <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+                  <SelectTrigger className="w-40">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="ok">OK</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
-              <SelectTrigger className="w-40">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="ok">OK</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="pending">Pendiente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Estado de Integraciones</CardTitle>
-            <CardDescription>
-              {filteredClients.length} cliente(s) {filter !== 'all' ? `con estado: ${filter}` : 'total'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>POS</TableHead>
-                  <TableHead>Último Sync</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Modo</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{client.name}</div>
-                        <div className="text-sm text-muted-foreground">{client.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{client.pos_type.toUpperCase()}</Badge>
-                    </TableCell>
-                    <TableCell>{formatLastSync(client.last_sync)}</TableCell>
-                    <TableCell>{getStatusBadge(client.sync_status, client.error_message)}</TableCell>
-                    <TableCell>
-                      <Badge variant={client.simulation_mode ? "secondary" : "default"}>
-                        {client.simulation_mode ? "Simulación" : "Producción"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleForceSync(client.id)}
-                          disabled={syncingClient === client.id}
-                        >
-                          {syncingClient === client.id ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </Button>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditingClient(client)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Editar Configuración - {client.name}</DialogTitle>
-                              <DialogDescription>
-                                Modifica la configuración de integración POS para este cliente
-                              </DialogDescription>
-                            </DialogHeader>
-                            
-                            <ClientEditForm 
-                              client={client} 
-                              availablePOSTypes={availablePOSTypes}
-                              onSave={handleSaveClient}
-                              onCancel={() => setEditingClient(null)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </ModuleAccessGuard>
+          {selectedTab === 'overview' ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Estado de Integraciones</CardTitle>
+                <CardDescription>
+                  {filteredClients.length} cliente(s) {filter !== 'all' ? `con estado: ${filter}` : 'total'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>POS</TableHead>
+                      <TableHead>Último Sync</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Modo</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredClients.map((client) => {
+                      const circuitState = integrationLogger.getCircuitState(client.id);
+                      const isPaused = circuitState?.is_paused || false;
+                      
+                      return (
+                        <TableRow key={client.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className="font-medium">{client.name}</div>
+                                <div className="text-sm text-muted-foreground">{client.id}</div>
+                              </div>
+                              {isPaused && (
+                                <div className="w-4 h-4 text-red-500" title="Circuit breaker active">
+                                  <AlertCircle className="w-4 h-4" />
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{client.pos_type.toUpperCase()}</Badge>
+                          </TableCell>
+                          <TableCell>{formatLastSync(client.last_sync)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(client.sync_status, client.error_message)}
+                              {isPaused && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleResetCircuitBreaker(client.id)}
+                                  className="text-xs"
+                                >
+                                  Reset
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={client.simulation_mode ? "secondary" : "default"}>
+                              {client.simulation_mode ? "Simulación" : "Producción"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleForceSync(client.id)}
+                                disabled={syncingClient === client.id || isPaused}
+                              >
+                                {syncingClient === client.id ? (
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </Button>
+                              
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setEditingClient(client)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle>Editar Configuración - {client.name}</DialogTitle>
+                                    <DialogDescription>
+                                      Modifica la configuración de integración POS para este cliente
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  
+                                  <ClientEditForm 
+                                    client={client} 
+                                    availablePOSTypes={availablePOSTypes}
+                                    onSave={handleSaveClient}
+                                    onCancel={() => setEditingClient(null)}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ) : (
+            <LogsAndMonitoring />
+          )}
+        </div>
+      </ModuleAccessGuard>
   );
 }
 
