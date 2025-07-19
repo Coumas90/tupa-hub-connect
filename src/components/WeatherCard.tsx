@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { apiClient } from '@/lib/api/axios.config';
 import { 
   MapPin, 
   Thermometer, 
@@ -35,7 +36,7 @@ export default function WeatherCard() {
   const [showApiInput, setShowApiInput] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('weatherApiKey') || '');
   const [advice, setAdvice] = useState('');
-  const { toast } = useToast();
+  const toastNotifications = useToastNotifications();
 
   const getWeatherAdvice = (temp: number, humidity: number, location: string) => {
     if (humidity > 75) {
@@ -63,14 +64,12 @@ export default function WeatherCard() {
     }
 
     try {
-      // Usar IP para obtener ubicación automática
-      const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=auto:ip`);
-      
-      if (!response.ok) {
-        throw new Error('Error al obtener datos del clima');
-      }
+      // Usar la instancia de Axios configurada con interceptors
+      const response = await apiClient.get(
+        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=auto:ip`
+      );
 
-      const data: WeatherData = await response.json();
+      const data: WeatherData = response.data;
       setWeather(data);
       
       const weatherAdvice = getWeatherAdvice(
@@ -79,14 +78,12 @@ export default function WeatherCard() {
         data.location.name
       );
       setAdvice(weatherAdvice);
+      toastNotifications.showSuccess("Datos del clima actualizados");
       
     } catch (error) {
       console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo obtener la información del clima. Verificá tu API key.",
-        variant: "destructive"
-      });
+      // El interceptor de Axios ya muestra el toast de error
+      // Solo necesitamos manejar el estado local
     } finally {
       setLoading(false);
     }
@@ -98,10 +95,8 @@ export default function WeatherCard() {
       setShowApiInput(false);
       setLoading(true);
       getLocationAndWeather();
-      toast({
-        title: "API Key guardada",
-        description: "Obteniendo información del clima...",
-      });
+      toastNotifications.showSaveSuccess();
+      toastNotifications.showInfo("Obteniendo información del clima...");
     }
   };
 

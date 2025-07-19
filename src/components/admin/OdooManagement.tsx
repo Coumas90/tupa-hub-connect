@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings, TestTube, ExternalLink, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export default function OdooManagement() {
     sync_entities: ['orders', 'stock']
   });
 
-  const { toast } = useToast();
+  const toastNotifications = useToastNotifications();
 
   // Mock connection status
   const connectionStatus: 'connected' | 'disconnected' | 'error' = 'connected';
@@ -49,19 +49,16 @@ export default function OdooManagement() {
       if (error) throw error;
 
       if (data?.success) {
-        toast({
-          title: "Conexión Odoo exitosa",
-          description: `${data.message} - Versión: ${data.server_info?.version}`,
-        });
+        toastNotifications.showSuccess(
+          `Conexión Odoo exitosa - ${data.message} - Versión: ${data.server_info?.version}`
+        );
       } else {
         throw new Error(data?.error || 'Error de conexión con Odoo');
       }
     } catch (error) {
-      toast({
-        title: "Error de conexión",
-        description: error instanceof Error ? error.message : "No se pudo establecer conexión con Odoo",
-        variant: "destructive",
-      });
+      toastNotifications.showError(
+        error instanceof Error ? error.message : "No se pudo establecer conexión con Odoo"
+      );
     } finally {
       setTesting(false);
     }
@@ -74,18 +71,10 @@ export default function OdooManagement() {
       // Simulate save operation
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast({
-        title: "Configuración guardada",
-        description: "La configuración de Odoo se ha actualizado correctamente",
-      });
-      
+      toastNotifications.showSaveSuccess();
       setIsConfigOpen(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la configuración",
-        variant: "destructive",
-      });
+      toastNotifications.showSaveError();
     } finally {
       setSaving(false);
     }
