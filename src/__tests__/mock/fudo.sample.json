@@ -1,0 +1,92 @@
+{
+  "sales": [
+    {
+      "id": "fudo_001",
+      "created_at": "2024-01-19T10:30:00Z",
+      "total": 4500,
+      "items": [
+        {
+          "id": "item_001",
+          "name": "Espresso Doble",
+          "quantity": 1,
+          "price": 2500,
+          "category": "cafe",
+          "modifiers": [
+            {
+              "name": "Extra Shot",
+              "price": 500
+            }
+          ]
+        },
+        {
+          "id": "item_002",
+          "name": "Croissant de Jamón y Queso",
+          "quantity": 1,
+          "price": 2000,
+          "category": "panaderia"
+        }
+      ],
+      "customer": {
+        "id": "cust_001",
+        "name": "Juan Pérez",
+        "email": "juan.perez@email.com",
+        "phone": "+54911234567"
+      },
+      "payment_method": "credit_card",
+      "transaction_id": "fudo_tx_001",
+      "table_number": "12",
+      "waiter_id": "waiter_005"
+    },
+    {
+      "id": "fudo_002",
+      "created_at": "2024-01-19T11:15:00Z",
+      "total": 3200,
+      "items": [
+        {
+          "id": "item_003",
+          "name": "Latte",
+          "quantity": 2,
+          "price": 1600,
+          "category": "cafe"
+        }
+      ],
+      "payment_method": "cash",
+      "transaction_id": "fudo_tx_002"
+    },
+    {
+      "id": "fudo_003",
+      "created_at": "2024-01-19T12:00:00Z",
+      "total": 5800,
+      "items": [
+        {
+          "id": "item_004",
+          "name": "Cappuccino",
+          "quantity": 1,
+          "price": 2800,
+          "category": "cafe"
+        },
+        {
+          "id": "item_005",
+          "name": "Tostado Completo",
+          "quantity": 1,
+          "price": 3000,
+          "category": "comida"
+        }
+      ],
+      "customer": {
+        "id": "cust_002",
+        "name": "María González",
+        "email": "maria.gonzalez@email.com"
+      },
+      "payment_method": "debit_card",
+      "transaction_id": "fudo_tx_003",
+      "table_number": "8"
+    }
+  ],
+  "pagination": {
+    "total": 3,
+    "page": 1,
+    "limit": 50
+  },
+  "status": "success"
+}

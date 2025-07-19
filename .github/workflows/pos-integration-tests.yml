@@ -1,0 +1,113 @@
+# GitHub Actions CI/CD for POS Integration Testing
+
+name: POS Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run POS integration tests
+      run: npm run test:run
+      
+    - name: Run tests with coverage
+      run: npm run test:coverage
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: pos-integration-coverage
+        
+  validate-pos-mappers:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Validate Fudo mapper
+      run: npm run test -- src/__tests__/pos/fudo/fudo.mapper.test.ts
+      
+    - name: Validate Bistrosoft mapper  
+      run: npm run test -- src/__tests__/pos/bistrosoft/bistrosoft.mapper.test.ts
+      
+    - name: Run E2E integration tests
+      run: npm run test -- src/__tests__/pos/*/*.e2e.test.ts
+      
+  quality-gates:
+    runs-on: ubuntu-latest
+    needs: [test, validate-pos-mappers]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check test coverage threshold
+      run: |
+        COVERAGE=$(npm run test:coverage | grep "All files" | awk '{print $4}' | sed 's/%//')
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "Coverage $COVERAGE% is below 80% threshold"
+          exit 1
+        fi
+        echo "Coverage $COVERAGE% meets threshold"
+        
+    - name: Validate mock data integrity
+      run: |
+        echo "Validating mock data files..."
+        node -e "
+          const fudoData = require('./src/__tests__/mock/fudo.sample.json');
+          const bistrosoftData = require('./src/__tests__/mock/bistrosoft.sample.json');
+          
+          if (!fudoData.sales || fudoData.sales.length === 0) {
+            throw new Error('Fudo mock data invalid');
+          }
+          
+          if (!bistrosoftData.data.ventas || bistrosoftData.data.ventas.length === 0) {
+            throw new Error('Bistrosoft mock data invalid'); 
+          }
+          
+          console.log('Mock data validation passed');
+        "

@@ -1,0 +1,62 @@
+{
+  "success": true,
+  "data": {
+    "ventas": [
+      {
+        "venta_id": "bistro_001",
+        "fecha_hora": "2024-01-19T14:30:00Z",
+        "total_venta": 6200,
+        "descuentos": 200,
+        "productos": [
+          {
+            "codigo": "PROD_001",
+            "nombre": "Café Americano",
+            "cantidad": 2,
+            "precio_unitario": 2200,
+            "categoria": "bebidas_calientes",
+            "observaciones": "Sin azúcar"
+          },
+          {
+            "codigo": "PROD_002",
+            "nombre": "Medialuna",
+            "cantidad": 2,
+            "precio_unitario": 1100,
+            "categoria": "panaderia"
+          }
+        ],
+        "cliente": {
+          "cliente_id": "cli_001",
+          "nombre": "Carlos Rodriguez",
+          "telefono": "+54911987654",
+          "email": "carlos.rodriguez@email.com",
+          "documento": "12345678"
+        },
+        "forma_pago": "tarjeta_credito",
+        "numero_ticket": "bistro_ticket_001",
+        "mesa": 15,
+        "mozo": "Empleado_003"
+      },
+      {
+        "venta_id": "bistro_002",
+        "fecha_hora": "2024-01-19T15:45:00Z",
+        "total_venta": 4800,
+        "productos": [
+          {
+            "codigo": "PROD_003",
+            "nombre": "Cortado",
+            "cantidad": 3,
+            "precio_unitario": 1600,
+            "categoria": "bebidas_calientes"
+          }
+        ],
+        "forma_pago": "efectivo",
+        "numero_ticket": "bistro_ticket_002",
+        "mesa": 7,
+        "mozo": "Empleado_001"
+      }
+    ],
+    "total_registros": 2,
+    "pagina_actual": 1
+  },
+  "mensaje": "Ventas obtenidas correctamente"
+}
