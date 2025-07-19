@@ -1,17 +1,81 @@
-# TUPÁ Hub - Sistema de Integración POS
+# TUPÁ Hub – Plataforma Central de Integraciones
 
 TUPÁ Hub es una plataforma de integración que conecta diferentes sistemas Point of Sale (POS) con Odoo, proporcionando sincronización automática de datos y gestión centralizada de integraciones.
 
-## 🚀 Características Principales
+## 🚀 Instalación Local
 
-- **Integración Multi-POS**: Soporte para Fudo, Bistrosoft y otros sistemas POS
-- **Sincronización con Odoo**: Push automático de datos a Odoo ERP
-- **Panel de Administración**: Gestión centralizada de clientes e integraciones
-- **Monitoreo en Tiempo Real**: Logs detallados y estado de sincronizaciones
-- **SDK Reutilizable**: Librería TypeScript para nuevas integraciones
-- **Sistema de Roles**: Control de acceso basado en roles (admin/user)
+```bash
+git clone <repository-url>
+cd tupa-hub
+npm install
+npm run dev
+```
 
-## 🏗️ Arquitectura del Sistema
+## ⚙️ Variables de Entorno
+
+**No se usan archivos .env**. La configuración se hace vía Supabase y código. Ver sección "Configuración por Cliente".
+
+**Configuración de Secrets** (para Edge Functions):
+- `SUPABASE_URL`: URL del proyecto Supabase  
+- `SUPABASE_ANON_KEY`: Clave pública de Supabase
+- `SUPABASE_SERVICE_ROLE_KEY`: Clave de servicio (solo backend)
+
+**APIs por Cliente** (configuradas en la UI):
+- API Keys de POS (Fudo, Bistrosoft, etc.)
+- Credenciales de Odoo por cliente
+- Tokens de notificaciones
+
+## 🛠️ Scripts Disponibles
+
+```bash
+npm run dev      # desarrollo local
+npm run build    # build producción  
+npm run preview  # vista previa post-build
+npm run test     # testing unitario con Vitest
+npm run test:ui  # interfaz visual de testing
+npm run lint     # ESLint
+```
+
+## 🧩 Estructura del Proyecto
+
+```
+src/            → Lógica principal del frontend
+├── components/   → Componentes React reutilizables
+│   ├── ui/      → Componentes base (shadcn/ui)  
+│   └── admin/   → Componentes específicos de admin
+├── pages/       → Páginas de la aplicación
+├── hooks/       → Custom React hooks
+├── lib/         → Utilidades y configuración
+│   ├── api/     → Cliente HTTP y configuración
+│   └── integrations/ → Lógica de integraciones POS
+├── integrations/ → Configuración de Supabase
+└── __tests__/   → Tests unitarios
+
+supabase/       → Edge functions y configuración backend
+├── functions/   → Edge Functions serverless
+└── migrations/  → Migraciones de base de datos
+
+sdk/            → Lógica de integración POS/Odoo
+├── adapters/    → Adaptadores por POS (Fudo, Bistrosoft)
+├── schemas/     → Validaciones Zod
+└── types.ts     → Tipos TypeScript
+
+public/         → Assets estáticos
+.github/        → Workflows de CI/CD
+```
+
+## 📦 Features Principales
+
+- **Panel Admin** con gestión de integraciones POS/Odoo
+- **Logs automáticos** por cliente con trazabilidad completa
+- **Sincronización manual y automática** configurable por cliente
+- **Seguridad** con Supabase Auth + CSP (configurable)
+- **Testing** con Vitest + React Testing Library
+- **Auditoría de seguridad** (Snyk, CodeQL, OWASP ZAP)
+- **SDK reutilizable** para nuevas integraciones
+- **Sistema de roles** (admin/user/barista) con Row Level Security
+
+## 📊 Diagrama de Arquitectura
 
 <lov-mermaid>
 graph TD
@@ -58,80 +122,6 @@ graph TD
     ADMIN_PANEL -.->|Configuración| SYNC_ENGINE
 </lov-mermaid>
 
-## 📋 Requisitos Previos
-
-- **Node.js** v18+ y npm
-- **Cuenta de Supabase** (para backend)
-- **Acceso a sistemas POS** (credenciales API)
-
-## ⚡ Instalación Rápida
-
-### 1. Clonar el repositorio
-```bash
-git clone <repository-url>
-cd tupa-hub
-```
-
-### 2. Instalar dependencias
-```bash
-npm install
-```
-
-### 3. Configurar Supabase
-Este proyecto usa **Supabase** como backend y no requiere archivos `.env` tradicionales.
-
-**Configuración de Secrets** (para producción):
-- `SUPABASE_URL`: URL del proyecto Supabase
-- `SUPABASE_ANON_KEY`: Clave pública de Supabase  
-- `SUPABASE_SERVICE_ROLE_KEY`: Clave de servicio (solo Edge Functions)
-
-**APIs Externas** (configuradas por cliente en la UI):
-- API Keys de POS (Fudo, Bistrosoft, etc.)
-- Credenciales de Odoo
-- Tokens de servicios de notificación
-
-### 4. Iniciar desarrollo
-```bash
-npm run dev
-```
-
-## 🛠️ Scripts Disponibles
-
-| Script | Descripción |
-|--------|-------------|
-| `npm run dev` | Inicia servidor de desarrollo |
-| `npm test` | Ejecuta suite de tests con Vitest |
-| `npm run test:ui` | Abre interfaz visual de testing |
-| `npm run build` | Genera build de producción |
-| `npm run build:dev` | Build en modo desarrollo |
-| `npm run preview` | Preview del build de producción |
-| `npm run lint` | Ejecuta ESLint |
-
-## 🏛️ Estructura del Proyecto
-
-```
-src/
-├── components/          # Componentes React reutilizables
-│   ├── ui/             # Componentes base (shadcn/ui)
-│   └── admin/          # Componentes específicos de admin
-├── pages/              # Páginas de la aplicación
-├── hooks/              # Custom React hooks
-├── lib/                # Utilidades y configuración
-│   ├── api/           # Cliente HTTP y configuración
-│   └── integrations/   # Lógica de integraciones POS
-├── integrations/       # Configuración de Supabase
-└── __tests__/          # Tests unitarios
-
-sdk/                    # TUPÁ SDK independiente
-├── adapters/          # Adaptadores por POS
-├── schemas/           # Validaciones Zod
-└── types.ts           # Tipos TypeScript
-
-supabase/              # Configuración del backend
-├── functions/         # Edge Functions
-└── migrations/        # Migraciones de DB
-```
-
 ## 🔌 Integraciones Soportadas
 
 ### Sistemas POS
@@ -140,131 +130,161 @@ supabase/              # Configuración del backend
 - **Simphony** 🔄 - En desarrollo
 - **Otros** - Via SDK personalizable
 
-### Sistemas Destino
+### Sistemas Destino  
 - **Odoo ERP** ✅ - XML-RPC
 - **Webhooks** ✅ - Notificaciones HTTP
 - **Email** ✅ - Alertas automáticas
 
 ## 🧪 Testing
 
-El proyecto usa **Vitest** + **React Testing Library** para testing:
+Testing strategy usando **Vitest** + **React Testing Library**:
 
 ```bash
 # Ejecutar todos los tests
 npm test
 
-# Modo watch
+# Modo watch para desarrollo
 npm test -- --watch
 
-# Con interfaz visual
+# Interfaz visual de testing
 npm run test:ui
 
-# Coverage
+# Generar coverage report
 npm test -- --coverage
 ```
 
 ### Estructura de Tests
 - **UI Components**: `src/__tests__/components/`
-- **Pages**: `src/__tests__/pages/`
+- **Pages**: `src/__tests__/pages/`  
 - **Hooks**: `src/__tests__/hooks/`
+- **Integrations**: `src/__tests__/pos/`
 - **SDK**: `sdk/__tests__/`
 
 ## 🔒 Seguridad
 
-### Autenticación
+### Autenticación y Autorización
 - **Supabase Auth** con email/password
 - **Row Level Security (RLS)** en todas las tablas
-- **Roles de usuario**: admin, user
+- **Sistema de roles**: admin, user, barista
+- **Función `is_admin()`** para verificación de permisos
+- **Triggers automáticos** para `updated_at`
+
+### Políticas RLS Implementadas
+- `client_configs`: Solo usuarios autenticados pueden modificar
+- `integration_logs`: Lectura/creación para usuarios autenticados
+- `user_roles`: Solo lectura de rol propio
 
 ### Manejo de Secrets
 - **API Keys**: Almacenadas en Supabase Secrets
 - **Credenciales POS**: Configuradas por cliente vía UI
-- **Tokens**: Rotación automática donde sea posible
-
-### Políticas RLS Implementadas
-- `client_configs`: Solo usuarios autenticados
-- `integration_logs`: Lectura/creación autenticada  
-- `user_roles`: Solo lectura de rol propio
+- **JWT tokens**: Gestión automática de Supabase
 
 ## 📊 Monitoreo y Logs
 
 ### Tipos de Logs
-- **Integration Logs**: Sincronizaciones POS → TUPÁ
-- **Error Logs**: Fallos de API y conexión
+- **Integration Logs**: Sincronizaciones POS → TUPÁ → Odoo
+- **Error Logs**: Fallos de API y conexión  
 - **Performance Logs**: Tiempos de respuesta
-- **Auth Logs**: Accesos y seguridad
+- **Auth Logs**: Accesos y eventos de seguridad
 
 ### Métricas Clave
-- Tasa de éxito de sincronización
+- Tasa de éxito de sincronización por cliente
 - Latencia promedio de APIs
 - Volumen de transacciones procesadas
 - Errores por cliente/integración
+- Estado de conexiones POS/Odoo
 
-## 🚀 Deployment
+## 🧪 Auditoría de Seguridad
 
-### Producción con Lovable
-1. Click en "Publish" en la interfaz de Lovable
-2. El deploy se hace automáticamente
-3. URL de producción disponible instantáneamente
+Ver `SECURITY.md` para detalles completos.
 
-### Supabase Backend
-- **Edge Functions**: Deploy automático vía git
-- **Database**: Migraciones ejecutadas automáticamente
-- **Secrets**: Configurados vía Supabase Dashboard
+**GitHub Actions automáticos para**:
+- **audit-ci**: Auditoría de dependencias NPM
+- **Snyk**: Detección de vulnerabilidades
+- **CodeQL**: Análisis estático de código
+- **OWASP ZAP**: Baseline scan del frontend
 
-## 🔧 Configuración Avanzada
+**Comandos manuales disponibles**:
+```bash
+# Auditoría de dependencias
+npx audit-ci --moderate
 
-### Variables de Configuración
+# OWASP ZAP scan (requiere Docker)
+docker run --rm owasp/zap2docker-stable zap-baseline.py -t https://preview--tupa-hub-connect.lovable.app
+```
+
+**⚠️ Recordatorio**: Restaurar CSP estricta en producción (actualmente en modo permisivo para desarrollo).
+
+## ☁️ Deployment
+
+### Producción
+**Automatizado** con GitHub Actions y Lovable:
+- Push a rama `main` → Deploy automático
+- Edge Functions deploy automático vía Supabase
+- Variables de entorno gestionadas por Lovable
+
+### Proceso de Release
+1. Desarrollar en rama `feature/*`
+2. PR a `main` con review obligatorio
+3. Deploy automático post-merge
+4. Monitoreo via GitHub Actions + Supabase Dashboard
+
+## 🔧 Configuración por Cliente
+
+### Variables Configurables (en `client_configs`)
 | Variable | Descripción | Default |
 |----------|-------------|---------|
 | `sync_frequency` | Intervalo de sync en minutos | 15 |
 | `simulation_mode` | Modo prueba (no envía a Odoo) | false |
-| `timeout` | Timeout de APIs en ms | 10000 |
+| `pos_type` | Tipo de POS (fudo/bistrosoft) | - |
+| `pos_version` | Versión de API del POS | v1 |
 
 ### Personalización SDK
 ```typescript
 import { TupaHub } from '@tupa/sdk';
 
 const client = new TupaHub({
-  adapter: 'custom-pos',
+  adapter: 'fudo',
   config: {
-    baseUrl: 'https://api.custom-pos.com',
-    apiKey: 'your-api-key'
+    baseUrl: 'https://api.fudo.com',
+    apiKey: 'client-api-key',
+    version: 'v1'
   }
 });
 ```
 
-## 📚 Documentación Adicional
+## 📄 Contribución
 
-- **[API Reference](./sdk/README.md)** - Documentación del SDK
-- **[Edge Functions](./supabase/functions/)** - Funciones serverless
-- **[Database Schema](./supabase/migrations/)** - Estructura de datos
-- **[Testing Guide](./__tests__/README.md)** - Guía de testing
-
-## 🤝 Contribución
+### Estándares de Código
+- **Prettier + ESLint**: Formato automático
+- **TypeScript**: Tipado estricto obligatorio  
+- **Tests unitarios**: Coverage mínimo 80%
+- **Commits**: Formato semántico (conventional commits)
 
 ### Flujo de Desarrollo
 1. Fork del repositorio
-2. Crear branch: `git checkout -b feature/nueva-integracion`
+2. Branch: `git checkout -b feature/nueva-funcionalidad`
 3. Desarrollar con tests incluidos
-4. Pull Request con descripción detallada
+4. PR con descripción detallada y screenshots
 
-### Estándares
-- **TypeScript** estricto
-- **Tests unitarios** obligatorios
-- **ESLint** + **Prettier** para código
-- **Conventional Commits** para mensajes
+### Roles y Permisos
+- **Admin**: Acceso completo + gestión de usuarios
+- **Usuario**: Acceso a módulos según configuración
+- **Barista**: Solo acceso a operaciones básicas
 
-## 📞 Soporte
+## 🚨 Troubleshooting
 
-- **Issues**: [GitHub Issues](link-to-issues)
-- **Slack**: Canal #tupa-dev  
-- **Email**: dev@tupa.com
-- **Docs**: [docs.tupa.com](link-to-docs)
+### Errores Comunes
+- **CSP Errors**: Verificar modo permisivo en desarrollo
+- **Auth Errors**: Verificar configuración de Supabase
+- **POS Connection**: Revisar API keys en `client_configs`
+- **Build Errors**: Verificar dependencias con `npm audit`
 
-## 📄 Licencia
-
-Este proyecto está bajo licencia MIT. Ver [LICENSE](./LICENSE) para detalles.
+### Logs y Debug
+- **Frontend**: Console del navegador
+- **Backend**: Supabase Edge Function logs
+- **Database**: Supabase SQL logs
+- **Network**: Network tab del DevTools
 
 ---
 
