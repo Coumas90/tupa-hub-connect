@@ -33,6 +33,7 @@ interface IntegrationLog {
 
 interface IntegrationTableProps {
   filter: 'all' | 'success' | 'error' | 'pending';
+  key?: number; // To force re-render when new integrations are added
 }
 
 export default function IntegrationTable({ filter }: IntegrationTableProps) {

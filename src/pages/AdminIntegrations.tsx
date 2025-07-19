@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Filter, Activity, AlertCircle, Users, CheckCircle, Clock, Settings } from 'lucide-react';
+import { Filter, Activity, AlertCircle, Users, CheckCircle, Clock, Settings, Plus } from 'lucide-react';
 import LogsAndMonitoring from '@/components/LogsAndMonitoring';
 import IntegrationTable from '@/components/admin/IntegrationTable';
+import NewIntegrationModal from '@/components/admin/NewIntegrationModal';
 import OdooManagement from '@/components/admin/OdooManagement';
 import { getLogStats } from '@/lib/api/logs';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,8 @@ export default function AdminIntegrations() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
   const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring'>('overview');
+  const [showNewIntegrationModal, setShowNewIntegrationModal] = useState(false);
+  const [tableKey, setTableKey] = useState(0); // To force table re-render
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     activeClients: 0,
@@ -96,6 +99,16 @@ export default function AdminIntegrations() {
           </div>
           
           <div className="flex gap-2">
+            {selectedTab === 'overview' && (
+              <Button
+                onClick={() => setShowNewIntegrationModal(true)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Integración POS
+              </Button>
+            )}
+            
             <Button
               variant={selectedTab === 'overview' ? 'default' : 'outline'}
               onClick={() => setSelectedTab('overview')}
@@ -189,7 +202,7 @@ export default function AdminIntegrations() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <IntegrationTable filter={filter} />
+                <IntegrationTable filter={filter} key={tableKey} />
               </CardContent>
             </Card>
 
@@ -198,6 +211,16 @@ export default function AdminIntegrations() {
         ) : (
           <LogsAndMonitoring />
         )}
+
+        <NewIntegrationModal 
+          isOpen={showNewIntegrationModal}
+          onClose={() => setShowNewIntegrationModal(false)}
+          onSuccess={() => {
+            setShowNewIntegrationModal(false);
+            setTableKey(prev => prev + 1); // Force table refresh
+            fetchStats(); // Refresh the stats after adding new integration
+          }}
+        />
       </div>
     </ModuleAccessGuard>
   );
