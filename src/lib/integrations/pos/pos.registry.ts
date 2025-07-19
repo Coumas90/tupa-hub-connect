@@ -1,8 +1,14 @@
+import { FudoAdapter } from './fudo/fudo.adapter';
+import { BistrosoftAdapter } from './bistrosoft/bistrosoft.adapter';
+
 export interface POSAdapter {
   name: string;
   version: string;
+  fetchSales: (clientId: string, dateRange: { from: string; to: string }) => Promise<TupaSalesData[]>;
   mapToTupa: (rawData: any) => TupaSalesData[];
-  validateConnection?: () => Promise<boolean>;
+  validateConnection: () => Promise<boolean>;
+  getLastSync?: () => Promise<string | null>;
+  getSupportedFeatures?: () => string[];
 }
 
 export interface TupaSalesData {
@@ -14,65 +20,78 @@ export interface TupaSalesData {
     quantity: number;
     price: number;
     category?: string;
+    sku?: string;
+    modifiers?: Array<{
+      name: string;
+      price: number;
+    }>;
+    notes?: string;
   }>;
   customer?: {
     id?: string;
     name?: string;
     email?: string;
+    phone?: string;
+    document?: string;
   };
   payment_method: string;
   pos_transaction_id: string;
+  metadata?: {
+    table_number?: string | number;
+    waiter_id?: string;
+    mesa?: number;
+    mozo?: string;
+    descuentos?: number;
+    pos_provider: string;
+  };
 }
 
-// Registro de adaptadores POS disponibles
-export const posRegistry: Record<string, { adapter: POSAdapter }> = {
+// Factory functions para crear adaptadores con configuración
+export const createFudoAdapter = (config: any) => new FudoAdapter(config);
+export const createBistrosoftAdapter = (config: any) => new BistrosoftAdapter(config);
+
+// Registro centralizado de adaptadores POS disponibles
+export const posRegistry: Record<string, { 
+  adapter: any; // Será el constructor del adapter
+  createAdapter: (config: any) => POSAdapter;
+  version: string;
+  features: string[];
+}> = {
   'fudo': {
-    adapter: {
-      name: 'Fudo POS',
-      version: '1.0.0',
-      mapToTupa: (rawData: any): TupaSalesData[] => {
-        // Mapper específico para Fudo
-        return rawData.sales?.map((sale: any) => ({
-          id: sale.id || `fudo_${Date.now()}`,
-          timestamp: sale.created_at || new Date().toISOString(),
-          amount: parseFloat(sale.total || 0),
-          items: sale.items?.map((item: any) => ({
-            name: item.name || 'Unknown Item',
-            quantity: parseInt(item.quantity || 1),
-            price: parseFloat(item.price || 0),
-            category: item.category
-          })) || [],
-          customer: sale.customer ? {
-            id: sale.customer.id,
-            name: sale.customer.name,
-            email: sale.customer.email
-          } : undefined,
-          payment_method: sale.payment_method || 'cash',
-          pos_transaction_id: sale.transaction_id || sale.id
-        })) || [];
-      }
-    }
+    adapter: FudoAdapter,
+    createAdapter: createFudoAdapter,
+    version: 'v1.0.0',
+    features: ['sales_sync', 'real_time_updates', 'customer_data', 'item_modifiers', 'table_service']
   },
-  'simphony': {
-    adapter: {
-      name: 'Oracle Simphony',
-      version: '1.0.0',
-      mapToTupa: (rawData: any): TupaSalesData[] => {
-        // Mapper específico para Simphony
-        return rawData.transactions?.map((transaction: any) => ({
-          id: transaction.check_id || `simphony_${Date.now()}`,
-          timestamp: transaction.business_date || new Date().toISOString(),
-          amount: parseFloat(transaction.total_amount || 0),
-          items: transaction.menu_items?.map((item: any) => ({
-            name: item.menu_item_name || 'Unknown Item',
-            quantity: parseInt(item.quantity || 1),
-            price: parseFloat(item.price || 0),
-            category: item.menu_group
-          })) || [],
-          payment_method: transaction.tender_type || 'cash',
-          pos_transaction_id: transaction.check_id
-        })) || [];
-      }
-    }
+  'bistrosoft': {
+    adapter: BistrosoftAdapter,
+    createAdapter: createBistrosoftAdapter,
+    version: 'v1.0.0',
+    features: ['sales_sync', 'customer_data', 'table_service', 'discount_handling', 'waiter_tracking']
   }
 };
+
+// Helper para obtener adaptador configurado
+export function getPOSAdapter(posType: string, config: any): POSAdapter {
+  const posConfig = posRegistry[posType];
+  if (!posConfig) {
+    throw new Error(`POS adapter not found for type: ${posType}`);
+  }
+  
+  return posConfig.createAdapter(config);
+}
+
+// Helper para listar POS disponibles
+export function getAvailablePOSTypes(): Array<{
+  type: string;
+  name: string;
+  version: string;
+  features: string[];
+}> {
+  return Object.entries(posRegistry).map(([type, config]) => ({
+    type,
+    name: config.adapter.name || type,
+    version: config.version,
+    features: config.features
+  }));
+}
