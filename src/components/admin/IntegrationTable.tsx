@@ -314,36 +314,9 @@ export default function IntegrationTable({ filter }: IntegrationTableProps) {
 
       {editingClient && (
         <ClientEditModal
+          isOpen={!!editingClient}
           client={editingClient}
-          onSave={async (updatedClient) => {
-            try {
-              const { error } = await supabase
-                .from('client_configs')
-                .update({
-                  pos_type: updatedClient.pos_type,
-                  pos_version: updatedClient.pos_version,
-                  sync_frequency: updatedClient.sync_frequency,
-                  simulation_mode: updatedClient.simulation_mode
-                })
-                .eq('id', updatedClient.id);
-
-              if (error) throw error;
-
-              toast({
-                title: "Configuración actualizada",
-                description: `Cliente ${updatedClient.client_id} actualizado exitosamente`,
-              });
-
-              await fetchData();
-              setEditingClient(null);
-            } catch (error) {
-              toast({
-                title: "Error",
-                description: "No se pudo actualizar la configuración",
-                variant: "destructive",
-              });
-            }
-          }}
+          onUpdate={fetchData}
           onClose={() => setEditingClient(null)}
         />
       )}

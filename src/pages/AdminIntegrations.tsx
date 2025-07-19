@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Filter, Activity, AlertCircle, TrendingUp, Calendar, Users, CheckCircle, Clock } from 'lucide-react';
+import { Filter, Activity, AlertCircle, Users, CheckCircle, Clock, Settings } from 'lucide-react';
 import LogsAndMonitoring from '@/components/LogsAndMonitoring';
 import IntegrationTable from '@/components/admin/IntegrationTable';
+import OdooManagement from '@/components/admin/OdooManagement';
 import { getLogStats } from '@/lib/api/logs';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -88,9 +89,9 @@ export default function AdminIntegrations() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Administración de Integraciones POS</h1>
+            <h1 className="text-3xl font-bold">Administración de Integraciones</h1>
             <p className="text-muted-foreground">
-              Gestiona las conexiones POS y sincronizaciones de todos los clientes
+              Gestiona las integraciones POS por cliente y configuración de Odoo
             </p>
           </div>
           
@@ -99,7 +100,8 @@ export default function AdminIntegrations() {
               variant={selectedTab === 'overview' ? 'default' : 'outline'}
               onClick={() => setSelectedTab('overview')}
             >
-              Overview
+              <Settings className="w-4 h-4 mr-2" />
+              Integraciones
             </Button>
             <Button
               variant={selectedTab === 'monitoring' ? 'default' : 'outline'}
@@ -181,7 +183,7 @@ export default function AdminIntegrations() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Estado de Integraciones</CardTitle>
+                <CardTitle>Integraciones POS por Cliente</CardTitle>
                 <CardDescription>
                   Gestión de configuraciones POS y monitoreo de sincronizaciones
                 </CardDescription>
@@ -190,6 +192,8 @@ export default function AdminIntegrations() {
                 <IntegrationTable filter={filter} />
               </CardContent>
             </Card>
+
+            <OdooManagement />
           </>
         ) : (
           <LogsAndMonitoring />
