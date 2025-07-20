@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Check, ChevronDown, MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLocationContext } from '@/hooks/useLocationContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -13,78 +12,26 @@ import {
 import { Button } from '@/components/ui/button';
 
 export function LocationSwitcher() {
-  const { group, locations, activeLocation, refreshContext } = useLocationContext();
+  const { group, locations, activeLocation, setActiveLocation, hasMultipleLocations } = useLocationContext();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { toast } = useToast();
 
   const handleLocationChange = async (locationId: string) => {
     if (locationId === activeLocation?.id || isLoading) return;
-
-    const targetLocation = locations.find(loc => loc.id === locationId);
-    if (!targetLocation) return;
 
     setIsLoading(true);
     setIsOpen(false);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No authenticated session');
-      }
-
-      const { data, error } = await supabase.functions.invoke('set-location', {
-        body: { location_id: locationId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to switch location');
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Unknown error occurred');
-      }
-
-      // Store in session storage
-      sessionStorage.setItem('activeLocationId', locationId);
-
-      // Refresh the location context
-      await refreshContext();
-
-      toast({
-        title: "Location Changed",
-        description: `Switched to ${targetLocation.name}`,
-      });
-
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to switch location';
-      console.error('Location switch error:', error);
-      
-      toast({
-        title: "Error Switching Location",
-        description: message,
-        variant: "destructive",
-      });
+      await setActiveLocation(locationId);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!group || locations.length === 0) {
+  // Don't render if no locations or only one location
+  if (!group || !hasMultipleLocations) {
     return null;
-  }
-
-  // If only one location, show it without dropdown
-  if (locations.length === 1) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        <span>{locations[0].name}</span>
-      </div>
-    );
   }
 
   return (

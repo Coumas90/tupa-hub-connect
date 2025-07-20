@@ -7,6 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useEffect } from 'react';
 import { initializeAuthListeners } from '@/utils/authConfig';
+import { LocationProvider } from '@/contexts/LocationContext';
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
@@ -35,20 +36,21 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
+        <LocationProvider>
+          <Toaster />
+          <Sonner />
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -69,7 +71,8 @@ const App = () => {
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+          </BrowserRouter>
+        </LocationProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
