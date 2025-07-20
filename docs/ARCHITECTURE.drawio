@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="Lovable" etag="generated" version="24.7.17">
   <diagram name="TUPÁ Hub Architecture" id="architecture">
-    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1422" dy="994" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1369" pageHeight="1027" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -10,13 +10,22 @@
           <mxGeometry x="40" y="200" width="120" height="60" as="geometry" />
         </mxCell>
         
+        <!-- Admin Usuario -->
+        <mxCell id="admin-user" value="👑 Admin User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        
         <!-- Frontend Layer -->
         <mxCell id="frontend-layer" value="🌐 FRONTEND LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="220" y="120" width="280" height="220" as="geometry" />
+          <mxGeometry x="220" y="120" width="280" height="280" as="geometry" />
         </mxCell>
         
         <mxCell id="react-app" value="React App&#xa;(Vite + TypeScript)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="240" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="location-context" value="Location Context&#xa;(React Context)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="160" width="100" height="60" as="geometry" />
         </mxCell>
         
         <mxCell id="login-page" value="/login&#xa;(Auth Page)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
@@ -31,25 +40,57 @@
           <mxGeometry x="440" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
+        <mxCell id="location-switcher" value="Location Switcher&#xa;(Multi-location)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="240" y="300" width="100" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="location-override" value="All Locations&#xa;(Admin Override)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="300" width="100" height="40" as="geometry" />
+        </mxCell>
+        
         <!-- Backend Layer -->
         <mxCell id="backend-layer" value="⚡ BACKEND LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="580" y="120" width="280" height="220" as="geometry" />
+          <mxGeometry x="580" y="120" width="320" height="280" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="location-middleware" value="🌍 Location Middleware&#xa;(Context Filter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="140" width="140" height="50" as="geometry" />
         </mxCell>
         
         <mxCell id="edge-functions" value="Supabase&#xa;Edge Functions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="600" y="160" width="120" height="60" as="geometry" />
+          <mxGeometry x="760" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="location-context-func" value="/location-context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="600" y="210" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="set-location-func" value="/set-location" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="690" y="210" width="80" height="30" as="geometry" />
         </mxCell>
         
         <mxCell id="refresh-token" value="/refresh-token-test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="600" y="240" width="80" height="30" as="geometry" />
+          <mxGeometry x="600" y="250" width="80" height="30" as="geometry" />
         </mxCell>
         
         <mxCell id="sync-pos" value="/sync-client-pos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="690" y="240" width="80" height="30" as="geometry" />
+          <mxGeometry x="690" y="250" width="80" height="30" as="geometry" />
         </mxCell>
         
         <mxCell id="test-connections" value="/test-pos-connection&#xa;/test-odoo-connection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" vertex="1" parent="1">
-          <mxGeometry x="780" y="240" width="70" height="40" as="geometry" />
+          <mxGeometry x="780" y="210" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="admin-override" value="Admin Override&#xa;(all_locations=true)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="780" y="260" width="100" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="backend-services" value="Backend Services&#xa;(Location Aware)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="320" width="140" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="context-propagation" value="Context Propagation&#xa;(location_id filter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="320" width="120" height="40" as="geometry" />
         </mxCell>
         
         <!-- Database Layer -->
@@ -61,20 +102,49 @@
           <mxGeometry x="240" y="440" width="150" height="60" as="geometry" />
         </mxCell>
         
+        <!-- Location-aware tables -->
+        <mxCell id="groups-table" value="groups" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="420" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="locations-table" value="locations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="490" y="420" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="users-table" value="users&#xa;(location_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="560" y="420" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="recipes-table" value="recipes&#xa;(location_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="420" y="455" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="consumptions-table" value="consumptions&#xa;(location_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="500" y="455" width="90" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="clients-table" value="clients&#xa;(audited)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="600" y="455" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="orders-table" value="orders&#xa;(location_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="680" y="455" width="70" height="25" as="geometry" />
+        </mxCell>
+        
         <mxCell id="client-configs" value="client_configs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="420" y="440" width="80" height="30" as="geometry" />
+          <mxGeometry x="640" y="420" width="80" height="25" as="geometry" />
         </mxCell>
         
         <mxCell id="integration-logs" value="integration_logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="520" y="440" width="80" height="30" as="geometry" />
+          <mxGeometry x="730" y="420" width="80" height="25" as="geometry" />
         </mxCell>
         
         <mxCell id="user-roles" value="user_roles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="620" y="440" width="80" height="30" as="geometry" />
+          <mxGeometry x="420" y="490" width="80" height="25" as="geometry" />
         </mxCell>
         
         <mxCell id="auth-users" value="auth.users&#xa;(Supabase Auth)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="720" y="440" width="80" height="30" as="geometry" />
+          <mxGeometry x="510" y="490" width="80" height="25" as="geometry" />
         </mxCell>
         
         <!-- External Services -->
@@ -103,6 +173,7 @@
         </mxCell>
         
         <!-- Arrows -->
+        <!-- User to React App -->
         <mxCell id="arrow1" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#2F5233;" edge="1" parent="1" source="user" target="react-app">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="180" y="230" as="sourcePoint" />
@@ -110,24 +181,75 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="arrow2" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1A4A80;" edge="1" parent="1" source="react-app" target="edge-functions">
+        <!-- Admin User to Admin Panel -->
+        <mxCell id="arrow-admin" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1" source="admin-user" target="location-override">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="370" y="190" as="sourcePoint" />
-            <mxPoint x="590" y="190" as="targetPoint" />
+            <mxPoint x="180" y="330" as="sourcePoint" />
+            <mxPoint x="360" y="320" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="arrow3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B8860B;" edge="1" parent="1" source="edge-functions" target="supabase-db">
+        <!-- React App to Location Context -->
+        <mxCell id="arrow-context" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#82b366;" edge="1" parent="1" source="react-app" target="location-context">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="660" y="230" as="sourcePoint" />
-            <mxPoint x="315" y="430" as="targetPoint" />
+            <mxPoint x="360" y="190" as="sourcePoint" />
+            <mxPoint x="380" y="190" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
+        <!-- React App to Location Middleware (through context) -->
+        <mxCell id="arrow2" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1A4A80;" edge="1" parent="1" source="location-context" target="location-middleware">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="190" as="sourcePoint" />
+            <mxPoint x="600" y="165" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Location Middleware to Edge Functions -->
+        <mxCell id="arrow-middleware" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1" source="location-middleware" target="edge-functions">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="740" y="165" as="sourcePoint" />
+            <mxPoint x="760" y="165" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Edge Functions to Backend Services -->
+        <mxCell id="arrow-services" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" parent="1" source="edge-functions" target="backend-services">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="820" y="200" as="sourcePoint" />
+            <mxPoint x="670" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Backend Services to Context Propagation -->
+        <mxCell id="arrow-propagation" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1" source="backend-services" target="context-propagation">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="740" y="340" as="sourcePoint" />
+            <mxPoint x="760" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Context Propagation to Database (Filtered Queries) -->
+        <mxCell id="arrow3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B8860B;" edge="1" parent="1" source="context-propagation" target="supabase-db">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="820" y="370" as="sourcePoint" />
+            <mxPoint x="390" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Admin Override to Backend Services -->
+        <mxCell id="arrow-admin-override" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;strokeDashArray=5,5;" edge="1" parent="1" source="admin-override" target="backend-services">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="830" y="310" as="sourcePoint" />
+            <mxPoint x="740" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Edge Functions to External Services -->
         <mxCell id="arrow4" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="edge-functions" target="supabase-service">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="730" y="190" as="sourcePoint" />
-            <mxPoint x="930" y="185" as="targetPoint" />
+            <mxPoint x="880" y="165" as="sourcePoint" />
+            <mxPoint x="940" y="185" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
@@ -136,12 +258,29 @@
           <mxGeometry x="170" y="210" width="60" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label2" value="API Calls" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="510" y="170" width="60" height="20" as="geometry" />
+        <mxCell id="label2" value="Location Context&#xa;with user session" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="500" y="130" width="90" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="label3" value="SQL Queries" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="380" y="350" width="60" height="20" as="geometry" />
+        <mxCell id="label-middleware" value="Filter by&#xa;location_id" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="740" y="120" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="label-propagation" value="Context&#xa;Propagation" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="740" y="290" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="label3" value="Filtered SQL Queries&#xa;WHERE location_id = ?" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="470" y="350" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="label-admin" value="Admin Override&#xa;(all_locations=true)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="170" y="320" width="90" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Flow description -->
+        <mxCell id="flow-description" value="LOCATION FILTERING FLOW:&#xa;1. User request with session context&#xa;2. Location middleware validates & filters&#xa;3. Context propagated to backend services&#xa;4. Database queries filtered by location_id&#xa;5. Admin can override with all_locations=true" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#666666;fontSize=9;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="600" width="300" height="100" as="geometry" />
         </mxCell>
         
         <!-- Title -->
