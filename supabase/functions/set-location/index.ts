@@ -123,14 +123,52 @@ Deno.serve(async (req) => {
 
     console.log(`Successfully set location for user ${user.id} to ${location.name} (${location_id})`)
 
+    // Fetch updated context: group, all locations, and active location
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('id', userData.group_id)
+      .single()
+
+    if (groupError) {
+      console.error('Error fetching group for context:', groupError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch updated group context' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Fetch all locations for the user's group
+    const { data: allLocations, error: locationsError } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('group_id', userData.group_id)
+      .order('name')
+
+    if (locationsError) {
+      console.error('Error fetching locations for context:', locationsError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch updated locations context' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Find the active location (the one we just set)
+    const activeLocation = allLocations.find(loc => loc.id === location_id)
+
+    const updatedContext = {
+      group,
+      locations: allLocations,
+      activeLocation
+    }
+
+    console.log(`Context updated - Group: ${group.name}, Active Location: ${activeLocation?.name}, Total Locations: ${allLocations.length}`)
+
     return new Response(
       JSON.stringify({
         success: true,
         message: `Location switched to ${location.name}`,
-        data: {
-          location_id: location.id,
-          location_name: location.name,
-        }
+        data: updatedContext
       }),
       { 
         status: 200, 
