@@ -11,6 +11,10 @@ interface LocationContext {
   activeLocation: any;
 }
 
+interface RequestBody {
+  preferredLocationId?: string;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -49,7 +53,7 @@ Deno.serve(async (req) => {
     console.log(`Processing location context for user: ${user.id}`)
 
     // Get request body for active location preference
-    let requestBody: any = {}
+    let requestBody: RequestBody = {}
     if (req.method === 'POST') {
       try {
         requestBody = await req.json()
@@ -120,11 +124,11 @@ Deno.serve(async (req) => {
     }
 
     // Determine active location
-    let activeLocation = null
+    let activeLocation: any = null
 
     // 1. Try session/request preference
     if (requestBody.preferredLocationId) {
-      activeLocation = locations.find(loc => loc.id === requestBody.preferredLocationId)
+      activeLocation = locations.find(loc => loc.id === requestBody.preferredLocationId) || null
       if (!activeLocation) {
         console.warn(`Preferred location ${requestBody.preferredLocationId} not available for user`)
       }
@@ -132,7 +136,7 @@ Deno.serve(async (req) => {
 
     // 2. Try user's assigned location
     if (!activeLocation && userData.location_id) {
-      activeLocation = locations.find(loc => loc.id === userData.location_id)
+      activeLocation = locations.find(loc => loc.id === userData.location_id) || null
       if (!activeLocation) {
         console.warn(`User's assigned location ${userData.location_id} not found in available locations`)
       }
@@ -140,11 +144,11 @@ Deno.serve(async (req) => {
 
     // 3. Default to main location
     if (!activeLocation) {
-      activeLocation = locations.find(loc => loc.is_main === true)
+      activeLocation = locations.find(loc => loc.is_main === true) || null
     }
 
     // 4. Fallback to first available location
-    if (!activeLocation) {
+    if (!activeLocation && locations.length > 0) {
       activeLocation = locations[0]
     }
 
@@ -156,10 +160,10 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Verify user has access to the active location
-    const hasAccess = locations.some(loc => loc.id === activeLocation.id)
+    // Verify user has access to the active location (non-null assertion safe here due to check above)
+    const hasAccess = locations.some(loc => loc.id === activeLocation!.id)
     if (!hasAccess) {
-      console.error(`User ${user.id} lacks access to location ${activeLocation.id}`)
+      console.error(`User ${user.id} lacks access to location ${activeLocation!.id}`)
       return new Response(
         JSON.stringify({ error: 'Access denied to requested location' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -169,10 +173,10 @@ Deno.serve(async (req) => {
     const locationContext: LocationContext = {
       group,
       locations,
-      activeLocation
+      activeLocation: activeLocation!  // Non-null assertion safe due to check above
     }
 
-    console.log(`Location context loaded - Group: ${group.name}, Active Location: ${activeLocation.name}, Available Locations: ${locations.length}`)
+    console.log(`Location context loaded - Group: ${group?.name}, Active Location: ${activeLocation!.name}, Available Locations: ${locations.length}`)
 
     return new Response(
       JSON.stringify({

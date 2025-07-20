@@ -170,7 +170,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       // Revert optimistic update on error
       const previousLocation = locations.find(loc => 
         sessionStorage.getItem('activeLocationId') === loc.id
-      ) || locations.find(loc => loc.is_main) || locations[0];
+      ) || locations.find(loc => loc.is_main) || (locations.length > 0 ? locations[0] : null);
       
       setActiveLocationState(previousLocation);
 

@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     }
 
     // Find the active location (the one we just set)
-    const activeLocation = allLocations.find(loc => loc.id === location_id)
+    const activeLocation = allLocations.find(loc => loc.id === location_id) || null
 
     const updatedContext = {
       group,
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
       activeLocation
     }
 
-    console.log(`Context updated - Group: ${group.name}, Active Location: ${activeLocation?.name}, Total Locations: ${allLocations.length}`)
+    console.log(`Context updated - Group: ${group?.name}, Active Location: ${activeLocation?.name}, Total Locations: ${allLocations.length}`)
 
     return new Response(
       JSON.stringify({

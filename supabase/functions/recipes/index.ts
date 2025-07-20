@@ -144,9 +144,16 @@ Deno.serve(async (req) => {
         }
 
         // Determine active location (user's assigned location or main location)
-        let activeLocation = locations.find(loc => loc.id === userData.location_id) ||
-                           locations.find(loc => loc.is_main === true) ||
-                           locations[0]
+        const activeLocation = locations.find(loc => loc.id === userData.location_id) ||
+                              locations.find(loc => loc.is_main === true) ||
+                              (locations.length > 0 ? locations[0] : null)
+
+        if (!activeLocation) {
+          return new Response(
+            JSON.stringify({ error: 'No accessible location found for user' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
 
         activeLocationId = activeLocation.id
         console.log(`Using active location: ${activeLocation.name} (${activeLocationId})`)
