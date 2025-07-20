@@ -13,6 +13,8 @@ npm run dev
 
 ## ⚙️ Variables de Entorno
 
+⚠️ **Importante**: Este proyecto **no usa variables VITE_** por limitación de Lovable. Las claves públicas (como Supabase anon key) están centralizadas en `src/lib/config.ts`.
+
 **No se usan archivos .env**. La configuración se hace vía Supabase y código. Ver sección "Configuración por Cliente".
 
 **Configuración de Secrets** (para Edge Functions):
