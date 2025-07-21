@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import RichTextEditor from './RichTextEditor';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -286,12 +287,14 @@ export default function MultiStepCourseForm({ isOpen, onClose, onSuccess }: Mult
                   onChange={(e) => updateLesson(section.id, lesson.id, { title: e.target.value })}
                   placeholder="Título de la lección"
                 />
-                <Textarea
-                  value={lesson.content}
-                  onChange={(e) => updateLesson(section.id, lesson.id, { content: e.target.value })}
-                  placeholder="Contenido de la lección (markdown soportado)"
-                  rows={3}
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Contenido de la Lección</Label>
+                  <RichTextEditor
+                    content={lesson.content}
+                    onChange={(content) => updateLesson(section.id, lesson.id, { content })}
+                    placeholder="Escribe el contenido de la lección..."
+                  />
+                </div>
                 <div className="flex space-x-2">
                   <Input
                     value={lesson.videoUrl || ''}
