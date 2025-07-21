@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.course-recommendations]
 verify_jwt = false
+
+[functions.consumption-alerts]
+verify_jwt = true

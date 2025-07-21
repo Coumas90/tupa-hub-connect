@@ -8,6 +8,7 @@ import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import { ConsumptionFilters } from '@/components/admin/ConsumptionFilters';
 import { ConsumptionSummary } from '@/components/admin/ConsumptionSummary';
 import { ConsumptionCharts } from '@/components/admin/ConsumptionCharts';
+import { ConsumptionAlerts } from '@/components/admin/ConsumptionAlerts';
 import {
   TrendingUp,
   Package,
@@ -90,6 +91,9 @@ const Consumo = (): JSX.Element => {
 
         {/* Filters */}
         <ConsumptionFilters onFiltersChange={handleFiltersChange} />
+
+        {/* AI-Powered Consumption Alerts */}
+        <ConsumptionAlerts />
 
         {/* Consumption Summary */}
         <ConsumptionSummary {...summaryData} />
