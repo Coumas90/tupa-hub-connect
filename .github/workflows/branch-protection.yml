@@ -1,0 +1,106 @@
+name: Branch Protection Rules
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+        - setup-protection
+        - update-protection
+        - view-protection
+
+jobs:
+  setup-branch-protection:
+    name: Setup Branch Protection Rules
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'setup-protection' || github.event.inputs.action == 'update-protection'
+    
+    steps:
+      - name: Setup branch protection rules
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branch = 'main';
+            
+            try {
+              const protection = await github.rest.repos.updateBranchProtection({
+                owner,
+                repo,
+                branch,
+                required_status_checks: {
+                  strict: true,
+                  contexts: [
+                    'CI Pipeline / Tests & Coverage Check',
+                    'CI Pipeline / Coverage Gate',
+                    'Security Audit & PR Checks / Security Gate',
+                    'Security Audit & PR Checks / PR Security Checks'
+                  ]
+                },
+                enforce_admins: true,
+                required_pull_request_reviews: {
+                  required_approving_review_count: 2,
+                  dismiss_stale_reviews: true,
+                  require_code_owner_reviews: true,
+                  require_last_push_approval: true
+                },
+                restrictions: null,
+                allow_auto_merge: false,
+                allow_force_pushes: false,
+                allow_deletions: false,
+                block_creations: false,
+                required_conversation_resolution: true
+              });
+              
+              console.log('✅ Branch protection rules updated successfully');
+              console.log('Protected branch:', branch);
+              console.log('Required status checks:', protection.data.required_status_checks.contexts);
+              
+            } catch (error) {
+              console.error('❌ Failed to update branch protection:', error.message);
+              throw error;
+            }
+
+  view-protection:
+    name: View Current Protection Rules
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'view-protection'
+    
+    steps:
+      - name: View current branch protection
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branch = 'main';
+            
+            try {
+              const protection = await github.rest.repos.getBranchProtection({
+                owner,
+                repo,
+                branch
+              });
+              
+              console.log('📋 Current Branch Protection Rules:');
+              console.log('Branch:', branch);
+              console.log('Required status checks:', protection.data.required_status_checks);
+              console.log('Required PR reviews:', protection.data.required_pull_request_reviews);
+              console.log('Enforce admins:', protection.data.enforce_admins.enabled);
+              console.log('Allow force pushes:', protection.data.allow_force_pushes.enabled);
+              console.log('Allow deletions:', protection.data.allow_deletions.enabled);
+              
+            } catch (error) {
+              if (error.status === 404) {
+                console.log('ℹ️ No branch protection rules found for branch:', branch);
+              } else {
+                console.error('❌ Error fetching protection rules:', error.message);
+                throw error;
+              }
+            }

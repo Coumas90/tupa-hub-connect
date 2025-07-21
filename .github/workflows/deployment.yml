@@ -1,0 +1,222 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to deploy'
+        required: false
+        default: 'latest'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Pre-deployment validation
+  pre-deployment-checks:
+    name: Pre-deployment Validation
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      environment: ${{ steps.check.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run all tests with coverage
+        run: npm test -- --coverage
+        
+      - name: Verify coverage threshold
+        run: |
+          COVERAGE=$(node -p "
+            const fs = require('fs');
+            try {
+              const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const total = coverage.total;
+              const avgCoverage = (total.lines.pct + total.functions.pct + total.branches.pct + total.statements.pct) / 4;
+              Math.round(avgCoverage * 100) / 100;
+            } catch (e) {
+              0;
+            }
+          ")
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below required 80% for production deployment"
+            exit 1
+          fi
+          echo "✅ Coverage $COVERAGE% meets production requirements"
+        
+      - name: Build production bundle
+        run: npm run build
+        
+      - name: Run security audit
+        run: npm audit --audit-level moderate
+        
+      - name: Determine deployment environment
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=production" >> $GITHUB_OUTPUT
+          fi
+          echo "should-deploy=true" >> $GITHUB_OUTPUT
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: dist/
+          retention-days: 7
+
+  # Manual approval for production
+  production-approval:
+    name: Production Deployment Approval
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: needs.pre-deployment-checks.outputs.environment == 'production'
+    environment:
+      name: production-approval
+      
+    steps:
+      - name: Request production deployment approval
+        run: |
+          echo "🚀 Production deployment approval requested"
+          echo "Environment: ${{ needs.pre-deployment-checks.outputs.environment }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          
+  # Staging deployment (automatic)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: needs.pre-deployment-checks.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging-tupa-hub-connect.lovable.app
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: dist/
+          
+      - name: Deploy to staging
+        run: |
+          echo "🚧 Deploying to staging environment..."
+          echo "This would deploy to your staging environment"
+          # Add actual deployment commands here
+          
+      - name: Run smoke tests
+        run: |
+          echo "🧪 Running staging smoke tests..."
+          # Add smoke test commands here
+          
+      - name: Notify deployment success
+        run: |
+          echo "✅ Staging deployment completed successfully"
+
+  # Production deployment (after approval)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, production-approval]
+    if: needs.pre-deployment-checks.outputs.environment == 'production'
+    environment:
+      name: production
+      url: https://tupa-hub-connect.lovable.app
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: dist/
+          
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          echo "Version: ${{ github.event.inputs.version || 'latest' }}"
+          echo "Commit: ${{ github.sha }}"
+          # Add actual deployment commands here
+          
+      - name: Run production smoke tests
+        run: |
+          echo "🧪 Running production smoke tests..."
+          # Add production smoke test commands here
+          
+      - name: Create deployment tag
+        run: |
+          TAG="v$(date +'%Y%m%d')-$(echo ${{ github.sha }} | head -c 7)"
+          git tag $TAG
+          echo "Created deployment tag: $TAG"
+          
+      - name: Notify deployment success
+        run: |
+          echo "✅ Production deployment completed successfully"
+          echo "🏷️ Tagged as: v$(date +'%Y%m%d')-$(echo ${{ github.sha }} | head -c 7)"
+
+  # Post-deployment monitoring
+  post-deployment-monitoring:
+    name: Post-deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && needs.deploy-production.result == 'success'
+    
+    steps:
+      - name: Health check
+        run: |
+          echo "🏥 Running post-deployment health checks..."
+          # Add health check commands here
+          
+      - name: Performance monitoring
+        run: |
+          echo "📊 Monitoring application performance..."
+          # Add performance monitoring commands here
+          
+      - name: Alert on deployment
+        run: |
+          echo "📢 Sending deployment notifications..."
+          # Add notification commands here (Slack, email, etc.)
+
+  # Rollback capability
+  rollback:
+    name: Emergency Rollback
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'workflow_dispatch'
+    environment:
+      name: production-rollback
+      
+    steps:
+      - name: Rollback production deployment
+        run: |
+          echo "🔄 Initiating emergency rollback..."
+          echo "This would rollback to the previous stable version"
+          # Add rollback commands here
