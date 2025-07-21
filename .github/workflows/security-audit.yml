@@ -123,6 +123,57 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       
+  vulnerability-tests:
+    name: Basic Vulnerability Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Make security test script executable
+      run: chmod +x scripts/security-tests.sh
+      
+    - name: Install testing tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl bc
+        
+    - name: Run XSS injection tests
+      run: |
+        echo "🧪 Running XSS injection tests..."
+        ./scripts/security-tests.sh https://preview--tupa-hub-connect.lovable.app
+        
+    - name: Verify iframe embedding prevention
+      run: |
+        echo "🔒 Testing iframe embedding prevention..."
+        response=$(curl -I https://preview--tupa-hub-connect.lovable.app/consumo)
+        
+        if ! echo "$response" | grep -i "X-Frame-Options: DENY"; then
+          echo "❌ X-Frame-Options missing"
+          exit 1
+        fi
+        
+        if ! echo "$response" | grep -i "Content-Security-Policy"; then
+          echo "❌ CSP header missing"  
+          exit 1
+        fi
+        
+        echo "✅ Security headers verified"
+        
+    - name: Check CSP blocks external scripts
+      run: |
+        echo "🛡️ Verifying CSP external script blocking..."
+        headers=$(curl -I https://preview--tupa-hub-connect.lovable.app/consumo)
+        
+        if echo "$headers" | grep -i "script-src.*'self'"; then
+          echo "✅ CSP script-src includes 'self'"
+        else
+          echo "❌ CSP script-src misconfigured"
+          exit 1
+        fi
+
   owasp-zap-baseline:
     name: OWASP ZAP Baseline Scan
     runs-on: ubuntu-latest
