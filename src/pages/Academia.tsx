@@ -13,116 +13,96 @@ import {
   Users,
   Star,
   X,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAcademy, type Course, type Quiz } from '@/hooks/useAcademy';
 
-const courses = [
-  {
-    id: 1,
-    title: 'Fundamentos del Espresso',
-    description: 'Aprende los conceptos básicos para preparar el espresso perfecto',
-    duration: '45 min',
-    difficulty: 'Principiante',
-    progress: 0,
-    status: 'available',
-    instructor: 'Carlos Rodriguez',
-    modules: 6,
-    quiz: {
-      questions: [
-        {
-          question: '¿Cuál es el tiempo ideal de extracción para un espresso?',
-          options: ['15-20 segundos', '20-30 segundos', '30-40 segundos', '40-50 segundos'],
-          correct: 1
-        },
-        {
-          question: '¿Qué cantidad de café molido necesitas para un espresso doble?',
-          options: ['14-16g', '18-20g', '22-24g', '26-28g'],
-          correct: 1
-        }
-      ]
-    }
-  },
-  {
-    id: 2,
-    title: 'Métodos de Filtrado',
-    description: 'Domina las técnicas de V60, Chemex y prensa francesa',
-    duration: '60 min',
-    difficulty: 'Intermedio',
-    progress: 35,
-    status: 'in-progress',
-    instructor: 'Ana Martinez',
-    modules: 8,
-    quiz: {
-      questions: [
-        {
-          question: '¿Cuál es la proporción ideal para V60?',
-          options: ['1:15', '1:16', '1:17', '1:18'],
-          correct: 1
-        }
-      ]
-    }
-  },
-  {
-    id: 3,
-    title: 'Latte Art Avanzado',
-    description: 'Técnicas profesionales para crear arte en leche',
-    duration: '90 min',
-    difficulty: 'Avanzado',
-    progress: 100,
-    status: 'completed',
-    instructor: 'Diego Fernandez',
-    modules: 10,
-    quiz: {
-      questions: [
-        {
-          question: '¿Qué temperatura debe tener la leche para latte art?',
-          options: ['55-60°C', '60-65°C', '65-70°C', '70-75°C'],
-          correct: 1
-        }
-      ]
-    }
-  }
-];
 
 export default function Academia() {
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const { 
+    courses, 
+    loading, 
+    error, 
+    fetchQuiz, 
+    updateCourseProgress, 
+    submitQuizAttempt 
+  } = useAcademy();
+  
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [userAnswers, setUserAnswers] = useState([]);
+  const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [score, setScore] = useState(0);
+  const [quizLoading, setQuizLoading] = useState(false);
 
-  const startCourse = (course: any) => {
+  const startCourse = async (course: Course) => {
     setSelectedCourse(course);
     setShowQuiz(false);
     setCurrentQuestion(0);
     setUserAnswers([]);
     setQuizCompleted(false);
     setScore(0);
+    setCurrentQuiz(null);
+    
+    // Update course progress to in_progress if not started
+    if (course.status === 'not_started') {
+      await updateCourseProgress(course.id, 0, 'in_progress');
+    }
   };
 
-  const startQuiz = () => {
-    setShowQuiz(true);
-    setCurrentQuestion(0);
-    setUserAnswers([]);
-    setQuizCompleted(false);
+  const startQuiz = async () => {
+    if (!selectedCourse) return;
+    
+    setQuizLoading(true);
+    try {
+      const quiz = await fetchQuiz(selectedCourse.id);
+      if (quiz) {
+        setCurrentQuiz(quiz);
+        setShowQuiz(true);
+        setCurrentQuestion(0);
+        setUserAnswers([]);
+        setQuizCompleted(false);
+      }
+    } finally {
+      setQuizLoading(false);
+    }
   };
 
-  const handleAnswer = (answerIndex) => {
+  const handleAnswer = async (answerIndex: number) => {
+    if (!currentQuiz || !selectedCourse) return;
+    
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestion] = answerIndex;
     setUserAnswers(newAnswers);
 
-    if (currentQuestion < selectedCourse.quiz.questions.length - 1) {
+    if (currentQuestion < currentQuiz.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Quiz completed
       const finalScore = newAnswers.reduce((score, answer, index) => {
-        return score + (answer === selectedCourse.quiz.questions[index].correct ? 1 : 0);
+        return score + (answer === currentQuiz.questions[index].correct_answer_index ? 1 : 0);
       }, 0);
       setScore(finalScore);
       setQuizCompleted(true);
+      
+      // Submit quiz attempt
+      const passed = (finalScore / currentQuiz.questions.length) * 100 >= currentQuiz.passing_score;
+      await submitQuizAttempt(
+        currentQuiz.id,
+        newAnswers,
+        finalScore,
+        currentQuiz.questions.length,
+        passed
+      );
+      
+      // Update course progress to completed if passed
+      if (passed) {
+        await updateCourseProgress(selectedCourse.id, 100, 'completed');
+      }
     }
   };
 
@@ -168,10 +148,10 @@ export default function Academia() {
         <div>Por completar exitosamente el curso:</div>
         <div class="course">${selectedCourse?.title}</div>
         <div class="details">
-          Puntuación Obtenida: ${score}/${selectedCourse?.quiz.questions.length} (${Math.round((score / selectedCourse?.quiz.questions.length) * 100)}%)<br>
-          Instructor: ${selectedCourse?.instructor}<br>
+          Puntuación Obtenida: ${score}/${currentQuiz?.questions.length || 0} (${Math.round((score / (currentQuiz?.questions.length || 1)) * 100)}%)<br>
+          Instructor: ${selectedCourse?.instructor?.name}<br>
           Fecha de Finalización: ${new Date().toLocaleDateString('es-AR')}<br>
-          Duración del Curso: ${selectedCourse?.duration}
+          Duración del Curso: ${Math.floor((selectedCourse?.duration_minutes || 0) / 60)}h ${(selectedCourse?.duration_minutes || 0) % 60}min
         </div>
         <div class="signature">
           TUPÁ Hub - Academia Cafetera Profesional<br>
@@ -210,6 +190,36 @@ export default function Academia() {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <ModuleAccessGuard module="Academia" requiredRole="barista">
+        <div className="p-6 flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Cargando cursos...</p>
+          </div>
+        </div>
+      </ModuleAccessGuard>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <ModuleAccessGuard module="Academia" requiredRole="barista">
+        <div className="p-6 flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <p className="text-destructive">Error: {error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </ModuleAccessGuard>
+    );
+  }
+
   return (
     <ModuleAccessGuard module="Academia" requiredRole="barista">
       <div className="p-6 space-y-6">
@@ -226,10 +236,10 @@ export default function Academia() {
                   <div className="text-2xl font-bold text-accent">68%</div>
                   <div className="text-xs text-muted-foreground">Progreso Total</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">2</div>
-                  <div className="text-xs text-muted-foreground">Certificados</div>
-                </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{courses.filter(c => c.status === 'completed').length}</div>
+                    <div className="text-xs text-muted-foreground">Certificados</div>
+                  </div>
               </div>
             </div>
 
@@ -283,7 +293,9 @@ export default function Academia() {
                               <Badge className={`${getDifficultyColor(course.difficulty)} border text-xs`}>
                                 {course.difficulty}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">{course.duration}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {Math.floor(course.duration_minutes / 60)}h {course.duration_minutes % 60}min
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -306,9 +318,9 @@ export default function Academia() {
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span className="flex items-center">
                           <Users className="h-3 w-3 mr-1" />
-                          {course.instructor}
+                          {course.instructor?.name || 'Instructor no disponible'}
                         </span>
-                        <span>{course.modules} módulos</span>
+                        <span>{course.module_count} módulos</span>
                       </div>
 
                       <Button 
@@ -368,17 +380,19 @@ export default function Academia() {
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-secondary/10 rounded-lg">
                     <Clock className="h-6 w-6 mx-auto mb-2 text-secondary" />
-                    <div className="font-semibold">{selectedCourse.duration}</div>
+                    <div className="font-semibold">
+                      {Math.floor(selectedCourse.duration_minutes / 60)}h {selectedCourse.duration_minutes % 60}min
+                    </div>
                     <div className="text-sm text-muted-foreground">Duración</div>
                   </div>
                   <div className="text-center p-4 bg-secondary/10 rounded-lg">
                     <BookOpen className="h-6 w-6 mx-auto mb-2 text-secondary" />
-                    <div className="font-semibold">{selectedCourse.modules}</div>
+                    <div className="font-semibold">{selectedCourse.module_count}</div>
                     <div className="text-sm text-muted-foreground">Módulos</div>
                   </div>
                   <div className="text-center p-4 bg-secondary/10 rounded-lg">
                     <Users className="h-6 w-6 mx-auto mb-2 text-secondary" />
-                    <div className="font-semibold">{selectedCourse.instructor}</div>
+                    <div className="font-semibold">{selectedCourse.instructor?.name || 'No disponible'}</div>
                     <div className="text-sm text-muted-foreground">Instructor</div>
                   </div>
                 </div>
@@ -398,17 +412,22 @@ export default function Academia() {
                   </p>
                   <Button 
                     onClick={startQuiz}
+                    disabled={quizLoading}
                     className="bg-gradient-primary hover:bg-primary/90"
                     size="lg"
                   >
-                    <ChevronRight className="h-5 w-5 mr-2" />
-                    Iniciar Quiz de Certificación
+                    {quizLoading ? (
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 mr-2" />
+                    )}
+                    {quizLoading ? 'Cargando Quiz...' : 'Iniciar Quiz de Certificación'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
-        ) : !quizCompleted ? (
+        ) : !showQuiz ? (
           // Quiz View
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -417,7 +436,7 @@ export default function Academia() {
                 Salir del Quiz
               </Button>
               <Badge variant="outline">
-                Pregunta {currentQuestion + 1} de {selectedCourse.quiz.questions.length}
+                Pregunta {currentQuestion + 1} de {currentQuiz?.questions.length || 0}
               </Badge>
             </div>
 
@@ -425,17 +444,17 @@ export default function Academia() {
               <CardHeader>
                 <CardTitle>Quiz: {selectedCourse.title}</CardTitle>
                 <Progress 
-                  value={(currentQuestion / selectedCourse.quiz.questions.length) * 100} 
+                  value={(currentQuestion / (currentQuiz?.questions.length || 1)) * 100} 
                   className="mt-4"
                 />
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">
-                    {selectedCourse.quiz.questions[currentQuestion].question}
+                    {currentQuiz?.questions[currentQuestion]?.question}
                   </h3>
                   <div className="space-y-3">
-                    {selectedCourse.quiz.questions[currentQuestion].options.map((option, index) => (
+                    {currentQuiz?.questions[currentQuestion]?.options.map((option, index) => (
                       <Button
                         key={index}
                         variant="outline"
@@ -476,7 +495,7 @@ export default function Academia() {
                   </div>
                 </div>
 
-                {score >= selectedCourse.quiz.questions.length * 0.7 ? (
+                {(currentQuiz && score >= (currentQuiz.questions.length * currentQuiz.passing_score / 100)) ? (
                   <div className="space-y-4">
                     <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
                       <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
