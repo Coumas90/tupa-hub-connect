@@ -424,6 +424,126 @@ export type Database = {
           },
         ]
       }
+      pos_sync_logs: {
+        Row: {
+          backoff_seconds: number | null
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          next_retry_at: string | null
+          operation: string
+          pos_type: string
+          records_failed: number | null
+          records_processed: number | null
+          records_success: number | null
+          retry_count: number | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          backoff_seconds?: number | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          next_retry_at?: string | null
+          operation: string
+          pos_type: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_success?: number | null
+          retry_count?: number | null
+          started_at?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          backoff_seconds?: number | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          next_retry_at?: string | null
+          operation?: string
+          pos_type?: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_success?: number | null
+          retry_count?: number | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pos_sync_status: {
+        Row: {
+          client_id: string
+          consecutive_failures: number | null
+          created_at: string
+          id: string
+          is_paused: boolean | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          last_sync_at: string | null
+          next_allowed_sync_at: string | null
+          pause_reason: string | null
+          paused_at: string | null
+          pos_type: string
+          total_failures: number | null
+          total_syncs: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          consecutive_failures?: number | null
+          created_at?: string
+          id?: string
+          is_paused?: boolean | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          next_allowed_sync_at?: string | null
+          pause_reason?: string | null
+          paused_at?: string | null
+          pos_type: string
+          total_failures?: number | null
+          total_syncs?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          consecutive_failures?: number | null
+          created_at?: string
+          id?: string
+          is_paused?: boolean | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          next_allowed_sync_at?: string | null
+          pause_reason?: string | null
+          paused_at?: string | null
+          pos_type?: string
+          total_failures?: number | null
+          total_syncs?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quiz_questions: {
         Row: {
           correct_answer_index: number

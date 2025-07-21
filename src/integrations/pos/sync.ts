@@ -1,256 +1,192 @@
-import { getPOSAdapter, posRegistry, POSAdapter } from './registry';
-import { TupaSalesData } from './fudo/types';
-
-// Sync interfaces
-export interface SyncConfig {
-  clientId: string;
-  posType: string;
-  posConfig: any;
-  dateRange?: { from: string; to: string };
-  batchSize?: number;
-  simulationMode?: boolean;
-}
+import { getPOSAdapter } from './registry';
+import { storeClientConsumption } from './consumption';
+import { POSSyncLogger } from './sync-logger';
 
 export interface SyncResult {
   success: boolean;
-  message: string;
-  recordsProcessed?: number;
-  timestamp: string;
-  errors?: string[];
-  metadata?: {
-    duration: number;
-    posProvider: string;
-    syncType: 'manual' | 'scheduled' | 'real-time';
-    batchCount?: number;
-  };
-}
-
-export interface SyncProgress {
-  clientId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  progress: number; // 0-100
-  currentStep: string;
-  startTime: string;
-  estimatedCompletion?: string;
+  recordsProcessed: number;
+  recordsSuccess: number;
+  recordsFailed: number;
+  errors: string[];
+  logId?: string;
+  isPaused?: boolean;
+  nextRetryAt?: Date;
 }
 
 /**
- * Base POS Sync Service
- * Provides core synchronization functionality for all POS integrations
+ * Core POS synchronization function with logging and error handling
  */
-export class POSSyncService {
-  private adapter: POSAdapter;
-  private config: SyncConfig;
-
-  constructor(config: SyncConfig) {
-    this.config = config;
-    this.adapter = getPOSAdapter(config.posType, config.posConfig);
-  }
-
-  /**
-   * Performs a full sync operation
-   */
-  async sync(): Promise<SyncResult> {
-    const startTime = Date.now();
+export async function syncPOS(
+  clientId: string,
+  posType: string,
+  locationId?: string,
+  forceSync: boolean = false
+): Promise<SyncResult> {
+  let logId: string | undefined;
+  
+  try {
+    console.log(`[POS Sync] Starting sync for client ${clientId} (${posType})`);
     
-    try {
-      console.log(`[POS Sync] Starting sync for client ${this.config.clientId} with ${this.config.posType}`);
-      
-      // Validate connection first
-      const isConnected = await this.adapter.validateConnection();
-      if (!isConnected) {
-        throw new Error(`Unable to connect to ${this.config.posType} POS system`);
+    // Check if sync is allowed (respects auto-pause)
+    if (!forceSync) {
+      const canSyncResult = await POSSyncLogger.canSync(clientId);
+      if (!canSyncResult.allowed) {
+        console.warn(`[POS Sync] Sync blocked: ${canSyncResult.reason}`);
+        return {
+          success: false,
+          recordsProcessed: 0,
+          recordsSuccess: 0,
+          recordsFailed: 0,
+          errors: [canSyncResult.reason || 'Sync not allowed'],
+          isPaused: true,
+          nextRetryAt: canSyncResult.nextAllowedAt ? new Date(canSyncResult.nextAllowedAt) : undefined
+        };
       }
+    }
 
-      // Determine date range
-      const dateRange = this.config.dateRange || await this.getDefaultDateRange();
-      
-      // Fetch sales data
-      const salesData = await this.adapter.fetchSales(this.config.clientId, dateRange);
-      
-      // Process in batches if needed
-      const batchSize = this.config.batchSize || this.getDefaultBatchSize();
-      const batches = this.chunkArray(salesData, batchSize);
-      
-      let totalProcessed = 0;
-      const errors: string[] = [];
+    // Start sync logging
+    logId = await POSSyncLogger.startSync(clientId, posType, 'sync', {
+      location_id: locationId,
+      force_sync: forceSync
+    });
 
-      for (let i = 0; i < batches.length; i++) {
-        try {
-          const batch = batches[i];
-          await this.processBatch(batch, i + 1, batches.length);
-          totalProcessed += batch.length;
-        } catch (error) {
-          const errorMsg = `Batch ${i + 1} failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-          errors.push(errorMsg);
-          console.error(errorMsg);
-        }
-      }
+    // Get POS adapter
+    const adapter = getPOSAdapter(posType, {});
+    if (!adapter) {
+      throw new Error(`No adapter found for POS type: ${posType}`);
+    }
 
-      const duration = Date.now() - startTime;
-      const success = errors.length === 0;
+    console.log(`[POS Sync] Using ${posType} adapter for client ${clientId}`);
 
-      const result: SyncResult = {
-        success,
-        message: success 
-          ? `Sync completed successfully. Processed ${totalProcessed} records.`
-          : `Sync completed with ${errors.length} errors. Processed ${totalProcessed} records.`,
-        recordsProcessed: totalProcessed,
-        timestamp: new Date().toISOString(),
-        errors: errors.length > 0 ? errors : undefined,
-        metadata: {
-          duration,
-          posProvider: this.config.posType,
-          syncType: 'manual',
-          batchCount: batches.length
-        }
+    // Fetch sales data
+    const salesData = await adapter.fetchSales(clientId, { from: '', to: '' });
+    console.log(`[POS Sync] Fetched ${salesData.length} sales records`);
+
+    if (salesData.length === 0) {
+      await POSSyncLogger.logSuccess(logId, 0, 0, {
+        message: 'No sales data found'
+      });
+
+      return {
+        success: true,
+        recordsProcessed: 0,
+        recordsSuccess: 0,
+        recordsFailed: 0,
+        errors: [],
+        logId
       };
+    }
 
-      console.log(`[POS Sync] Completed sync for ${this.config.clientId}:`, result);
-      return result;
+    // Map to standardized format
+    const mappedData = adapter.mapToTupa(salesData);
+    console.log(`[POS Sync] Mapped ${mappedData.length} sales records`);
 
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+    // Store consumption data
+    const storeResult = await storeClientConsumption(clientId, mappedData, locationId);
+    
+    if (!storeResult.success) {
+      const errorMessage = storeResult.errors?.join(', ') || 'Failed to store consumption data';
       
-      console.error(`[POS Sync] Sync failed for ${this.config.clientId}:`, error);
-      
+      const retryResult = await POSSyncLogger.logError(
+        logId,
+        errorMessage,
+        'STORE_CONSUMPTION_FAILED',
+        mappedData.length,
+        mappedData.length,
+        { store_result: storeResult }
+      );
+
       return {
         success: false,
-        message: errorMessage,
-        timestamp: new Date().toISOString(),
-        errors: [errorMessage],
-        metadata: {
-          duration,
-          posProvider: this.config.posType,
-          syncType: 'manual'
-        }
+        recordsProcessed: mappedData.length,
+        recordsSuccess: 0,
+        recordsFailed: mappedData.length,
+        errors: storeResult.errors || [errorMessage],
+        logId,
+        isPaused: retryResult.isPaused,
+        nextRetryAt: retryResult.nextRetryAt
       };
     }
-  }
 
-  /**
-   * Validates the POS connection
-   */
-  async validateConnection(): Promise<boolean> {
-    try {
-      return await this.adapter.validateConnection();
-    } catch (error) {
-      console.error(`[POS Sync] Connection validation failed:`, error);
-      return false;
-    }
-  }
+    // Log success
+    await POSSyncLogger.logSuccess(
+      logId,
+      mappedData.length,
+      mappedData.length,
+      {
+        consumption_id: storeResult.consumptionId,
+        message: 'Successfully processed all sales data'
+      }
+    );
 
-  /**
-   * Gets the last sync timestamp
-   */
-  async getLastSync(): Promise<string | null> {
-    try {
-      return await this.adapter.getLastSync?.() || null;
-    } catch (error) {
-      console.error(`[POS Sync] Error getting last sync:`, error);
-      return null;
-    }
-  }
+    console.log(`[POS Sync] Successfully completed sync for client ${clientId}`);
 
-  /**
-   * Gets adapter metadata
-   */
-  getAdapterInfo() {
     return {
-      name: this.adapter.name,
-      version: this.adapter.version,
-      features: this.adapter.getSupportedFeatures?.() || [],
-      metadata: this.adapter.getMetadata?.() || {}
+      success: true,
+      recordsProcessed: mappedData.length,
+      recordsSuccess: mappedData.length,
+      recordsFailed: 0,
+      errors: [],
+      logId
     };
-  }
 
-  /**
-   * Processes a batch of sales data
-   */
-  private async processBatch(batch: TupaSalesData[], batchNumber: number, totalBatches: number): Promise<void> {
-    console.log(`[POS Sync] Processing batch ${batchNumber}/${totalBatches} (${batch.length} records)`);
-    
-    // Here you would typically:
-    // 1. Store the data in database
-    // 2. Transform for external systems (Odoo, etc.)
-    // 3. Apply business logic
-    // 4. Generate notifications/alerts
-    
-    // For now, just simulate processing
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+    console.error(`[POS Sync] Error syncing client ${clientId}:`, error);
 
-  /**
-   * Gets default date range (last 24 hours)
-   */
-  private async getDefaultDateRange(): Promise<{ from: string; to: string }> {
-    const lastSync = await this.getLastSync();
-    const now = new Date();
-    const from = lastSync ? new Date(lastSync) : new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    return {
-      from: from.toISOString(),
-      to: now.toISOString()
-    };
-  }
+    if (logId) {
+      const retryResult = await POSSyncLogger.logError(
+        logId,
+        errorMessage,
+        'SYNC_ERROR',
+        0,
+        0,
+        { error: error instanceof Error ? error.stack : String(error) }
+      );
 
-  /**
-   * Gets default batch size based on POS type
-   */
-  private getDefaultBatchSize(): number {
-    const registryConfig = posRegistry[this.config.posType];
-    return registryConfig?.metadata.batchSizeLimit || 100;
-  }
-
-  /**
-   * Splits array into chunks
-   */
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
+      return {
+        success: false,
+        recordsProcessed: 0,
+        recordsSuccess: 0,
+        recordsFailed: 0,
+        errors: [errorMessage],
+        logId,
+        isPaused: retryResult.isPaused,
+        nextRetryAt: retryResult.nextRetryAt
+      };
     }
-    return chunks;
+
+    return {
+      success: false,
+      recordsProcessed: 0,
+      recordsSuccess: 0,
+      recordsFailed: 0,
+      errors: [errorMessage]
+    };
   }
 }
 
 /**
- * Factory function to create a sync service
+ * Syncs multiple clients in parallel with logging
  */
-export function createSyncService(config: SyncConfig): POSSyncService {
-  return new POSSyncService(config);
-}
-
-/**
- * Quick sync function for legacy compatibility
- */
-export async function syncPOS(clientId: string, posType: string, posConfig: any): Promise<SyncResult> {
-  const syncService = createSyncService({
-    clientId,
-    posType,
-    posConfig,
-    simulationMode: false
+export async function syncMultipleClients(
+  clients: Array<{ clientId: string; posType: string; locationId?: string }>,
+  forceSync: boolean = false
+): Promise<Record<string, SyncResult>> {
+  const results: Record<string, SyncResult> = {};
+  
+  console.log(`[POS Sync] Starting batch sync for ${clients.length} clients`);
+  
+  const syncPromises = clients.map(async (client) => {
+    const result = await syncPOS(client.clientId, client.posType, client.locationId, forceSync);
+    results[client.clientId] = result;
+    return result;
   });
-  
-  return await syncService.sync();
-}
 
-/**
- * Validates all registered POS adapters
- */
-export async function validateAllAdapters(): Promise<Record<string, boolean>> {
-  const results: Record<string, boolean> = {};
+  await Promise.allSettled(syncPromises);
   
-  for (const [posType, config] of Object.entries(posRegistry)) {
-    try {
-      const adapter = config.createAdapter({});
-      results[posType] = await adapter.validateConnection();
-    } catch (error) {
-      console.error(`Error validating ${posType}:`, error);
-      results[posType] = false;
-    }
-  }
+  const successCount = Object.values(results).filter(r => r.success).length;
+  console.log(`[POS Sync] Batch sync completed: ${successCount}/${clients.length} successful`);
   
   return results;
 }
