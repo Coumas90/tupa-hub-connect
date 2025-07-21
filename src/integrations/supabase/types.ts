@@ -18,32 +18,38 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          created_by: string | null
           id: string
           pos_type: string
           pos_version: string | null
           simulation_mode: boolean | null
           sync_frequency: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           client_id: string
           created_at?: string
+          created_by?: string | null
           id?: string
           pos_type: string
           pos_version?: string | null
           simulation_mode?: boolean | null
           sync_frequency?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           pos_type?: string
           pos_version?: string | null
           simulation_mode?: boolean | null
           sync_frequency?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -147,34 +153,40 @@ export type Database = {
           content: string | null
           course_id: string
           created_at: string
+          created_by: string | null
           description: string | null
           duration_minutes: number | null
           id: string
           order_index: number
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           content?: string | null
           course_id: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
           id?: string
           order_index: number
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           content?: string | null
           course_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
           id?: string
           order_index?: number
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -245,21 +257,27 @@ export type Database = {
       groups: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           name: string
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           name: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           name?: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -267,32 +285,38 @@ export type Database = {
         Row: {
           bio: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           expertise: string[] | null
           id: string
           image_url: string | null
           name: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           bio?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           expertise?: string[] | null
           id?: string
           image_url?: string | null
           name: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           bio?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           expertise?: string[] | null
           id?: string
           image_url?: string | null
           name?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -300,6 +324,7 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          created_by: string | null
           error_message: string | null
           events_count: number | null
           id: string
@@ -307,10 +332,12 @@ export type Database = {
           pos_type: string
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           client_id: string
           created_at?: string
+          created_by?: string | null
           error_message?: string | null
           events_count?: number | null
           id?: string
@@ -318,10 +345,12 @@ export type Database = {
           pos_type: string
           status: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string
+          created_by?: string | null
           error_message?: string | null
           events_count?: number | null
           id?: string
@@ -329,6 +358,7 @@ export type Database = {
           pos_type?: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -336,29 +366,35 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string | null
+          created_by: string | null
           group_id: string
           id: string
           is_main: boolean | null
           name: string
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           address?: string | null
           created_at?: string | null
+          created_by?: string | null
           group_id: string
           id?: string
           is_main?: boolean | null
           name: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           address?: string | null
           created_at?: string | null
+          created_by?: string | null
           group_id?: string
           id?: string
           is_main?: boolean | null
           name?: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -430,6 +466,7 @@ export type Database = {
           client_id: string
           completed_at: string | null
           created_at: string
+          created_by: string | null
           duration_ms: number | null
           error_code: string | null
           error_message: string | null
@@ -445,12 +482,14 @@ export type Database = {
           started_at: string
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           backoff_seconds?: number | null
           client_id: string
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           duration_ms?: number | null
           error_code?: string | null
           error_message?: string | null
@@ -466,12 +505,14 @@ export type Database = {
           started_at?: string
           status: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           backoff_seconds?: number | null
           client_id?: string
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           duration_ms?: number | null
           error_code?: string | null
           error_message?: string | null
@@ -487,6 +528,7 @@ export type Database = {
           started_at?: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -495,6 +537,7 @@ export type Database = {
           client_id: string
           consecutive_failures: number | null
           created_at: string
+          created_by: string | null
           id: string
           is_paused: boolean | null
           last_failure_at: string | null
@@ -507,11 +550,13 @@ export type Database = {
           total_failures: number | null
           total_syncs: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           client_id: string
           consecutive_failures?: number | null
           created_at?: string
+          created_by?: string | null
           id?: string
           is_paused?: boolean | null
           last_failure_at?: string | null
@@ -524,11 +569,13 @@ export type Database = {
           total_failures?: number | null
           total_syncs?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           client_id?: string
           consecutive_failures?: number | null
           created_at?: string
+          created_by?: string | null
           id?: string
           is_paused?: boolean | null
           last_failure_at?: string | null
@@ -541,6 +588,7 @@ export type Database = {
           total_failures?: number | null
           total_syncs?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -548,6 +596,7 @@ export type Database = {
         Row: {
           correct_answer_index: number
           created_at: string
+          created_by: string | null
           explanation: string | null
           id: string
           options: Json
@@ -555,10 +604,12 @@ export type Database = {
           question: string
           quiz_id: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           correct_answer_index: number
           created_at?: string
+          created_by?: string | null
           explanation?: string | null
           id?: string
           options: Json
@@ -566,10 +617,12 @@ export type Database = {
           question: string
           quiz_id: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           correct_answer_index?: number
           created_at?: string
+          created_by?: string | null
           explanation?: string | null
           id?: string
           options?: Json
@@ -577,6 +630,7 @@ export type Database = {
           question?: string
           quiz_id?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -592,29 +646,35 @@ export type Database = {
         Row: {
           course_id: string
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           passing_score: number
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           course_id: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           passing_score?: number
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           course_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           passing_score?: number
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -709,12 +769,14 @@ export type Database = {
           completed_at: string | null
           course_id: string
           created_at: string
+          created_by: string | null
           id: string
           last_accessed_at: string | null
           progress_percentage: number
           started_at: string | null
           status: string
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
@@ -722,12 +784,14 @@ export type Database = {
           completed_at?: string | null
           course_id: string
           created_at?: string
+          created_by?: string | null
           id?: string
           last_accessed_at?: string | null
           progress_percentage?: number
           started_at?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
@@ -735,12 +799,14 @@ export type Database = {
           completed_at?: string | null
           course_id?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           last_accessed_at?: string | null
           progress_percentage?: number
           started_at?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -759,11 +825,13 @@ export type Database = {
           attempt_number: number
           completed_at: string
           created_at: string
+          created_by: string | null
           id: string
           passed: boolean
           quiz_id: string
           score: number
           total_questions: number
+          updated_by: string | null
           user_id: string
         }
         Insert: {
@@ -771,11 +839,13 @@ export type Database = {
           attempt_number?: number
           completed_at?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           passed: boolean
           quiz_id: string
           score: number
           total_questions: number
+          updated_by?: string | null
           user_id: string
         }
         Update: {
@@ -783,11 +853,13 @@ export type Database = {
           attempt_number?: number
           completed_at?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           passed?: boolean
           quiz_id?: string
           score?: number
           total_questions?: number
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -824,24 +896,30 @@ export type Database = {
       users: {
         Row: {
           created_at: string | null
+          created_by: string | null
           group_id: string | null
           id: string
           location_id: string | null
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           group_id?: string | null
           id?: string
           location_id?: string | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           group_id?: string | null
           id?: string
           location_id?: string | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
