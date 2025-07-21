@@ -76,6 +76,8 @@ public/         → Assets estáticos
 - **Auditoría de seguridad** (Snyk, CodeQL, OWASP ZAP)
 - **SDK reutilizable** para nuevas integraciones
 - **Sistema de roles** (admin/user/barista) con Row Level Security
+- **LocationSwitcher** para gestión multi-ubicación
+- **Campos de auditoría** automáticos en todas las tablas
 
 ## 📊 Diagrama de Arquitectura
 
@@ -270,9 +272,96 @@ const client = new TupaHub({
 4. PR con descripción detallada y screenshots
 
 ### Roles y Permisos
-- **Admin**: Acceso completo + gestión de usuarios
-- **Usuario**: Acceso a módulos según configuración
-- **Barista**: Solo acceso a operaciones básicas
+- **Admin**: Acceso completo + gestión de usuarios + bypass de filtros de ubicación
+- **Usuario**: Acceso a módulos según configuración y ubicación asignada
+- **Barista**: Solo acceso a operaciones básicas de su ubicación
+
+## 📍 LocationSwitcher - Gestión Multi-Ubicación
+
+### Uso del Componente
+```tsx
+import { LocationSwitcher } from '@/components/LocationSwitcher';
+
+// El componente se renderiza automáticamente solo si:
+// - El usuario tiene acceso a múltiples ubicaciones
+// - El usuario está autenticado
+function Header() {
+  return (
+    <div className="header">
+      <LocationSwitcher />
+    </div>
+  );
+}
+```
+
+### Características
+- **Auto-hide**: Se oculta automáticamente si solo hay una ubicación
+- **Fallback inteligente**: Lógica de respaldo para determinar ubicación activa
+- **Validación de acceso**: Solo muestra ubicaciones del grupo del usuario
+- **Estado de carga**: UI responsiva durante cambios de ubicación
+- **Persistencia**: Recuerda la última ubicación seleccionada
+
+### Lógica de Fallback
+1. **Ubicación preferida** (de sessionStorage o parámetro)
+2. **Ubicación asignada** al usuario (`users.location_id`)
+3. **Ubicación principal** del grupo (`locations.is_main = true`)
+4. **Primera ubicación** disponible en el grupo
+
+### Seguridad
+- Verificación JWT en cada cambio
+- Validación de pertenencia al grupo
+- RLS policies automáticas
+- Logs de auditoría en cambios
+
+## 🔍 Campos de Auditoría
+
+### Implementación Automática
+Todas las tablas incluyen campos de auditoría que se populan automáticamente:
+
+```sql
+-- Campos añadidos a todas las tablas
+created_by UUID REFERENCES auth.users(id)
+updated_by UUID REFERENCES auth.users(id)
+
+-- Trigger automático
+CREATE TRIGGER audit_[table_name]
+  BEFORE INSERT OR UPDATE ON public.[table_name]
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_audit_fields();
+```
+
+### Tablas con Auditoría
+- ✅ `recipes` - Recetas por ubicación
+- ✅ `consumptions` - Datos de consumo
+- ✅ `clients` - Información de clientes
+- ✅ `orders` - Órdenes por ubicación
+- ✅ `locations` - Ubicaciones y sucursales
+- ✅ `groups` - Grupos de ubicaciones
+- ✅ `users` - Usuarios del sistema
+- ✅ `instructors` - Instructores de cursos
+- ✅ `courses` - Cursos de capacitación
+- ✅ `course_modules` - Módulos de cursos
+- ✅ `quizzes` - Evaluaciones
+- ✅ `quiz_questions` - Preguntas de evaluaciones
+- ✅ `user_course_progress` - Progreso de usuarios
+- ✅ `user_quiz_attempts` - Intentos de evaluaciones
+- ✅ `client_configs` - Configuraciones por cliente
+- ✅ `integration_logs` - Logs de integraciones
+- ✅ `pos_sync_logs` - Logs de sincronización POS
+- ✅ `pos_sync_status` - Estado de sincronización
+
+### Función de Backfill
+```bash
+# Edge function para poblar registros existentes
+curl -X POST https://your-project.supabase.co/functions/v1/backfill-audit-fields \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Beneficios
+- **Trazabilidad completa**: Quién creó/modificó cada registro
+- **Compliance**: Cumplimiento con requisitos de auditoría
+- **Debugging**: Facilita la resolución de problemas
+- **Reportes**: Análisis de actividad por usuario
 
 ## 🚨 Troubleshooting
 
