@@ -13,7 +13,7 @@ export class LoggedSupabaseClient {
   async query<T = any>(
     operation: string,
     tableName: string,
-    queryFn: () => Promise<{ data: T | null; error: any }>
+    queryFn: () => any
   ): Promise<{ data: T | null; error: any }> {
     const startTime = Date.now();
     
@@ -36,57 +36,57 @@ export class LoggedSupabaseClient {
   }
 
   /**
-   * Select with logging
+   * Select with logging - uses the original client methods
    */
-  async select<T = any>(tableName: string, query?: string) {
+  async selectWithLogging<T = any>(tableName: string, query?: string) {
     return this.query<T[]>('SELECT', tableName, () => {
-      let queryBuilder = this.client.from(tableName).select(query || '*');
+      const queryBuilder = this.client.from(tableName as any).select(query || '*');
       return queryBuilder;
     });
   }
 
   /**
-   * Insert with logging
+   * Insert with logging - uses the original client methods
    */
-  async insert<T = any>(tableName: string, data: any) {
+  async insertWithLogging<T = any>(tableName: string, data: any) {
     return this.query<T>('INSERT', tableName, () => {
-      return this.client.from(tableName).insert(data).select();
+      return this.client.from(tableName as any).insert(data).select();
     });
   }
 
   /**
-   * Update with logging
+   * Update with logging - uses the original client methods
    */
-  async update<T = any>(tableName: string, data: any, filter: any) {
+  async updateWithLogging<T = any>(tableName: string, data: any, filter: any) {
     return this.query<T>('UPDATE', tableName, () => {
-      return this.client.from(tableName).update(data).match(filter).select();
+      return this.client.from(tableName as any).update(data).match(filter).select();
     });
   }
 
   /**
-   * Delete with logging
+   * Delete with logging - uses the original client methods
    */
-  async delete<T = any>(tableName: string, filter: any) {
+  async deleteWithLogging<T = any>(tableName: string, filter: any) {
     return this.query<T>('DELETE', tableName, () => {
-      return this.client.from(tableName).delete().match(filter);
+      return this.client.from(tableName as any).delete().match(filter);
     });
   }
 
   /**
-   * Upsert with logging
+   * Upsert with logging - uses the original client methods
    */
-  async upsert<T = any>(tableName: string, data: any) {
+  async upsertWithLogging<T = any>(tableName: string, data: any) {
     return this.query<T>('UPSERT', tableName, () => {
-      return this.client.from(tableName).upsert(data).select();
+      return this.client.from(tableName as any).upsert(data).select();
     });
   }
 
   /**
-   * Call RPC function with logging
+   * Call RPC function with logging - uses the original client methods
    */
-  async rpc<T = any>(functionName: string, params?: any) {
+  async rpcWithLogging<T = any>(functionName: string, params?: any) {
     return this.query<T>('RPC', functionName, () => {
-      return this.client.rpc(functionName, params);
+      return this.client.rpc(functionName as any, params);
     });
   }
 

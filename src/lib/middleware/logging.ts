@@ -1,5 +1,4 @@
 import { logger, loggerUtils } from '@/lib/logger';
-import { v4 as uuidv4 } from 'uuid';
 
 // Types for middleware
 interface LoggingRequest extends Request {
@@ -8,29 +7,30 @@ interface LoggingRequest extends Request {
   userId?: string;
 }
 
-interface LoggingResponse extends Response {
-  locals?: {
-    requestId?: string;
-    userId?: string;
-  };
+/**
+ * Generate unique request ID
+ */
+function generateRequestId(): string {
+  return crypto.randomUUID();
 }
 
 /**
- * Request logging middleware for Express-like APIs
+ * Edge Function logging wrapper with request logging
  */
-export function requestLoggingMiddleware() {
-  return (req: LoggingRequest, res: LoggingResponse, next: () => void) => {
-    // Generate unique request ID
-    req.requestId = uuidv4();
-    req.startTime = Date.now();
-
+export function withRequestLogging<T extends any[], R>(
+  handler: (req: Request, ...args: T) => Promise<Response>,
+  functionName: string
+) {
+  return async (req: Request, ...args: T): Promise<Response> => {
+    const requestId = generateRequestId();
+    const startTime = Date.now();
+    
     // Extract user ID from auth header if available
     const authHeader = req.headers.get('authorization');
+    let userId: string | undefined;
     if (authHeader) {
-      // This would need to be adapted based on your auth implementation
       try {
-        // Extract user ID from JWT or session
-        req.userId = extractUserIdFromAuth(authHeader);
+        userId = extractUserIdFromAuth(authHeader);
       } catch (error) {
         // Ignore auth extraction errors for logging
       }
@@ -40,71 +40,48 @@ export function requestLoggingMiddleware() {
     loggerUtils.logRequest(
       req.method,
       req.url,
-      req.userId,
-      req.requestId
+      userId,
+      requestId
     );
 
-    // Override response methods to log responses
-    const originalSend = res.send;
-    const originalJson = res.json;
-    const originalEnd = res.end;
-
-    const logResponse = () => {
-      const duration = req.startTime ? Date.now() - req.startTime : 0;
+    try {
+      const response = await handler(req, ...args);
+      const duration = Date.now() - startTime;
+      
+      // Log successful response
       loggerUtils.logResponse(
         req.method,
         req.url,
-        res.status,
+        response.status,
         duration,
-        req.userId,
-        req.requestId
+        userId,
+        requestId
       );
-    };
 
-    res.send = function(data: any) {
-      logResponse();
-      return originalSend.call(this, data);
-    };
+      return response;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      
+      // Log error
+      loggerUtils.logError(
+        req.method,
+        req.url,
+        error as Error,
+        userId,
+        requestId
+      );
 
-    res.json = function(data: any) {
-      logResponse();
-      return originalJson.call(this, data);
-    };
+      // Log additional context
+      logger.error('Request Error Context', {
+        requestId,
+        userId,
+        userAgent: req.headers.get('user-agent'),
+        referer: req.headers.get('referer'),
+        timestamp: new Date().toISOString()
+      });
 
-    res.end = function(chunk?: any, encoding?: any) {
-      logResponse();
-      return originalEnd.call(this, chunk, encoding);
-    };
-
-    next();
-  };
-}
-
-/**
- * Error logging middleware for APIs
- */
-export function errorLoggingMiddleware() {
-  return (error: Error, req: LoggingRequest, res: LoggingResponse, next: (error?: Error) => void) => {
-    // Log the error with request context
-    loggerUtils.logError(
-      req.method,
-      req.url,
-      error,
-      req.userId,
-      req.requestId
-    );
-
-    // Log additional context if available
-    logger.error('Error Context', {
-      requestId: req.requestId,
-      userId: req.userId,
-      userAgent: req.headers.get('user-agent'),
-      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-      referer: req.headers.get('referer'),
-      timestamp: new Date().toISOString()
-    });
-
-    next(error);
+      throw error;
+    }
   };
 }
 
@@ -116,7 +93,7 @@ export function withLogging<T extends any[], R>(
   functionName: string
 ) {
   return async (...args: T): Promise<R> => {
-    const requestId = uuidv4();
+    const requestId = generateRequestId();
     const startTime = Date.now();
     
     logger.info('Edge Function Started', {
@@ -273,8 +250,7 @@ export function logApplicationStop(reason?: string) {
 }
 
 export default {
-  requestLoggingMiddleware,
-  errorLoggingMiddleware,
+  withRequestLogging,
   withLogging,
   withDatabaseLogging,
   handleApiError,
