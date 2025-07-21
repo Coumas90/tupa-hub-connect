@@ -377,9 +377,59 @@ curl -X POST https://your-project.supabase.co/functions/v1/backfill-audit-fields
 - **Database**: Supabase SQL logs
 - **Network**: Network tab del DevTools
 
+## 📞 Support & Documentation
+
+### 📋 Technical Documentation
+- **[Deployment Guide](docs/DEPLOY.md)** - Environment variables, deployment processes, troubleshooting
+- **[Onboarding Guide](docs/ONBOARDING.md)** - Developer setup, debugging guide, best practices
+- **[Architecture Diagram](docs/ARCHITECTURE.drawio)** - System architecture and data flow
+- **[Security Guidelines](SECURITY.md)** - Security procedures and audit requirements
+
+### 🆘 Support Contacts
+
+**Development Team:**
+- **Tech Lead**: [tech-lead@company.com](mailto:tech-lead@company.com)
+- **DevOps Engineer**: [devops@company.com](mailto:devops@company.com)
+- **Team Slack**: #tupahub-dev
+
+**Platform Support:**
+- **Lovable Support**: [support@lovable.dev](mailto:support@lovable.dev)
+- **Supabase Support**: [Dashboard Support](https://supabase.com/dashboard/support)
+
+**Emergency Contacts:**
+- **On-call Engineer**: [oncall@company.com](mailto:oncall@company.com) (24/7)
+- **Incident Response**: [incidents@company.com](mailto:incidents@company.com)
+
+**Business Contacts:**
+- **Product Owner**: [product@company.com](mailto:product@company.com)
+- **Customer Success**: [success@company.com](mailto:success@company.com)
+
+### 🐛 Issue Reporting
+
+**For Bugs & Technical Issues:**
+1. Check existing documentation first
+2. Search previous issues in repository
+3. Create GitHub issue with:
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Console logs and error messages
+   - Environment details (browser, device)
+
+**For Security Issues:**
+- **Email**: [security@company.com](mailto:security@company.com)
+- **PGP Key**: Available on request
+- **Response Time**: 24 hours for critical issues
+
+**For Feature Requests:**
+- Create GitHub discussion
+- Include business justification
+- Provide mockups or examples if possible
+
 ---
 
 <div align="center">
-  <strong>Construido con ❤️ por el equipo TUPÁ</strong><br>
-  <em>Conectando el presente con el futuro del retail</em>
+  <strong>Built with ❤️ by the TUPÁ Team</strong><br>
+  <em>Connecting the present with the future of retail</em><br><br>
+  
+  **Need help?** Check our [troubleshooting docs](https://docs.lovable.dev/tips-tricks/troubleshooting) or contact support above.
 </div>

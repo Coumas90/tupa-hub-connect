@@ -1,136 +1,321 @@
-# 🚀 Guía de Despliegue - TUPÁ Hub
+# Deployment Guide - TUPÁ Hub
 
-## 📦 Instalación
+## 🚀 Overview
 
-### Clonar el repositorio
-```bash
-git clone https://github.com/[tu-usuario]/tupa-hub.git
-cd tupa-hub
+TUPÁ Hub is deployed using Lovable's hosting platform with Supabase as the backend. This guide covers deployment processes, environment configuration, and troubleshooting.
+
+## 📋 Prerequisites
+
+- Supabase project configured
+- Lovable account with project access
+- GitHub repository (optional, for CI/CD)
+- Domain name (optional, for custom domains)
+
+## 🔧 Environment Configuration
+
+### ⚠️ Important: No VITE_ Variables
+
+**This project does NOT use VITE_ environment variables** due to Lovable limitations. Configuration is centralized in `src/lib/config.ts`.
+
+### Supabase Configuration
+
+**Required in Supabase Dashboard > Settings > API:**
+```
+Project URL: https://your-project-id.supabase.co
+Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Service Role Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (backend only)
 ```
 
-### Instalar dependencias
+**Required Supabase Secrets** (for Edge Functions):
 ```bash
+# Core Supabase
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@db.your-project-id.supabase.co:5432/postgres
+
+# External Services
+OPENAI_API_KEY=sk-...  # For AI features
+RESEND_API_KEY=re_...  # For email notifications
+```
+
+### Client-Specific Configuration
+
+**Stored in `client_configs` table** (configured via Admin UI):
+```sql
+-- Example client configuration
+INSERT INTO client_configs (client_id, pos_type, pos_version, sync_frequency, simulation_mode) 
+VALUES ('client-123', 'fudo', 'v1', 15, false);
+```
+
+**POS API Configuration** (per client):
+- Fudo POS: API URL + API Key
+- Bistrosoft: API URL + Authentication credentials
+- Odoo: Server URL + Database + Username + Password
+
+## 🏗️ Deployment Process
+
+### 1. Automatic Deployment (Recommended)
+
+**Via Lovable Dashboard:**
+1. Push changes to your repository
+2. Lovable automatically detects changes
+3. Build process starts automatically
+4. Preview available at `https://preview--your-project.lovable.app`
+5. Production deploy via "Publish" button
+
+**Build Process:**
+```bash
+# Automatic build steps
+npm install           # Install dependencies
+npm run build        # Vite production build
+# Edge functions deploy automatically
+# Static files deployed to CDN
+```
+
+### 2. Manual Deployment
+
+**For development testing:**
+```bash
+# Local build test
+npm run build
+npm run preview
+
+# Local development
+npm run dev
+```
+
+### 3. Edge Functions Deployment
+
+**Automatic with main deployment:**
+- All functions in `supabase/functions/` deploy automatically
+- Configuration from `supabase/config.toml` applied
+- Secrets must be configured in Supabase Dashboard
+
+**Manual Edge Function Deploy:**
+```bash
+# Via Supabase CLI (if needed)
+supabase functions deploy --project-ref your-project-id
+```
+
+## 🌐 Domain Configuration
+
+### Custom Domain Setup
+
+**In Lovable Dashboard:**
+1. Go to Project Settings > Domains
+2. Add your custom domain
+3. Configure DNS records:
+   ```
+   Type: CNAME
+   Name: @ (or subdomain)
+   Value: your-project.lovable.app
+   ```
+4. SSL certificates auto-provisioned
+
+### Environment-Specific URLs
+
+```bash
+# Development
+LOCAL: http://localhost:8080
+
+# Staging
+PREVIEW: https://preview--your-project.lovable.app
+
+# Production
+PRODUCTION: https://your-project.lovable.app
+CUSTOM_DOMAIN: https://your-domain.com
+```
+
+## 🔒 Security Configuration
+
+### Authentication Settings
+
+**Supabase Auth Configuration:**
+```bash
+# Auth Settings (Dashboard > Authentication > Settings)
+Site URL: https://your-production-domain.com
+Redirect URLs: 
+  - https://preview--your-project.lovable.app
+  - https://your-production-domain.com
+  - http://localhost:8080 (development only)
+
+# Email Settings
+Email Confirmations: Disabled (for faster testing)
+Email Invitations: Enabled
+```
+
+### Content Security Policy (CSP)
+
+**Production CSP** (`public/_headers`):
+```
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://your-project-id.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://your-project-id.supabase.co wss://your-project-id.supabase.co; font-src 'self' data:;
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+```
+
+**Development CSP** (more permissive):
+```
+/*
+  Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https: wss:;
+```
+
+### Row Level Security (RLS)
+
+**All tables have RLS enabled:**
+```sql
+-- Verify RLS is enabled
+SELECT schemaname, tablename, rowsecurity 
+FROM pg_tables 
+WHERE schemaname = 'public' AND rowsecurity = true;
+```
+
+## 🚨 Troubleshooting Deployment
+
+### Common Build Issues
+
+**Dependency Errors:**
+```bash
+# Clear cache and reinstall
+rm -rf node_modules
+rm package-lock.json
 npm install
 ```
 
-## 🔐 Variables de Entorno
-
-⚠️ **Importante**: Este proyecto **no usa archivos `.env`** por limitación de Lovable. Las configuraciones se manejan de la siguiente manera:
-
-### Variables públicas (en `src/lib/config.ts`)
-```typescript
-SUPABASE_URL=https://hmmaubkxfewzlypywqff.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### Variables secretas (en Supabase Secrets)
+**TypeScript Errors:**
 ```bash
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_DB_URL=
-REACT_APP_SENTRY_DSN=
-ODOO_API_KEY=
-POS_API_KEYS=
-NOTIFICATION_TOKENS=
-```
+# Type check only
+npx tsc --noEmit
 
-### Configuración por cliente
-Las credenciales de POS y Odoo se configuran por cliente en la interfaz de administración, no como variables de entorno.
-
-## 🚀 Deploy Local y Producción
-
-### Desarrollo Local
-```bash
-# Levantar servidor de desarrollo
-npm run dev
-
-# El servidor estará disponible en:
-# http://localhost:8080
-```
-
-### Preview de Producción
-```bash
-# Construir y previsualizar
+# Build with type checking
 npm run build
-npm run preview
 ```
 
-### Deploy en Lovable
-1. El deploy se hace automáticamente desde la interfaz de Lovable
-2. Click en "Publish" en la esquina superior derecha
-3. La app estará disponible en: `https://[nombre-proyecto].lovable.app`
+### Edge Function Issues
 
-### Deploy en Vercel (alternativo)
+**Function not deploying:**
 ```bash
-# Conectar el repositorio de GitHub a Vercel
-# Configurar las variables de entorno en Vercel Dashboard
-# Deploy automático en cada push a main
+# Check function syntax
+cd supabase/functions/your-function
+deno check index.ts
+
+# Check configuration
+cat ../../config.toml
 ```
 
-### Deploy manual
+**Function errors:**
 ```bash
-# Construir para producción
-npm run build
-
-# Los archivos estáticos estarán en dist/
-# Subir a cualquier hosting estático (Netlify, Vercel, etc.)
+# View logs in Supabase Dashboard
+https://supabase.com/dashboard/project/your-project-id/functions/your-function/logs
 ```
 
-## 🧪 Testing
+### Database Migration Issues
 
-### Tests Unitarios
+**Failed migration:**
+```sql
+-- Check migration status
+SELECT * FROM supabase_migrations.schema_migrations ORDER BY version DESC;
+
+-- Rollback if needed (contact support)
+```
+
+### Environment Issues
+
+**Auth redirect errors:**
+1. Check Site URL in Supabase Auth settings
+2. Verify Redirect URLs include all environments
+3. Test with different browsers/incognito mode
+
+**API connection errors:**
+1. Verify Supabase URL and keys in `src/lib/config.ts`
+2. Check CORS configuration in Supabase
+3. Verify RLS policies allow intended access
+
+## 📊 Monitoring & Performance
+
+### Metrics to Monitor
+
+**Supabase Dashboard:**
+- API requests per minute
+- Database query performance
+- Edge function execution time
+- Error rates by function
+
+**Application Metrics:**
+- Page load times
+- User authentication success rate
+- POS synchronization success rate
+- Integration error rates
+
+### Performance Optimization
+
+**Frontend:**
 ```bash
-# Correr tests una vez
-npm test
+# Bundle analysis
+npm run build -- --analyze
 
-# Correr tests en modo watch
-npm run test:watch
-
-# Correr tests con coverage
-npm run test:coverage
-
-# Interfaz visual de tests
-npm run test:ui
+# Lighthouse performance audit
+npx lighthouse https://your-domain.com --view
 ```
 
-### Tests de Estrés (Artillery)
+**Backend:**
+- Monitor slow queries in Supabase dashboard
+- Optimize RLS policies for performance
+- Use database indexes appropriately
+
+## 🔄 Rollback Procedures
+
+### Application Rollback
+
+**Via Lovable:**
+1. Go to project history
+2. Select previous working version
+3. Click "Revert to this version"
+4. Confirm rollback
+
+### Database Rollback
+
+**Migration rollback** (contact Supabase support):
+- Migrations are not automatically reversible
+- Database backup restoration may be required
+- Always test migrations in staging first
+
+## 🧪 Testing in Production
+
+### Smoke Tests
+
+**Post-deployment checklist:**
+- [ ] Login/logout functionality
+- [ ] LocationSwitcher works for multi-location users
+- [ ] Admin panel accessible to admin users
+- [ ] POS sync test (simulation mode)
+- [ ] Email notifications working
+- [ ] Edge functions responding
+
+### Load Testing
+
+**Basic load test:**
 ```bash
-# Instalar Artillery globalmente
-npm install -g artillery
+# Using Apache Bench
+ab -n 100 -c 10 https://your-domain.com/
 
-# Correr test de carga básico
-artillery run load-test.yml
-
-# Test específico de refresh tokens
-artillery run load-test.yml --target https://hmmaubkxfewzlypywqff.supabase.co/functions/v1/
-
-# Ver reporte detallado
-artillery run load-test.yml --output report.json
-artillery report report.json
+# Monitor Supabase dashboard during test
 ```
 
-### Linting y Formato
-```bash
-# Verificar formato de código
-npm run lint
+## 📞 Emergency Contacts
 
-# Correr todas las verificaciones
-npm run build  # Incluye type checking
-```
+**For deployment emergencies:**
+- Lovable Support: support@lovable.dev
+- Supabase Support: https://supabase.com/dashboard/support
+- Team Lead: [Internal contact]
+- DevOps Engineer: [Internal contact]
 
-## 🔧 Configuración Adicional
+---
 
-### Supabase
-1. Las migraciones se ejecutan automáticamente
-2. Edge Functions se despliegan automáticamente
-3. RLS policies están configuradas para seguridad
-
-### Monitoring
-- Logs disponibles en Supabase Dashboard
-- Integración con Sentry para errores en producción
-- Artillery para tests de rendimiento
-
-### Seguridad
-- CSP headers configurados
-- RLS policies activas
-- Secrets manejados por Supabase
-- No hay credenciales en código fuente
+**⚠️ Important Notes:**
+- Always test deployments in preview environment first
+- Keep Supabase backups current
+- Monitor error rates after each deployment
+- Document any manual configuration changes
