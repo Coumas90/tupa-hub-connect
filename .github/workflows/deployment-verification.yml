@@ -30,6 +30,23 @@ jobs:
           echo "Waiting 30 seconds for deployment to stabilize..."
           sleep 30
 
+      - name: Verify Security Headers
+        env:
+          PRODUCTION_URL: ${{ github.event.inputs.url || 'tuapp.com' }}
+        run: |
+          response=$(curl -I https://${{ env.PRODUCTION_URL }}/consumo)
+          echo "$response"
+          
+          if ! echo "$response" | grep -i "X-Frame-Options: DENY"; then
+            echo "❌ X-Frame-Options missing"
+            exit 1
+          fi
+          
+          if ! echo "$response" | grep -i "Content-Security-Policy"; then
+            echo "❌ CSP header missing"
+            exit 1
+          fi
+
       - name: Verify security headers
         env:
           VERIFICATION_URL: ${{ github.event.inputs.url || 'https://tuapp.com' }}
