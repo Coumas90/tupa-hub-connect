@@ -1,5 +1,5 @@
 import { getClientConfig } from '../config/client.config';
-import { posRegistry } from './pos.registry';
+import { legacyPosRegistry } from '../../../integrations/pos/registry';
 import { loadMockData } from '../mock/mock.loader';
 import { storeParsedSales } from '../storage/sales.storage';
 import { syncSalesToOdoo } from '../odoo/odoo.sync';
@@ -42,7 +42,7 @@ export async function syncClientPOS(clientId: string): Promise<SyncResult> {
 
     logInfo(clientId, client.pos_type as any, 'sync', `Using POS type: ${client.pos_type}, simulation: ${client.simulation_mode}`);
 
-    const posAdapter = posRegistry[client.pos_type];
+    const posAdapter = legacyPosRegistry[client.pos_type];
     if (!posAdapter) {
       const errorMsg = `POS adapter not found for type: ${client.pos_type}`;
       logError(clientId, 'system', 'sync', errorMsg);

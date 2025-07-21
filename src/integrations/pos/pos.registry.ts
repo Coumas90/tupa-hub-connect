@@ -1,7 +1,5 @@
-import * as FudoAdapter from './fudo/v1/fudo.service';
-import * as BistrosoftAdapter from './bistrosoft/v1/bistrosoft.service';
+// Legacy registry - DEPRECATED
+// Use src/integrations/pos/registry.ts instead
+import { legacyPosRegistry } from './registry';
 
-export const posRegistry = {
-  fudo: { version: 'v1', adapter: FudoAdapter },
-  bistrosoft: { version: 'v1', adapter: BistrosoftAdapter },
-};
+export const posRegistry = legacyPosRegistry;
