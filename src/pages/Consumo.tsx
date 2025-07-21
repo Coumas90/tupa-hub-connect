@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import { ConsumptionFilters } from '@/components/admin/ConsumptionFilters';
 import { ConsumptionSummary } from '@/components/admin/ConsumptionSummary';
+import { ConsumptionCharts } from '@/components/admin/ConsumptionCharts';
 import {
   TrendingUp,
   Package,
@@ -151,7 +152,10 @@ const Consumo = (): JSX.Element => {
           </Card>
         </div>
 
-        {/* Gráficos */}
+        {/* Advanced Consumption Charts */}
+        <ConsumptionCharts />
+
+        {/* Original Charts */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Gráfico de Consumo Mensual */}
           <Card className="shadow-warm">
