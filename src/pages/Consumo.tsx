@@ -9,6 +9,7 @@ import { ConsumptionFilters } from '@/components/admin/ConsumptionFilters';
 import { ConsumptionSummary } from '@/components/admin/ConsumptionSummary';
 import { ConsumptionCharts } from '@/components/admin/ConsumptionCharts';
 import { ConsumptionAlerts } from '@/components/admin/ConsumptionAlerts';
+import { ConsumptionQARunner } from '@/components/admin/ConsumptionQARunner';
 import {
   TrendingUp,
   Package,
@@ -68,14 +69,35 @@ const Consumo = (): JSX.Element => {
     efficiency: 87
   };
 
+  const [showQARunner, setShowQARunner] = useState(false);
+
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
     // Here you would typically fetch new data based on filters
     console.log('Filters changed:', newFilters);
   };
 
+  if (showQARunner) {
+    return (
+      <ModuleAccessGuard moduleName="consumo">
+        <div className="container mx-auto p-6">
+          <div className="mb-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowQARunner(false)}
+              className="mb-4"
+            >
+              ← Volver a Consumo
+            </Button>
+          </div>
+          <ConsumptionQARunner />
+        </div>
+      </ModuleAccessGuard>
+    );
+  }
+
   return (
-    <ModuleAccessGuard module="Consumo" requiredRole="encargado">
+    <ModuleAccessGuard moduleName="consumo">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
@@ -90,7 +112,9 @@ const Consumo = (): JSX.Element => {
         </div>
 
         {/* Filters */}
-        <ConsumptionFilters onFiltersChange={handleFiltersChange} />
+        <div data-testid="consumption-filters">
+          <ConsumptionFilters onFiltersChange={handleFiltersChange} />
+        </div>
 
         {/* AI-Powered Consumption Alerts */}
         <ConsumptionAlerts />
