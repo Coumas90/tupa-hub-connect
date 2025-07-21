@@ -21,6 +21,7 @@ import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
+import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 
@@ -64,6 +65,7 @@ const App = () => {
               <Route path="barista-pool" element={<BaristaPool />} />
               <Route path="faq" element={<FAQ />} />
               <Route path="admin/integrations" element={<AdminIntegrations />} />
+              <Route path="admin/courses" element={<AdminCourses />} />
               <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
               <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
               <Route path="auth" element={<LoginPage />} />

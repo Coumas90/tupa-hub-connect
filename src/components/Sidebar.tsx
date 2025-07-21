@@ -28,6 +28,7 @@ const navigation = [
   { name: 'Barista Pool', href: '/barista-pool', icon: Clock },
   { name: 'FAQ', href: '/faq', icon: HelpCircle },
   { name: 'Admin POS', href: '/admin/integrations', icon: Settings },
+  { name: 'Admin Cursos', href: '/admin/courses', icon: GraduationCap },
 ];
 
 export function Sidebar() {

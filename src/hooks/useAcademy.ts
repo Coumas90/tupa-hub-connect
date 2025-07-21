@@ -68,6 +68,16 @@ export interface UserQuizAttempt {
   completed_at: string;
 }
 
+export interface CourseModule {
+  id: string;
+  course_id: string;
+  title: string;
+  description?: string;
+  content?: string;
+  duration_minutes?: number;
+  order_index: number;
+}
+
 export function useAcademy() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -99,6 +109,40 @@ export function useAcademy() {
         description: "Failed to load courses",
         variant: "destructive",
       });
+    }
+  };
+
+  // Fetch all courses (for admin) - includes inactive courses
+  const fetchAllCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          instructor:instructors(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCourses((data || []) as Course[]);
+    } catch (err) {
+      console.error('Error fetching all courses:', err);
+      setError('Failed to load courses');
+    }
+  };
+
+  // Fetch instructors
+  const fetchInstructors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setInstructors((data || []) as Instructor[]);
+    } catch (err) {
+      console.error('Error fetching instructors:', err);
     }
   };
 
@@ -169,6 +213,23 @@ export function useAcademy() {
         variant: "destructive",
       });
       return null;
+    }
+  };
+
+  // Fetch course modules
+  const fetchCourseModules = async (courseId: string): Promise<CourseModule[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('course_modules')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index');
+
+      if (error) throw error;
+      return (data || []) as CourseModule[];
+    } catch (err) {
+      console.error('Error fetching course modules:', err);
+      throw err;
     }
   };
 
@@ -297,6 +358,196 @@ export function useAcademy() {
     }
   };
 
+  // Admin functions
+  const createCourse = async (courseData: any) => {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .insert(courseData);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error creating course:', err);
+      throw err;
+    }
+  };
+
+  const updateCourse = async (courseId: string, courseData: any) => {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .update(courseData)
+        .eq('id', courseId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error updating course:', err);
+      throw err;
+    }
+  };
+
+  const deleteCourse = async (courseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error deleting course:', err);
+      throw err;
+    }
+  };
+
+  const createCourseModule = async (courseId: string, moduleData: any) => {
+    try {
+      const { error } = await supabase
+        .from('course_modules')
+        .insert({ ...moduleData, course_id: courseId });
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error creating course module:', err);
+      throw err;
+    }
+  };
+
+  const updateCourseModule = async (moduleId: string, moduleData: any) => {
+    try {
+      const { error } = await supabase
+        .from('course_modules')
+        .update(moduleData)
+        .eq('id', moduleId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error updating course module:', err);
+      throw err;
+    }
+  };
+
+  const deleteCourseModule = async (moduleId: string) => {
+    try {
+      const { error } = await supabase
+        .from('course_modules')
+        .delete()
+        .eq('id', moduleId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error deleting course module:', err);
+      throw err;
+    }
+  };
+
+  const createQuiz = async (courseId: string, quizData: any) => {
+    try {
+      // First create the quiz
+      const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .insert({
+          course_id: courseId,
+          title: quizData.title,
+          description: quizData.description,
+          passing_score: quizData.passing_score
+        })
+        .select()
+        .single();
+
+      if (quizError) throw quizError;
+
+      // Then create the questions
+      const questions = quizData.questions.map((q: any) => ({
+        quiz_id: quiz.id,
+        question: q.question,
+        options: q.options,
+        correct_answer_index: q.correct_answer_index,
+        explanation: q.explanation,
+        order_index: q.order_index
+      }));
+
+      const { error: questionsError } = await supabase
+        .from('quiz_questions')
+        .insert(questions);
+
+      if (questionsError) throw questionsError;
+    } catch (err: any) {
+      console.error('Error creating quiz:', err);
+      throw err;
+    }
+  };
+
+  const updateQuiz = async (quizId: string, quizData: any) => {
+    try {
+      // Update quiz info
+      const { error: quizError } = await supabase
+        .from('quizzes')
+        .update({
+          title: quizData.title,
+          description: quizData.description,
+          passing_score: quizData.passing_score
+        })
+        .eq('id', quizId);
+
+      if (quizError) throw quizError;
+
+      // Delete existing questions
+      const { error: deleteError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .eq('quiz_id', quizId);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new questions
+      const questions = quizData.questions.map((q: any) => ({
+        quiz_id: quizId,
+        question: q.question,
+        options: q.options,
+        correct_answer_index: q.correct_answer_index,
+        explanation: q.explanation,
+        order_index: q.order_index
+      }));
+
+      const { error: questionsError } = await supabase
+        .from('quiz_questions')
+        .insert(questions);
+
+      if (questionsError) throw questionsError;
+    } catch (err: any) {
+      console.error('Error updating quiz:', err);
+      throw err;
+    }
+  };
+
+  const deleteQuiz = async (quizId: string) => {
+    try {
+      // Delete questions first (should cascade, but being explicit)
+      const { error: questionsError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .eq('quiz_id', quizId);
+
+      if (questionsError) throw questionsError;
+
+      // Delete quiz
+      const { error } = await supabase
+        .from('quizzes')
+        .delete()
+        .eq('id', quizId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error deleting quiz:', err);
+      throw err;
+    }
+  };
+
+  const refreshCourses = () => {
+    fetchAllCourses();
+  };
+
   // Initialize data
   useEffect(() => {
     const loadData = async () => {
@@ -304,7 +555,8 @@ export function useAcademy() {
       try {
         await Promise.all([
           fetchCourses(),
-          fetchUserProgress()
+          fetchUserProgress(),
+          fetchInstructors()
         ]);
       } finally {
         setLoading(false);
@@ -321,9 +573,22 @@ export function useAcademy() {
     loading,
     error,
     fetchQuiz,
+    fetchCourseModules,
+    fetchInstructors,
     updateCourseProgress,
     submitQuizAttempt,
     getUserQuizAttempts,
+    refreshCourses,
+    // Admin functions
+    createCourse,
+    updateCourse,
+    deleteCourse,
+    createCourseModule,
+    updateCourseModule,
+    deleteCourseModule,
+    createQuiz,
+    updateQuiz,
+    deleteQuiz,
     refetch: () => {
       fetchCourses();
       fetchUserProgress();
