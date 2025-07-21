@@ -664,6 +664,45 @@ export type Database = {
           },
         ]
       }
+      refresh_tokens: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          expires_at: string
+          id: string
+          is_revoked: boolean
+          last_used_at: string | null
+          parent_token_hash: string | null
+          revoked_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at: string
+          id?: string
+          is_revoked?: boolean
+          last_used_at?: string | null
+          parent_token_hash?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at?: string
+          id?: string
+          is_revoked?: boolean
+          last_used_at?: string | null
+          parent_token_hash?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_course_progress: {
         Row: {
           certificate_url: string | null
@@ -826,9 +865,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      enforce_session_limit: {
+        Args: { target_user_id: string; max_sessions?: number }
+        Returns: undefined
+      }
       is_admin: {
         Args: { _user_id?: string }
         Returns: boolean
+      }
+      revoke_all_user_sessions: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
