@@ -11,16 +11,12 @@ export interface ConsumptionRecord {
   total_items: number;
   average_order_value: number;
   top_categories: string[];
-  payment_methods: Record<string, number>;
-  metadata: {
-    pos_provider: string;
-    sync_timestamp: string;
-    sales_count: number;
-    peak_hour?: number;
-    customer_count?: number;
-  };
+  payment_methods: any;
+  metadata: any;
   created_at: string;
   updated_at: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface ValidationResult {
@@ -254,7 +250,7 @@ export async function getClientConsumption(
   clientId: string,
   dateRange?: { from: string; to: string },
   locationId?: string
-) {
+): Promise<ConsumptionRecord[]> {
   try {
     let query = supabase
       .from('consumptions')
@@ -279,7 +275,7 @@ export async function getClientConsumption(
       throw error;
     }
 
-    return data || [];
+    return (data as unknown as ConsumptionRecord[]) || [];
   } catch (error) {
     console.error('[Consumption Storage] Error in getClientConsumption:', error);
     throw error;
@@ -319,9 +315,9 @@ export async function updateConsumptionRecord(
 
     // Re-aggregate with new data
     const updated = aggregateConsumptionData(
-      existing.client_id,
+      (existing as any).client_id,
       salesData,
-      existing.location_id
+      (existing as any).location_id
     );
 
     // Update record

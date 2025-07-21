@@ -85,26 +85,50 @@ export type Database = {
       }
       consumptions: {
         Row: {
+          average_order_value: number
+          client_id: string
           created_at: string | null
           created_by: string | null
+          date: string
           id: string
           location_id: string | null
+          metadata: Json | null
+          payment_methods: Json | null
+          top_categories: string[] | null
+          total_amount: number
+          total_items: number
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          average_order_value?: number
+          client_id?: string
           created_at?: string | null
           created_by?: string | null
+          date?: string
           id?: string
           location_id?: string | null
+          metadata?: Json | null
+          payment_methods?: Json | null
+          top_categories?: string[] | null
+          total_amount?: number
+          total_items?: number
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          average_order_value?: number
+          client_id?: string
           created_at?: string | null
           created_by?: string | null
+          date?: string
           id?: string
           location_id?: string | null
+          metadata?: Json | null
+          payment_methods?: Json | null
+          top_categories?: string[] | null
+          total_amount?: number
+          total_items?: number
           updated_at?: string | null
           updated_by?: string | null
         }
