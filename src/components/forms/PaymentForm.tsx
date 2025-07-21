@@ -81,20 +81,20 @@ export default function PaymentForm({ onPaymentSuccess, amount }: PaymentFormPro
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto" data-testid="payment-form">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
           <CreditCard className="h-6 w-6" />
           Información de Pago
         </CardTitle>
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-sm text-muted-foreground text-center" data-testid="payment-amount">
           Monto a pagar: ${amount.toFixed(2)}
         </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" data-testid="error-message">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -207,16 +207,28 @@ export default function PaymentForm({ onPaymentSuccess, amount }: PaymentFormPro
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} data-testid="payment-submit">
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="payment-loading" />
                 Procesando pago...
               </>
             ) : (
               `Pagar $${amount.toFixed(2)}`
             )}
           </Button>
+          
+          {error && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full mt-2" 
+              onClick={() => setError('')}
+              data-testid="retry-payment"
+            >
+              Intentar nuevamente
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

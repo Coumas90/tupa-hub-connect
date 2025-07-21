@@ -1,0 +1,38 @@
+{
+  "success": {
+    "success": true,
+    "transaction_id": "txn_1234567890",
+    "amount": 99.99,
+    "currency": "USD",
+    "status": "completed",
+    "payment_method": "card",
+    "timestamp": "2024-01-01T12:00:00Z"
+  },
+  "declined": {
+    "success": false,
+    "error": "Payment declined",
+    "decline_code": "insufficient_funds",
+    "message": "Your card was declined due to insufficient funds",
+    "suggested_actions": [
+      "Try a different payment method",
+      "Contact your bank",
+      "Check your account balance"
+    ]
+  },
+  "network_error": {
+    "success": false,
+    "error": "Network timeout",
+    "message": "Unable to process payment due to network issues",
+    "retry_after": 30
+  },
+  "validation_error": {
+    "success": false,
+    "error": "Validation failed",
+    "message": "Invalid card details provided",
+    "field_errors": {
+      "card_number": "Invalid card number format",
+      "expiry_date": "Card has expired",
+      "cvv": "Invalid CVV code"
+    }
+  }
+}
