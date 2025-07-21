@@ -1,0 +1,102 @@
+name: Deployment Verification
+
+on:
+  deployment_status:
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to verify (e.g., https://tuapp.com)'
+        required: true
+        default: 'https://tuapp.com'
+
+jobs:
+  verify-headers:
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'success' || github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make verification script executable
+        run: chmod +x scripts/verify-deployment.sh
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "Waiting 30 seconds for deployment to stabilize..."
+          sleep 30
+
+      - name: Verify security headers
+        env:
+          VERIFICATION_URL: ${{ github.event.inputs.url || 'https://tuapp.com' }}
+        run: |
+          echo "🚀 Starting security headers verification..."
+          ./scripts/verify-deployment.sh "$VERIFICATION_URL"
+
+      - name: Verify specific endpoints
+        env:
+          VERIFICATION_URL: ${{ github.event.inputs.url || 'https://tuapp.com' }}
+        run: |
+          echo "🔍 Testing critical application endpoints..."
+          
+          # Test main application pages
+          endpoints=("/consumo" "/academia" "/recetas" "/dashboard")
+          
+          for endpoint in "${endpoints[@]}"; do
+            echo "Testing endpoint: $endpoint"
+            response=$(curl -s -o /dev/null -w "%{http_code}" "$VERIFICATION_URL$endpoint" || echo "000")
+            
+            if [[ "$response" == "200" ]] || [[ "$response" == "302" ]] || [[ "$response" == "401" ]]; then
+              echo "✅ $endpoint - HTTP $response (OK)"
+            else
+              echo "❌ $endpoint - HTTP $response (FAILED)"
+              exit 1
+            fi
+          done
+
+      - name: Performance and Security Audit
+        env:
+          VERIFICATION_URL: ${{ github.event.inputs.url || 'https://tuapp.com' }}
+        run: |
+          echo "🏃‍♂️ Running basic performance checks..."
+          
+          # Check response time
+          response_time=$(curl -o /dev/null -s -w "%{time_total}" "$VERIFICATION_URL")
+          echo "Response time: ${response_time}s"
+          
+          # Warn if response time is too high
+          if (( $(echo "$response_time > 3.0" | bc -l) )); then
+            echo "⚠️ WARNING: Response time is high (${response_time}s)"
+          else
+            echo "✅ Response time is acceptable (${response_time}s)"
+          fi
+
+      - name: Create verification report
+        if: always()
+        run: |
+          echo "📊 Deployment Verification Report" > verification-report.md
+          echo "=================================" >> verification-report.md
+          echo "" >> verification-report.md
+          echo "- **Deployment URL**: ${{ github.event.inputs.url || 'https://tuapp.com' }}" >> verification-report.md
+          echo "- **Verification Time**: $(date -u)" >> verification-report.md
+          echo "- **Commit SHA**: ${{ github.sha }}" >> verification-report.md
+          echo "- **Status**: ${{ job.status }}" >> verification-report.md
+          echo "" >> verification-report.md
+          
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "✅ All security headers and endpoints verified successfully!" >> verification-report.md
+          else
+            echo "❌ Verification failed. Check logs for details." >> verification-report.md
+          fi
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-verification-report
+          path: verification-report.md
+          retention-days: 30
