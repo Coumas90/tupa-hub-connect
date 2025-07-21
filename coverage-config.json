@@ -1,0 +1,25 @@
+{
+  "name": "PaymentService Coverage Report",
+  "scripts": {
+    "test:payment-coverage": "vitest run src/__tests__/lib/services/paymentService.test.ts --coverage --reporter=verbose",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage-ui": "vitest run --coverage --ui",
+    "coverage:badges": "npx coverage-badges-cli --source coverage/coverage-summary.json --output badges/",
+    "coverage:open": "open coverage/index.html"
+  },
+  "coverage": {
+    "targets": {
+      "paymentService": {
+        "file": "src/lib/services/paymentService.ts",
+        "minCoverage": 95,
+        "testFile": "src/__tests__/lib/services/paymentService.test.ts"
+      }
+    },
+    "requirements": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}
