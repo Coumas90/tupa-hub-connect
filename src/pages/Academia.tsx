@@ -14,10 +14,14 @@ import {
   Star,
   X,
   ChevronRight,
-  Loader2
+  Loader2,
+  TrendingUp,
+  Target,
+  Lightbulb
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAcademy, type Course, type Quiz } from '@/hooks/useAcademy';
+import { useCourseRecommendations, type CourseRecommendation } from '@/hooks/useCourseRecommendations';
 
 
 export default function Academia() {
@@ -29,6 +33,12 @@ export default function Academia() {
     updateCourseProgress, 
     submitQuizAttempt 
   } = useAcademy();
+  
+  const { 
+    recommendations, 
+    userProfile: recommendationProfile, 
+    loading: recommendationsLoading 
+  } = useCourseRecommendations();
   
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
@@ -275,9 +285,152 @@ export default function Academia() {
               </Card>
             </div>
 
+            {/* AI Recommendations Section */}
+            {recommendations.length > 0 && (
+              <Card className="shadow-glow border-primary/20">
+                <CardHeader className="bg-gradient-light rounded-t-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Recomendaciones Personalizadas</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Basado en tu progreso y perfil de aprendizaje
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {recommendationProfile && (
+                    <div className="mb-6 p-4 bg-secondary/10 rounded-lg">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                          <div className="text-lg font-bold text-primary">{recommendationProfile.completedCoursesCount}</div>
+                          <div className="text-xs text-muted-foreground">Cursos Completados</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold text-success">{recommendationProfile.averageScore}%</div>
+                          <div className="text-xs text-muted-foreground">Puntuación Promedio</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold text-accent">{recommendationProfile.skillLevel}</div>
+                          <div className="text-xs text-muted-foreground">Nivel Actual</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold text-warning">{recommendationProfile.role}</div>
+                          <div className="text-xs text-muted-foreground">Rol</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    {recommendations.map((recommendation: CourseRecommendation, index) => (
+                      <div
+                        key={recommendation.course.id}
+                        className={`p-4 rounded-lg border-2 transition-all hover:shadow-md ${
+                          recommendation.priority === 'high' 
+                            ? 'border-primary/30 bg-primary/5' 
+                            : recommendation.priority === 'medium'
+                            ? 'border-warning/30 bg-warning/5'
+                            : 'border-muted/30 bg-muted/5'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <div className={`p-1.5 rounded-full ${
+                                recommendation.priority === 'high' 
+                                  ? 'bg-primary/20' 
+                                  : recommendation.priority === 'medium'
+                                  ? 'bg-warning/20'
+                                  : 'bg-muted/20'
+                              }`}>
+                                {recommendation.priority === 'high' ? (
+                                  <Target className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Lightbulb className="h-4 w-4 text-warning" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg">{recommendation.course.title}</h3>
+                                <div className="flex items-center space-x-3 mt-1">
+                                  <Badge className={`${getDifficultyColor(recommendation.course.difficulty)} border text-xs`}>
+                                    {recommendation.course.difficulty}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {Math.floor(recommendation.course.duration_minutes / 60)}h {recommendation.course.duration_minutes % 60}min
+                                  </span>
+                                  <Badge variant="outline" className={`text-xs ${
+                                    recommendation.priority === 'high' ? 'border-primary text-primary' :
+                                    recommendation.priority === 'medium' ? 'border-warning text-warning' :
+                                    'border-muted text-muted-foreground'
+                                  }`}>
+                                    {recommendation.priority === 'high' ? 'Altamente Recomendado' :
+                                     recommendation.priority === 'medium' ? 'Recomendado' : 'Sugerido'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {recommendation.course.description}
+                            </p>
+                            
+                            <div className="flex items-start space-x-2 mb-3">
+                              <Lightbulb className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
+                              <p className="text-sm italic text-accent">
+                                <strong>¿Por qué este curso?</strong> {recommendation.reason}
+                              </p>
+                            </div>
+
+                            {recommendation.course.instructor && (
+                              <p className="text-xs text-muted-foreground">
+                                Instructor: {recommendation.course.instructor.name}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="ml-4 flex-shrink-0">
+                            <Button 
+                              onClick={() => startCourse({
+                                ...recommendation.course,
+                                progress: 0,
+                                status: 'not_started'
+                              } as Course)}
+                              className={`${
+                                recommendation.priority === 'high' 
+                                  ? 'bg-primary hover:bg-primary/90'
+                                  : 'bg-secondary hover:bg-secondary/90'
+                              }`}
+                              size="sm"
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Iniciar Curso
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Loading Recommendations */}
+            {recommendationsLoading && (
+              <Card className="shadow-soft">
+                <CardContent className="p-6 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                  <p className="text-muted-foreground">Generando recomendaciones personalizadas...</p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Courses Grid */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Cursos Disponibles</h2>
+              <h2 className="text-xl font-semibold mb-4">Todos los Cursos</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((course) => (
                   <Card key={course.id} className="shadow-soft hover:shadow-warm transition-shadow">
