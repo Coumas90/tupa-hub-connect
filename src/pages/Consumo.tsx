@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
+import { ConsumptionFilters } from '@/components/admin/ConsumptionFilters';
+import { ConsumptionSummary } from '@/components/admin/ConsumptionSummary';
 import {
   TrendingUp,
   Package,
@@ -45,23 +48,53 @@ const Consumo = (): JSX.Element => {
   const consumoMensual = 28;
   const estimacionDias = 32;
 
+  // Filter state
+  const [filters, setFilters] = useState({
+    coffeeVariety: 'Todas las variedades',
+    format: 'Todos los formatos',
+    dateRange: { from: null as Date | null, to: null as Date | null }
+  });
+
+  // Summary data (would normally come from API based on filters)
+  const summaryData = {
+    weeklyTotal: 7.2,
+    monthlyTotal: 28.5,
+    weeklyChange: 12.5,
+    monthlyChange: 8.3,
+    topVariety: 'Finca La Esperanza',
+    topFormat: 'Espresso',
+    efficiency: 87
+  };
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    // Here you would typically fetch new data based on filters
+    console.log('Filters changed:', newFilters);
+  };
+
   return (
     <ModuleAccessGuard module="Consumo" requiredRole="encargado">
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Monitoreo de Consumo</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Monitoreo de Consumo</h1>
             <p className="text-muted-foreground">Control de stock, consumo y reposición automática</p>
           </div>
-          <Button className="bg-gradient-primary hover:bg-primary/90">
+          <Button className="bg-gradient-primary hover:bg-primary/90 w-full lg:w-auto">
             <Package className="h-4 w-4 mr-2" />
             Reposición Automática
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-4">
+        {/* Filters */}
+        <ConsumptionFilters onFiltersChange={handleFiltersChange} />
+
+        {/* Consumption Summary */}
+        <ConsumptionSummary {...summaryData} />
+
+        {/* Stock Status Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="shadow-soft">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
