@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.refresh-token-test]
 verify_jwt = false
+
+[functions.generate-certificate]
+verify_jwt = false
+
+[functions.send-certificate]
+verify_jwt = false
+
+[functions.course-recommendations]
+verify_jwt = false

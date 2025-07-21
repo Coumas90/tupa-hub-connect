@@ -17,11 +17,15 @@ import {
   Loader2,
   TrendingUp,
   Target,
-  Lightbulb
+  Lightbulb,
+  Download,
+  Mail
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAcademy, type Course, type Quiz } from '@/hooks/useAcademy';
 import { useCourseRecommendations, type CourseRecommendation } from '@/hooks/useCourseRecommendations';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function Academia() {
@@ -48,6 +52,9 @@ export default function Academia() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [quizLoading, setQuizLoading] = useState(false);
+  const [certificateLoading, setCertificateLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const { toast } = useToast();
 
   const startCourse = async (course: Course) => {
     setSelectedCourse(course);
@@ -116,71 +123,96 @@ export default function Academia() {
     }
   };
 
-  const generateCertificate = () => {
-    // Crear HTML mejorado para el certificado
-    const certificateHTML = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Certificado TUPÁ Hub</title>
-      <style>
-        body { 
-          font-family: 'Georgia', serif; 
-          background: linear-gradient(135deg, #f8f4f1, #ede7e1);
-          margin: 0; 
-          padding: 40px;
-          color: #2c1810;
-        }
-        .certificate {
-          max-width: 800px;
-          margin: 0 auto;
-          background: white;
-          border: 8px solid #b5651d;
-          border-radius: 20px;
-          padding: 60px;
-          text-align: center;
-          box-shadow: 0 15px 40px rgba(181, 101, 29, 0.2);
-        }
-        .logo { color: #b5651d; font-size: 48px; font-weight: bold; margin-bottom: 20px; }
-        .title { font-size: 36px; color: #2c1810; margin: 30px 0; font-weight: bold; }
-        .recipient { font-size: 28px; color: #b5651d; margin: 30px 0; font-style: italic; }
-        .course { font-size: 24px; color: #2c1810; margin: 20px 0; font-weight: bold; }
-        .details { font-size: 16px; color: #666; margin: 30px 0; line-height: 1.8; }
-        .signature { margin-top: 60px; font-size: 14px; color: #999; }
-      </style>
-    </head>
-    <body>
-      <div class="certificate">
-        <div class="logo">☕ TUPÁ HUB</div>
-        <div class="title">CERTIFICADO DE FINALIZACIÓN</div>
-        <div class="recipient">Se otorga a: Usuario TUPÁ</div>
-        <div>Por completar exitosamente el curso:</div>
-        <div class="course">${selectedCourse?.title}</div>
-        <div class="details">
-          Puntuación Obtenida: ${score}/${currentQuiz?.questions.length || 0} (${Math.round((score / (currentQuiz?.questions.length || 1)) * 100)}%)<br>
-          Instructor: ${selectedCourse?.instructor?.name}<br>
-          Fecha de Finalización: ${new Date().toLocaleDateString('es-AR')}<br>
-          Duración del Curso: ${Math.floor((selectedCourse?.duration_minutes || 0) / 60)}h ${(selectedCourse?.duration_minutes || 0) % 60}min
-        </div>
-        <div class="signature">
-          TUPÁ Hub - Academia Cafetera Profesional<br>
-          Certificación avalada por Specialty Coffee Association (SCA)
-        </div>
-      </div>
-    </body>
-    </html>
-    `;
+  const generateCertificate = async () => {
+    if (!selectedCourse) return;
+    
+    setCertificateLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Debes estar autenticado para generar un certificado",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const blob = new Blob([certificateHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `certificado-${selectedCourse?.title.toLowerCase().replace(/\s+/g, '-')}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const response = await supabase.functions.invoke('generate-certificate', {
+        body: {
+          courseId: selectedCourse.id,
+          userId: user.id,
+          userName: user.user_metadata?.full_name || user.email || 'Usuario TUPÁ'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Error al generar el certificado');
+      }
+
+      toast({
+        title: "¡Certificado Generado!",
+        description: "Tu certificado ha sido generado y guardado correctamente",
+      });
+
+      // Refresh the course to get the updated certificate URL
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Error al generar el certificado",
+        variant: "destructive",
+      });
+    } finally {
+      setCertificateLoading(false);
+    }
+  };
+
+  const sendCertificateByEmail = async () => {
+    if (!selectedCourse) return;
+    
+    setEmailLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Debes estar autenticado para enviar el certificado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await supabase.functions.invoke('send-certificate', {
+        body: {
+          courseId: selectedCourse.id,
+          userId: user.id,
+          userEmail: user.email,
+          userName: user.user_metadata?.full_name || user.email || 'Usuario TUPÁ'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Error al enviar el certificado');
+      }
+
+      toast({
+        title: "¡Certificado Enviado!",
+        description: "El certificado ha sido enviado a tu correo electrónico",
+      });
+      
+    } catch (error) {
+      console.error('Error sending certificate:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Error al enviar el certificado por correo",
+        variant: "destructive",
+      });
+    } finally {
+      setEmailLoading(false);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -654,17 +686,58 @@ export default function Academia() {
                       <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
                       <p className="text-success font-semibold">¡Felicitaciones!</p>
                       <p className="text-success/80 text-sm">
-                        Has aprobado el curso. Tu certificado está listo para descargar.
+                        Has aprobado el curso. Tu certificado está listo para generar.
                       </p>
                     </div>
-                    <Button 
-                      onClick={generateCertificate}
-                      className="bg-gradient-primary hover:bg-primary/90"
-                      size="lg"
-                    >
-                      <Award className="h-5 w-5 mr-2" />
-                      Descargar Certificado
-                    </Button>
+                    
+                    {/* Certificate Actions */}
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button 
+                        onClick={generateCertificate}
+                        disabled={certificateLoading}
+                        className="bg-gradient-primary hover:bg-primary/90"
+                        size="lg"
+                      >
+                        {certificateLoading ? (
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-5 w-5 mr-2" />
+                        )}
+                        {certificateLoading ? 'Generando...' : 'Generar Certificado'}
+                      </Button>
+                      
+                      <Button 
+                        onClick={sendCertificateByEmail}
+                        disabled={emailLoading}
+                        variant="outline"
+                        size="lg"
+                      >
+                        {emailLoading ? (
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        ) : (
+                          <Mail className="h-5 w-5 mr-2" />
+                        )}
+                        {emailLoading ? 'Enviando...' : 'Enviar por Email'}
+                      </Button>
+                    </div>
+                    
+                    {/* Show certificate link if available */}
+                    {selectedCourse.certificate_url && (
+                      <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                        <p className="text-accent text-sm mb-2">
+                          ✅ Tu certificado ya está generado
+                        </p>
+                        <Button 
+                          onClick={() => window.open(selectedCourse.certificate_url, '_blank')}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Ver Certificado
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">

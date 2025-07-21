@@ -24,6 +24,7 @@ export interface Course {
   instructor?: Instructor;
   progress?: number;
   status?: 'not_started' | 'in_progress' | 'completed';
+  certificate_url?: string;
 }
 
 export interface Quiz {
@@ -54,6 +55,7 @@ export interface UserCourseProgress {
   started_at?: string;
   completed_at?: string;
   last_accessed_at?: string;
+  certificate_url?: string;
 }
 
 export interface UserQuizAttempt {
@@ -177,7 +179,8 @@ export function useAcademy() {
       return {
         ...course,
         progress: progress?.progress_percentage || 0,
-        status: progress?.status || 'not_started'
+        status: progress?.status || 'not_started',
+        certificate_url: progress?.certificate_url
       };
     });
   };

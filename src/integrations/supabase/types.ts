@@ -522,6 +522,7 @@ export type Database = {
       }
       user_course_progress: {
         Row: {
+          certificate_url: string | null
           completed_at: string | null
           course_id: string
           created_at: string
@@ -534,6 +535,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          certificate_url?: string | null
           completed_at?: string | null
           course_id: string
           created_at?: string
@@ -546,6 +548,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          certificate_url?: string | null
           completed_at?: string | null
           course_id?: string
           created_at?: string
