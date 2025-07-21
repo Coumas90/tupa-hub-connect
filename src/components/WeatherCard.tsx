@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { sanitizeInput } from '@/utils/FormUtils';
+import { sanitizeInput } from '@/utils/sanitize';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
