@@ -262,7 +262,7 @@ export default function Academia() {
               <Card className="shadow-soft">
                 <CardContent className="p-4 text-center">
                   <Clock className="h-8 w-8 mx-auto mb-2 text-warning" />
-                  <div className="text-xl font-bold">{courses.filter(c => c.status === 'in-progress').length}</div>
+                  <div className="text-xl font-bold">{courses.filter(c => c.status === 'in_progress').length}</div>
                   <div className="text-sm text-muted-foreground">En Progreso</div>
                 </CardContent>
               </Card>
@@ -333,7 +333,7 @@ export default function Academia() {
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Revisar Curso
                           </>
-                        ) : course.status === 'in-progress' ? (
+                        ) : course.status === 'in_progress' ? (
                           <>
                             <Play className="h-4 w-4 mr-2" />
                             Continuar
@@ -488,10 +488,10 @@ export default function Academia() {
               <CardContent className="p-6 space-y-6 text-center">
                 <div className="space-y-2">
                   <div className="text-4xl font-bold text-success">
-                    {score}/{selectedCourse.quiz.questions.length}
+                    {score}/{currentQuiz?.questions.length || 0}
                   </div>
                   <div className="text-muted-foreground">
-                    Puntuación: {Math.round((score / selectedCourse.quiz.questions.length) * 100)}%
+                    Puntuación: {Math.round((score / (currentQuiz?.questions.length || 1)) * 100)}%
                   </div>
                 </div>
 
