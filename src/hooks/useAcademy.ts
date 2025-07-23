@@ -138,8 +138,9 @@ export function useAcademy() {
     try {
       const { data, error } = await supabase
         .from('instructors')
-        .select('*')
-        .order('name');
+        .select('id, name')
+        .order('name')
+        .limit(50);
 
       if (error) throw error;
       setInstructors((data || []) as Instructor[]);
