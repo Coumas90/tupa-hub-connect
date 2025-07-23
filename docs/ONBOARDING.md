@@ -6,6 +6,46 @@ This guide will help new developers get up to speed with the TUPÁ Hub platform.
 
 ## 🚀 Quick Start
 
+## ⚙️ Gestión de Configuración
+
+### Variables Públicas
+Editar en `src/lib/config.ts`:
+```typescript
+export const config = {
+  supabase: {
+    url: "https://your-project.supabase.co",
+    anonKey: "eyJ0eXAi...public_key"
+  },
+  app: {
+    theme: 'dark',
+    maxUsers: 100,
+    featureFlags: {
+      academia: true,
+      pos_sync: true
+    }
+  }
+} as const;
+```
+
+### Secrets Privados
+Ir a **Supabase Dashboard > Settings > Functions > Secrets**
+
+Agregar clave-valor:
+- **Nombre**: `OPENAI_API_KEY`
+- **Valor**: `sk-...` (copiar del proveedor)
+
+**Acceder en Edge Functions:**
+```typescript
+// supabase/functions/example/index.ts
+const openAIKey = Deno.env.get('OPENAI_API_KEY');
+const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+```
+
+**Configurar nuevos secrets:**
+1. Usar el botón de configuración en el chat de Lovable
+2. Alternativamente: Supabase Dashboard > Functions > Secrets
+3. Verificar en Edge Function logs si se cargan correctamente
+
 ### 1. Environment Setup
 
 **Prerequisites:**
