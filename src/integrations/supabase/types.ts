@@ -305,6 +305,7 @@ export type Database = {
           customer_name: string | null
           id: string
           rating: number | null
+          sentiment: string | null
         }
         Insert: {
           cafe_id: string
@@ -314,6 +315,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           rating?: number | null
+          sentiment?: string | null
         }
         Update: {
           cafe_id?: string
@@ -323,6 +325,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           rating?: number | null
+          sentiment?: string | null
         }
         Relationships: [
           {
