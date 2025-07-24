@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      cafes: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       client_configs: {
         Row: {
           client_id: string
@@ -250,6 +280,44 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedbacks: {
+        Row: {
+          cafe_id: string
+          comment: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          rating: number | null
+        }
+        Insert: {
+          cafe_id: string
+          comment?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          rating?: number | null
+        }
+        Update: {
+          cafe_id?: string
+          comment?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedbacks_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
             referencedColumns: ["id"]
           },
         ]
@@ -951,8 +1019,16 @@ export type Database = {
         Args: { target_user_id: string; max_sessions?: number }
         Returns: undefined
       }
+      get_user_cafe_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       is_admin: {
         Args: { _user_id?: string }
+        Returns: boolean
+      }
+      is_cafe_owner: {
+        Args: { _user_id: string; _cafe_id: string }
         Returns: boolean
       }
       revoke_all_user_sessions: {
