@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageSquare, Gift, Coffee } from "lucide-react";
+import { Star, MessageSquare, Gift, Coffee, Users, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,20 +18,34 @@ interface Cafe {
   brand_color: string;
 }
 
+interface FeedbackFormData {
+  coffeeRating: number;
+  serviceRating: number;
+  ambianceComment: string;
+  customerName: string;
+  customerEmail?: string;
+  participateInGiveaway: boolean;
+}
+
 export default function FeedbackForm() {
   const { cafeId } = useParams<{ cafeId: string }>();
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  
-  // Form state
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [participateInGiveaway, setParticipateInGiveaway] = useState(false);
+
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FeedbackFormData>({
+    defaultValues: {
+      coffeeRating: 0,
+      serviceRating: 0,
+      ambianceComment: "",
+      customerName: "",
+      customerEmail: "",
+      participateInGiveaway: false
+    }
+  });
+
+  const watchedValues = watch();
+  const participateInGiveaway = watch("participateInGiveaway");
 
   useEffect(() => {
     if (cafeId) {
@@ -63,43 +78,43 @@ export default function FeedbackForm() {
     }
   };
 
-  const handleStarClick = (selectedRating: number) => {
-    setRating(selectedRating);
+  const handleStarClick = (field: 'coffeeRating' | 'serviceRating', selectedRating: number) => {
+    setValue(field, selectedRating);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!cafe || !rating || !customerName.trim()) {
+  const onSubmit = async (data: FeedbackFormData) => {
+    if (!cafe) {
+      toast.error("Error: información del café no disponible");
+      return;
+    }
+
+    if (!data.coffeeRating || !data.serviceRating || !data.customerName.trim()) {
       toast.error("Por favor completa todos los campos requeridos");
       return;
     }
 
     try {
-      setSubmitting(true);
-
-      // Submit feedback
+      // Submit feedback with all ratings
       const { error: feedbackError } = await supabase
         .from('feedbacks')
         .insert({
           cafe_id: cafe.id,
-          customer_name: customerName.trim(),
-          customer_email: customerEmail.trim() || null,
-          rating,
-          comment: comment.trim() || null
+          customer_name: data.customerName.trim(),
+          customer_email: data.customerEmail?.trim() || null,
+          rating: Math.round((data.coffeeRating + data.serviceRating) / 2), // Average rating
+          comment: data.ambianceComment.trim() || null
         });
 
       if (feedbackError) throw feedbackError;
 
-      // If user wants to participate in giveaway and provided contact info
-      if (participateInGiveaway && (customerEmail.trim() || phone.trim())) {
+      // If user wants to participate in giveaway and provided email
+      if (data.participateInGiveaway && data.customerEmail?.trim()) {
         const { error: giveawayError } = await supabase
           .from('giveaway_participants')
           .insert({
             cafe_id: cafe.id,
-            customer_name: customerName.trim(),
-            customer_email: customerEmail.trim(),
-            phone: phone.trim() || null,
+            customer_name: data.customerName.trim(),
+            customer_email: data.customerEmail.trim(),
             campaign_id: `feedback-${Date.now()}`
           });
 
@@ -115,8 +130,6 @@ export default function FeedbackForm() {
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error("Error al enviar el feedback");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -202,21 +215,24 @@ export default function FeedbackForm() {
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Rating */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Coffee Rating */}
             <div className="text-center">
-              <Label className="text-base font-medium">¿Cómo calificarías tu experiencia?</Label>
-              <div className="flex justify-center gap-2 mt-2">
+              <Label className="text-base font-medium flex items-center justify-center gap-2 mb-3">
+                <Coffee className="h-5 w-5" />
+                ¿Cómo estuvo el café?
+              </Label>
+              <div className="flex justify-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
-                    onClick={() => handleStarClick(star)}
+                    onClick={() => handleStarClick('coffeeRating', star)}
                     className="p-1 transition-transform hover:scale-110"
                   >
                     <Star
                       className={`h-8 w-8 ${
-                        star <= rating
+                        star <= watchedValues.coffeeRating
                           ? 'fill-yellow-400 text-yellow-400'
                           : 'text-gray-300'
                       }`}
@@ -224,6 +240,55 @@ export default function FeedbackForm() {
                   </button>
                 ))}
               </div>
+              {errors.coffeeRating && (
+                <p className="text-sm text-destructive mt-1">Califica el café por favor</p>
+              )}
+            </div>
+
+            {/* Service Rating */}
+            <div className="text-center">
+              <Label className="text-base font-medium flex items-center justify-center gap-2 mb-3">
+                <Users className="h-5 w-5" />
+                ¿Cómo fue el servicio?
+              </Label>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => handleStarClick('serviceRating', star)}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${
+                        star <= watchedValues.serviceRating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {errors.serviceRating && (
+                <p className="text-sm text-destructive mt-1">Califica el servicio por favor</p>
+              )}
+            </div>
+
+            {/* Ambiance Comment */}
+            <div>
+              <Label htmlFor="ambiance" className="text-base font-medium flex items-center gap-2 mb-2">
+                <Home className="h-5 w-5" />
+                ¿Cómo te sentiste en el ambiente?
+              </Label>
+              <Textarea
+                id="ambiance"
+                {...register("ambianceComment", { required: "Describe el ambiente por favor" })}
+                placeholder="Describe el ambiente del lugar..."
+                className="min-h-[80px]"
+              />
+              {errors.ambianceComment && (
+                <p className="text-sm text-destructive mt-1">{errors.ambianceComment.message}</p>
+              )}
             </div>
 
             {/* Customer Info */}
@@ -232,35 +297,13 @@ export default function FeedbackForm() {
                 <Label htmlFor="name">Nombre *</Label>
                 <Input
                   id="name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  {...register("customerName", { required: "El nombre es requerido" })}
                   placeholder="Tu nombre"
-                  required
                 />
+                {errors.customerName && (
+                  <p className="text-sm text-destructive mt-1">{errors.customerName.message}</p>
+                )}
               </div>
-
-              <div>
-                <Label htmlFor="email">Email (opcional)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                />
-              </div>
-            </div>
-
-            {/* Comment */}
-            <div>
-              <Label htmlFor="comment">Comentarios (opcional)</Label>
-              <Textarea
-                id="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Cuéntanos más sobre tu experiencia..."
-                className="min-h-[100px]"
-              />
             </div>
 
             {/* Giveaway Participation */}
@@ -269,8 +312,7 @@ export default function FeedbackForm() {
                 <input
                   type="checkbox"
                   id="giveaway"
-                  checked={participateInGiveaway}
-                  onChange={(e) => setParticipateInGiveaway(e.target.checked)}
+                  {...register("participateInGiveaway")}
                   className="rounded border-gray-300"
                 />
                 <Label htmlFor="giveaway" className="text-sm">
@@ -280,13 +322,22 @@ export default function FeedbackForm() {
 
               {participateInGiveaway && (
                 <div>
-                  <Label htmlFor="phone">Teléfono (opcional)</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
-                    id="phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1234567890"
+                    id="email"
+                    type="email"
+                    {...register("customerEmail", { 
+                      required: participateInGiveaway ? "Email requerido para participar en sorteos" : false,
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Email inválido"
+                      }
+                    })}
+                    placeholder="tu@email.com"
                   />
+                  {errors.customerEmail && (
+                    <p className="text-sm text-destructive mt-1">{errors.customerEmail.message}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">
                     Para contactarte si resultas ganador
                   </p>
@@ -294,13 +345,25 @@ export default function FeedbackForm() {
               )}
             </div>
 
+            {/* Anonymous Preview */}
+            {watchedValues.customerName.trim() && (
+              <div className="p-3 bg-muted rounded-lg border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground mb-1">
+                  Tu comentario se publicará como:
+                </p>
+                <p className="text-sm font-medium">
+                  Usuario: {watchedValues.customerName.trim()}
+                </p>
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={submitting || !rating || !customerName.trim()}
+              disabled={isSubmitting}
               className="w-full"
               style={{ backgroundColor: cafe.brand_color }}
             >
-              {submitting ? "Enviando..." : "Enviar Feedback"}
+              {isSubmitting ? "Enviando..." : "Enviar Feedback"}
             </Button>
           </form>
 
