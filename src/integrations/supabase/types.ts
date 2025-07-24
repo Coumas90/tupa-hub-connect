@@ -300,6 +300,7 @@ export type Database = {
         Row: {
           cafe_id: string
           comment: string | null
+          comment_status: string | null
           created_at: string | null
           customer_email: string | null
           customer_name: string | null
@@ -310,6 +311,7 @@ export type Database = {
         Insert: {
           cafe_id: string
           comment?: string | null
+          comment_status?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
@@ -320,6 +322,7 @@ export type Database = {
         Update: {
           cafe_id?: string
           comment?: string | null
+          comment_status?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
@@ -583,6 +586,68 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_reviews: {
+        Row: {
+          auto_approved: boolean
+          created_at: string
+          created_by: string | null
+          feedback_id: string
+          id: string
+          is_approved: boolean | null
+          moderation_reason: string | null
+          needs_validation: boolean
+          original_comment: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sentiment_result: string | null
+          toxicity_score: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_approved?: boolean
+          created_at?: string
+          created_by?: string | null
+          feedback_id: string
+          id?: string
+          is_approved?: boolean | null
+          moderation_reason?: string | null
+          needs_validation?: boolean
+          original_comment: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sentiment_result?: string | null
+          toxicity_score?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_approved?: boolean
+          created_at?: string
+          created_by?: string | null
+          feedback_id?: string
+          id?: string
+          is_approved?: boolean | null
+          moderation_reason?: string | null
+          needs_validation?: boolean
+          original_comment?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sentiment_result?: string | null
+          toxicity_score?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_reviews_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedbacks"
             referencedColumns: ["id"]
           },
         ]

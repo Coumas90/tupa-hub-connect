@@ -109,19 +109,35 @@ export default function FeedbackForm() {
 
       if (feedbackError) throw feedbackError;
 
-      // Trigger sentiment analysis for the comment
+      // Trigger both sentiment analysis and AI moderation for comments
       if (data.ambianceComment?.trim() && feedbackData?.id) {
         try {
-          await supabase.functions.invoke('analyze-sentiment', {
+          // First get sentiment analysis
+          const sentimentResponse = await supabase.functions.invoke('analyze-sentiment', {
             body: {
               feedback_id: feedbackData.id,
               text: data.ambianceComment.trim()
             }
           });
-          console.log('✅ Sentiment analysis triggered');
-        } catch (sentimentError) {
-          console.warn('⚠️ Sentiment analysis failed:', sentimentError);
-          // Continue with success - sentiment analysis is not critical
+
+          // Then trigger AI moderation with sentiment result
+          const moderationResponse = await supabase.functions.invoke('moderate-comment', {
+            body: {
+              feedback_id: feedbackData.id,
+              comment: data.ambianceComment.trim(),
+              sentiment: sentimentResponse.data?.sentiment || null
+            }
+          });
+
+          if (moderationResponse.data?.auto_approved) {
+            console.log('✅ Comment auto-approved by AI moderation');
+          } else {
+            console.log('⚠️ Comment sent to manual moderation');
+          }
+
+        } catch (analysisError) {
+          console.warn('⚠️ AI analysis failed:', analysisError);
+          // Continue with success - AI analysis is not critical for feedback submission
         }
       }
 
