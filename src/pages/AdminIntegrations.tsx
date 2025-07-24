@@ -10,6 +10,7 @@ import IntegrationTable from '@/components/admin/IntegrationTable';
 import IntegrationMonitoring from '@/components/admin/IntegrationMonitoring';
 import NewIntegrationModal from '@/components/admin/NewIntegrationModal';
 import OdooManagement from '@/components/admin/OdooManagement';
+import { QRDashboard } from '@/components/admin/QRDashboard';
 import { getLogStats } from '@/lib/api/logs';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,7 +24,7 @@ interface DashboardStats {
 export default function AdminIntegrations() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'qr'>('overview');
   const [showNewIntegrationModal, setShowNewIntegrationModal] = useState(false);
   const [tableKey, setTableKey] = useState(0); // To force table re-render
   const [stats, setStats] = useState<DashboardStats>({
@@ -124,6 +125,13 @@ export default function AdminIntegrations() {
               <Activity className="w-4 h-4 mr-2" />
               Monitoring
             </Button>
+            <Button
+              variant={selectedTab === 'qr' ? 'default' : 'outline'}
+              onClick={() => setSelectedTab('qr')}
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              QR Codes
+            </Button>
             
             {selectedTab === 'overview' && (
               <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
@@ -209,8 +217,10 @@ export default function AdminIntegrations() {
 
             <OdooManagement />
           </>
-        ) : (
+        ) : selectedTab === 'monitoring' ? (
           <IntegrationMonitoring />
+        ) : (
+          <QRDashboard />
         )}
 
         <NewIntegrationModal 

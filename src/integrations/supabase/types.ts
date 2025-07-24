@@ -17,29 +17,41 @@ export type Database = {
       cafes: {
         Row: {
           address: string | null
+          brand_color: string | null
           created_at: string | null
           description: string | null
           id: string
+          logo_url: string | null
           name: string
           owner_id: string
+          qr_code_url: string | null
+          qr_generated_at: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
+          brand_color?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           owner_id: string
+          qr_code_url?: string | null
+          qr_generated_at?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
+          brand_color?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           owner_id?: string
+          qr_code_url?: string | null
+          qr_generated_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -315,6 +327,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "feedbacks_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      giveaway_participants: {
+        Row: {
+          cafe_id: string
+          campaign_id: string | null
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          id: string
+          metadata: Json | null
+          participated_at: string | null
+          phone: string | null
+        }
+        Insert: {
+          cafe_id: string
+          campaign_id?: string | null
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          id?: string
+          metadata?: Json | null
+          participated_at?: string | null
+          phone?: string | null
+        }
+        Update: {
+          cafe_id?: string
+          campaign_id?: string | null
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          id?: string
+          metadata?: Json | null
+          participated_at?: string | null
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giveaway_participants_cafe_id_fkey"
             columns: ["cafe_id"]
             isOneToOne: false
             referencedRelation: "cafes"

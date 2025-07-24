@@ -25,6 +25,7 @@ import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
+import FeedbackForm from "./pages/FeedbackForm";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => {
                 <Route path="auth" element={<LoginPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               </Route>
+              <Route path="feedback/:cafeId" element={<FeedbackForm />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </BrowserRouter>
