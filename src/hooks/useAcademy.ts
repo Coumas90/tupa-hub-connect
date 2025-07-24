@@ -143,6 +143,20 @@ export function useAcademy() {
         .limit(50);
 
       if (error) throw error;
+      
+      // Debug logging for response size (development only)
+      if (import.meta.env.DEV && data) {
+        const responseSize = new Blob([JSON.stringify(data)]).size / 1024;
+        const instructorCount = data.length;
+        const avgSizePerInstructor = instructorCount > 0 ? responseSize / instructorCount : 0;
+        
+        console.log(`📊 Instructors Response Debug:`, {
+          count: instructorCount,
+          totalSizeKB: responseSize.toFixed(2),
+          avgSizePerInstructorKB: avgSizePerInstructor.toFixed(3)
+        });
+      }
+      
       setInstructors((data || []) as Instructor[]);
     } catch (err) {
       console.error('Error fetching instructors:', err);
