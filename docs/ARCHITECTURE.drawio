@@ -5,6 +5,11 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
+        <!-- Mobile User for new sequence -->
+        <mxCell id="mobile-user" value="📱 Mobile User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        
         <!-- Usuario -->
         <mxCell id="user" value="👤 Usuario" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="40" y="200" width="120" height="60" as="geometry" />
@@ -18,6 +23,11 @@
         <!-- Frontend Layer -->
         <mxCell id="frontend-layer" value="🌐 FRONTEND LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="220" y="120" width="280" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- CourseForm Component with mobile optimization -->
+        <mxCell id="course-form" value="📱 CourseForm&#xa;🔍 Lazy Search + 📊 50 Limit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="60" width="160" height="50" as="geometry" />
         </mxCell>
         
         <mxCell id="react-app" value="React App&#xa;(Vite + TypeScript)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
@@ -51,6 +61,11 @@
         <!-- Backend Layer -->
         <mxCell id="backend-layer" value="⚡ BACKEND LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="580" y="120" width="320" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- Mobile API Endpoint -->
+        <mxCell id="mobile-api" value="📱 Instructor API&#xa;fields=id,name&#xa;limit=50" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="580" y="60" width="120" height="50" as="geometry" />
         </mxCell>
         
         <mxCell id="location-middleware" value="🌍 Location Middleware&#xa;(Context Filter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="1">
@@ -100,6 +115,11 @@
         
         <mxCell id="supabase-db" value="Supabase PostgreSQL&#xa;(Auth + RLS + Tables)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="240" y="440" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Instructors table with mobile optimization -->
+        <mxCell id="instructors-table" value="📱 instructors&#xa;SELECT id,name&#xa;LIMIT 50" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="380" width="80" height="40" as="geometry" />
         </mxCell>
         
         <!-- Location-aware tables -->
@@ -172,7 +192,40 @@
           <mxGeometry x="940" y="440" width="160" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Arrows -->
+        <!-- Mobile optimization sequence arrows -->
+        <!-- Mobile User to CourseForm -->
+        <mxCell id="arrow-mobile-user" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#d79b00;" edge="1" parent="1" source="mobile-user" target="course-form">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="110" as="sourcePoint" />
+            <mxPoint x="240" y="85" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- CourseForm to Mobile API -->
+        <mxCell id="arrow-form-api" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#d79b00;" edge="1" parent="1" source="course-form" target="mobile-api">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="85" as="sourcePoint" />
+            <mxPoint x="580" y="85" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Mobile API to Supabase -->
+        <mxCell id="arrow-api-supabase" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#d79b00;" edge="1" parent="1" source="mobile-api" target="supabase-service">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="700" y="85" as="sourcePoint" />
+            <mxPoint x="940" y="172" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Mobile API to Instructors Table -->
+        <mxCell id="arrow-api-db" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#d79b00;" edge="1" parent="1" source="mobile-api" target="instructors-table">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="640" y="120" as="sourcePoint" />
+            <mxPoint x="460" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Regular User flows -->
         <!-- User to React App -->
         <mxCell id="arrow1" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#2F5233;" edge="1" parent="1" source="user" target="react-app">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -254,142 +307,55 @@
         </mxCell>
         
         <!-- Labels for arrows -->
+        <mxCell id="label-mobile-fields" value="fields=id,name" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=1;fontColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="420" y="40" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="label-mobile-limit" value="LIMIT 50" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=1;fontColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="720" y="65" width="60" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="mobile-annotation" value="📱 Mobile-optimized payload&#xa;• Lazy search icon 🔍&#xa;• Response limiter (50)&#xa;• Skeleton loader&#xa;• Empty state handling" style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="180" height="60" as="geometry" />
+        </mxCell>
+        
         <mxCell id="label1" value="HTTP/HTTPS" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="170" y="210" width="60" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label2" value="Location Context&#xa;with user session" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="500" y="130" width="90" height="30" as="geometry" />
+        <mxCell id="label2" value="Admin Access" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="170" y="310" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label-middleware" value="Filter by&#xa;location_id" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="740" y="120" width="60" height="30" as="geometry" />
+        <mxCell id="label3" value="Context Aware" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="490" y="170" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label-propagation" value="Context&#xa;Propagation" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="740" y="290" width="60" height="30" as="geometry" />
+        <mxCell id="label4" value="Edge Processing" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="750" y="120" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label3" value="Filtered SQL Queries&#xa;WHERE location_id = ?" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="470" y="350" width="120" height="30" as="geometry" />
+        <mxCell id="label5" value="Location Filter" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="780" y="350" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="label-admin" value="Admin Override&#xa;(all_locations=true)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="170" y="320" width="90" height="30" as="geometry" />
+        <mxCell id="label6" value="RLS + Audited" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="370" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <!-- Flow description -->
-        <mxCell id="flow-description" value="LOCATION FILTERING FLOW:&#xa;1. User request with session context&#xa;2. Location middleware validates & filters&#xa;3. Context propagated to backend services&#xa;4. Database queries filtered by location_id&#xa;5. Admin can override with all_locations=true" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#666666;fontSize=9;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="40" y="600" width="300" height="100" as="geometry" />
+        <mxCell id="label7" value="External APIs" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="860" y="140" width="60" height="20" as="geometry" />
         </mxCell>
         
-        <!-- Title -->
-        <mxCell id="title" value="TUPÁ Hub - Arquitectura del Sistema" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="400" y="40" width="400" height="40" as="geometry" />
+        <mxCell id="label8" value="POS Integration" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="450" y="625" width="60" height="20" as="geometry" />
         </mxCell>
         
-        <!-- Legend -->
-        <mxCell id="legend" value="LEYENDA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="40" y="400" width="140" height="160" as="geometry" />
+        <mxCell id="integration-detail" value="Multi-POS Adapters&#xa;(SDK Pattern)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="580" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="legend-frontend" value="🌐 Frontend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="50" y="430" width="120" height="25" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="legend-backend" value="⚡ Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="50" y="465" width="120" height="25" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="legend-database" value="🗄️ Database" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="50" y="500" width="120" height="25" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="legend-external" value="🌍 Servicios Externos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="50" y="535" width="120" height="25" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="label5" value="JWT Authentication&#xa;+ Location Filtering" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="820" y="370" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- Audit Fields Legend -->
-        <mxCell id="audit-legend" value="🔍 AUDIT FIELDS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1160" y="440" width="180" height="120" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="audit-created-by" value="created_by → auth.users(id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="1180" y="470" width="140" height="20" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="audit-updated-by" value="updated_by → auth.users(id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="1180" y="500" width="140" height="20" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="audit-triggers" value="Auto-populated via triggers&#xa;handle_audit_fields()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="1180" y="530" width="140" height="20" as="geometry" />
-        </mxCell>
-        
-        <!-- Location Context Flow -->
-        <mxCell id="location-flow" value="📍 LOCATION CONTEXT FLOW" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="40" y="580" width="860" height="140" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-step1" value="1. User Login" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="60" y="610" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-step2" value="2. Fetch Group&#xa;& Locations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="160" y="610" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-step3" value="3. Determine&#xa;Active Location" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="260" y="610" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-step4" value="4. Location&#xa;Switcher UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="360" y="610" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-step5" value="5. Filter Data&#xa;by location_id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="460" y="610" width="80" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-fallback" value="Fallback Logic:&#xa;1. User preference&#xa;2. Assigned location&#xa;3. Main location&#xa;4. First available" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="60" y="660" width="120" height="50" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-security" value="Security:&#xa;• JWT validation&#xa;• Group membership&#xa;• Location access control&#xa;• RLS policies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="200" y="660" width="120" height="50" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="flow-admin" value="Admin Override:&#xa;all_locations=true&#xa;bypasses location filter&#xa;sees all data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="340" y="660" width="120" height="50" as="geometry" />
-        </mxCell>
-        
-        <!-- Flow arrows -->
-        <mxCell id="flow-arrow1" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1" source="flow-step1" target="flow-step2">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="150" y="625" as="sourcePoint" />
-            <mxPoint x="200" y="575" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="flow-arrow2" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1" source="flow-step2" target="flow-step3">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="250" y="625" as="sourcePoint" />
-            <mxPoint x="300" y="575" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="flow-arrow3" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1" source="flow-step3" target="flow-step4">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="350" y="625" as="sourcePoint" />
-            <mxPoint x="400" y="575" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="flow-arrow4" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673a6;" edge="1" parent="1" source="flow-step4" target="flow-step5">
+        <mxCell id="arrow-integration" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="pos-integration" target="integration-detail">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="450" y="625" as="sourcePoint" />
             <mxPoint x="500" y="575" as="targetPoint" />
