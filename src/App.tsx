@@ -26,6 +26,7 @@ import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
+import CafeDashboard from "./pages/CafeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               </Route>
               <Route path="feedback/:cafeId" element={<FeedbackForm />} />
+              <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </BrowserRouter>
