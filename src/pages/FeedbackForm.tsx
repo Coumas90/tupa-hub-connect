@@ -95,7 +95,7 @@ export default function FeedbackForm() {
 
     try {
       // Submit feedback with all ratings
-      const { error: feedbackError } = await supabase
+      const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedbacks')
         .insert({
           cafe_id: cafe.id,
@@ -103,9 +103,27 @@ export default function FeedbackForm() {
           customer_email: data.customerEmail?.trim() || null,
           rating: Math.round((data.coffeeRating + data.serviceRating) / 2), // Average rating
           comment: data.ambianceComment.trim() || null
-        });
+        })
+        .select('id')
+        .single();
 
       if (feedbackError) throw feedbackError;
+
+      // Trigger sentiment analysis for the comment
+      if (data.ambianceComment?.trim() && feedbackData?.id) {
+        try {
+          await supabase.functions.invoke('analyze-sentiment', {
+            body: {
+              feedback_id: feedbackData.id,
+              text: data.ambianceComment.trim()
+            }
+          });
+          console.log('✅ Sentiment analysis triggered');
+        } catch (sentimentError) {
+          console.warn('⚠️ Sentiment analysis failed:', sentimentError);
+          // Continue with success - sentiment analysis is not critical
+        }
+      }
 
       // If user wants to participate in giveaway and provided email
       if (data.participateInGiveaway && data.customerEmail?.trim()) {
