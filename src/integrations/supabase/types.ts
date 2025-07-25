@@ -384,6 +384,72 @@ export type Database = {
           },
         ]
       }
+      giveaway_winners: {
+        Row: {
+          cafe_id: string
+          created_at: string
+          created_by: string | null
+          email_sent_at: string | null
+          email_status: string | null
+          id: string
+          participant_id: string
+          prize_code: string
+          prize_description: string | null
+          region: string | null
+          selected_at: string
+          updated_at: string
+          updated_by: string | null
+          week_of: string
+        }
+        Insert: {
+          cafe_id: string
+          created_at?: string
+          created_by?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          id?: string
+          participant_id: string
+          prize_code: string
+          prize_description?: string | null
+          region?: string | null
+          selected_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          week_of: string
+        }
+        Update: {
+          cafe_id?: string
+          created_at?: string
+          created_by?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          id?: string
+          participant_id?: string
+          prize_code?: string
+          prize_description?: string | null
+          region?: string | null
+          selected_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          week_of?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_giveaway_winners_cafe"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_giveaway_winners_participant"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "giveaway_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           created_at: string | null
@@ -1142,6 +1208,10 @@ export type Database = {
       enforce_session_limit: {
         Args: { target_user_id: string; max_sessions?: number }
         Returns: undefined
+      }
+      generate_prize_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_cafe_id: {
         Args: { _user_id: string }
