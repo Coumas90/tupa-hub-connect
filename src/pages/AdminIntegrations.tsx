@@ -11,6 +11,7 @@ import IntegrationMonitoring from '@/components/admin/IntegrationMonitoring';
 import NewIntegrationModal from '@/components/admin/NewIntegrationModal';
 import OdooManagement from '@/components/admin/OdooManagement';
 import { QRDashboard } from '@/components/admin/QRDashboard';
+import { AdminMonitoringHub } from '@/components/admin/AdminMonitoringHub';
 import { getLogStats } from '@/lib/api/logs';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -24,7 +25,7 @@ interface DashboardStats {
 export default function AdminIntegrations() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'qr'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'qr' | 'heatmap'>('overview');
   const [showNewIntegrationModal, setShowNewIntegrationModal] = useState(false);
   const [tableKey, setTableKey] = useState(0); // To force table re-render
   const [stats, setStats] = useState<DashboardStats>({
@@ -132,6 +133,13 @@ export default function AdminIntegrations() {
               <Activity className="w-4 h-4 mr-2" />
               QR Codes
             </Button>
+            <Button
+              variant={selectedTab === 'heatmap' ? 'default' : 'outline'}
+              onClick={() => setSelectedTab('heatmap')}
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Monitoring Hub
+            </Button>
             
             {selectedTab === 'overview' && (
               <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
@@ -219,8 +227,10 @@ export default function AdminIntegrations() {
           </>
         ) : selectedTab === 'monitoring' ? (
           <IntegrationMonitoring />
-        ) : (
+        ) : selectedTab === 'qr' ? (
           <QRDashboard />
+        ) : (
+          <AdminMonitoringHub />
         )}
 
         <NewIntegrationModal 
