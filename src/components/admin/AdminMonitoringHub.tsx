@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Download, UserCheck, MapPin, Star } from 'lucide-react';
+import { AlertTriangle, Download, UserCheck, MapPin, Star, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,21 +27,34 @@ interface CriticalCafe {
   address?: string;
 }
 
-// Custom markers for different statuses
-const createCustomIcon = (status: 'critical' | 'warning' | 'good') => {
-  const color = status === 'critical' ? '#ef4444' : status === 'warning' ? '#f59e0b' : '#10b981';
-  
-  return new Icon({
-    iconUrl: `data:image/svg+xml;base64,${btoa(`
-      <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 12.5 12.5 28.5 12.5 28.5s12.5-16 12.5-28.5C25 5.596 19.404 0 12.5 0z" fill="${color}"/>
-        <circle cx="12.5" cy="12.5" r="6" fill="white"/>
-      </svg>
-    `)}`,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-  });
+// Simple map visualization component (placeholder for leaflet)
+const SimpleMapVisualization: React.FC<{ markers: CafeMarker[] }> = ({ markers }) => {
+  return (
+    <div className="h-96 w-full bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50" />
+      <div className="text-center z-10">
+        <MapPin className="h-16 w-16 text-primary mx-auto mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Interactive Map Placeholder</h3>
+        <p className="text-muted-foreground mb-4">
+          Showing {markers.length} cafe locations
+        </p>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="bg-white rounded-lg p-2 shadow">
+            <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1"></div>
+            <span>Good ({markers.filter(m => m.status === 'good').length})</span>
+          </div>
+          <div className="bg-white rounded-lg p-2 shadow">
+            <div className="w-3 h-3 bg-yellow-500 rounded-full mx-auto mb-1"></div>
+            <span>Warning ({markers.filter(m => m.status === 'warning').length})</span>
+          </div>
+          <div className="bg-white rounded-lg p-2 shadow">
+            <div className="w-3 h-3 bg-red-500 rounded-full mx-auto mb-1"></div>
+            <span>Critical ({markers.filter(m => m.status === 'critical').length})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const AdminMonitoringHub: React.FC = () => {
@@ -211,7 +221,7 @@ export const AdminMonitoringHub: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -244,7 +254,7 @@ export const AdminMonitoringHub: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Map */}
+        {/* Map Visualization */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -252,46 +262,11 @@ export const AdminMonitoringHub: React.FC = () => {
               Cafe Feedback Heatmap
             </CardTitle>
             <CardDescription>
-              Color-coded markers: Red (critical), Yellow (warning), Green (good)
+              Color-coded visualization: Red (critical), Yellow (warning), Green (good)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-96 w-full">
-              <MapContainer
-                center={[40.7128, -74.0060]}
-                zoom={11}
-                style={{ height: '100%', width: '100%' }}
-                className="rounded-lg"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {cafeMarkers.map((marker) => (
-                  <Marker
-                    key={marker.id}
-                    position={[marker.lat, marker.lng]}
-                    icon={createCustomIcon(marker.status)}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold">{marker.name}</h3>
-                        <div className="flex items-center gap-1 mb-1">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm">{marker.rating.toFixed(1)}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {marker.negativeFeedbacks} negative / {marker.totalFeedbacks} total (24h)
-                        </p>
-                        <Badge variant={marker.status === 'critical' ? 'destructive' : marker.status === 'warning' ? 'secondary' : 'default'}>
-                          {marker.status}
-                        </Badge>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
-            </div>
+            <SimpleMapVisualization markers={cafeMarkers} />
           </CardContent>
         </Card>
 
