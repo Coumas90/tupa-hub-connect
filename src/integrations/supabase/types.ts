@@ -1021,6 +1021,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_audit_log: {
+        Row: {
+          action: string
+          changed_by: string
+          created_at: string | null
+          id: string
+          role_changed: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          changed_by: string
+          created_at?: string | null
+          id?: string
+          role_changed: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string
+          created_at?: string | null
+          id?: string
+          role_changed?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_course_progress: {
         Row: {
           certificate_url: string | null
@@ -1225,6 +1252,10 @@ export type Database = {
       }
       get_user_cafe_id: {
         Args: { _user_id: string }
+        Returns: string
+      }
+      get_user_location_id: {
+        Args: { _user_id?: string }
         Returns: string
       }
       is_admin: {

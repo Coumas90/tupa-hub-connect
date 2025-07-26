@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { checkAndRefreshSession } from '@/utils/authGuard';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, AlertTriangle } from 'lucide-react';
@@ -72,7 +73,7 @@ export function ProtectedRoute({
 
         // Check admin requirements if needed
         if (requireAdmin) {
-          const isAdmin = checkAdminRole(validSession);
+          const isAdmin = await checkAdminRole(validSession);
           if (!isAdmin) {
             console.warn('❌ ProtectedRoute: Admin access required but user lacks permissions');
             setError('Se requieren permisos de administrador para acceder a esta página');
@@ -92,7 +93,7 @@ export function ProtectedRoute({
         console.info('✅ ProtectedRoute: Access granted', {
           userId: validSession.user.id,
           email: validSession.user.email,
-          isAdmin: requireAdmin ? checkAdminRole(validSession) : null
+          isAdmin: requireAdmin ? await checkAdminRole(validSession) : null
         });
 
         setSession(validSession);
@@ -222,21 +223,26 @@ function LoadingSkeleton() {
 }
 
 /**
- * Check if user has admin role based on session data
+ * Check if user has admin role using secure database function
  */
-function checkAdminRole(session: Session): boolean {
-  const user = session.user;
-  const userMetadata = user.user_metadata;
-  const appMetadata = user.app_metadata;
+async function checkAdminRole(session: Session): Promise<boolean> {
+  if (!session?.user) return false;
   
-  // Check various sources for admin role
-  return (
-    userMetadata?.role === 'admin' ||
-    userMetadata?.is_admin === true ||
-    appMetadata?.role === 'admin' ||
-    appMetadata?.is_admin === true ||
-    user.email?.includes('admin') === true
-  );
+  try {
+    const { data, error } = await supabase.rpc('is_admin', { 
+      _user_id: session.user.id 
+    });
+    
+    if (error) {
+      console.error('Error checking admin role:', error);
+      return false;
+    }
+    
+    return data || false;
+  } catch (error) {
+    console.error('Error checking admin role:', error);
+    return false;
+  }
 }
 
 /**
