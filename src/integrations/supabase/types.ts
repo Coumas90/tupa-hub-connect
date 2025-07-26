@@ -1198,7 +1198,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      giveaway_winner_stats: {
+        Row: {
+          emails_failed: number | null
+          emails_pending: number | null
+          emails_sent: number | null
+          regions_count: number | null
+          week_start: string | null
+          winners_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_expired_tokens: {

@@ -12,6 +12,7 @@ import NewIntegrationModal from '@/components/admin/NewIntegrationModal';
 import OdooManagement from '@/components/admin/OdooManagement';
 import { QRDashboard } from '@/components/admin/QRDashboard';
 import { AdminMonitoringHub } from '@/components/admin/AdminMonitoringHub';
+import { GiveawayAdminPanel } from '@/components/admin/GiveawayAdminPanel';
 import { getLogStats } from '@/lib/api/logs';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,7 +26,7 @@ interface DashboardStats {
 export default function AdminIntegrations() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'qr' | 'heatmap'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'qr' | 'heatmap' | 'giveaways'>('overview');
   const [showNewIntegrationModal, setShowNewIntegrationModal] = useState(false);
   const [tableKey, setTableKey] = useState(0); // To force table re-render
   const [stats, setStats] = useState<DashboardStats>({
@@ -140,6 +141,13 @@ export default function AdminIntegrations() {
               <Activity className="w-4 h-4 mr-2" />
               Monitoring Hub
             </Button>
+            <Button
+              variant={selectedTab === 'giveaways' ? 'default' : 'outline'}
+              onClick={() => setSelectedTab('giveaways')}
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Sorteos
+            </Button>
             
             {selectedTab === 'overview' && (
               <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
@@ -229,8 +237,10 @@ export default function AdminIntegrations() {
           <IntegrationMonitoring />
         ) : selectedTab === 'qr' ? (
           <QRDashboard />
-        ) : (
+        ) : selectedTab === 'heatmap' ? (
           <AdminMonitoringHub />
+        ) : (
+          <GiveawayAdminPanel />
         )}
 
         <NewIntegrationModal 
