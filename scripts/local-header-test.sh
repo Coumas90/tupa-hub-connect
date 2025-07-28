@@ -49,7 +49,7 @@ echo "   - vercel.json (Vercel-specific)"
 echo ""
 echo "🔍 Testing application routes..."
 
-routes=("/" "/consumo" "/academia" "/recetas" "/dashboard")
+routes=("/" "/consumo" "/academia" "/recetas" "/app")
 
 for route in "${routes[@]}"; do
     status=$(curl -s -o /dev/null -w "%{http_code}" "$LOCAL_URL$route" || echo "000")

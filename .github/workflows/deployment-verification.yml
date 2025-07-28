@@ -61,7 +61,7 @@ jobs:
           echo "🔍 Testing critical application endpoints..."
           
           # Test main application pages
-          endpoints=("/consumo" "/academia" "/recetas" "/dashboard")
+          endpoints=("/consumo" "/academia" "/recetas" "/app")
           
           for endpoint in "${endpoints[@]}"; do
             echo "Testing endpoint: $endpoint"

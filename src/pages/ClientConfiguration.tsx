@@ -202,7 +202,7 @@ export default function ClientConfiguration() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/integrations">
+            <Link to="/app/admin/integrations">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Link>
@@ -223,7 +223,7 @@ export default function ClientConfiguration() {
               {testing ? 'Probando...' : 'Probar Conexión'}
             </Button>
             <Button asChild variant="outline">
-              <Link to={`/admin/integrations/logs/${config.id}`}>
+              <Link to={`/app/admin/integrations/logs/${config.id}`}>
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Logs
               </Link>

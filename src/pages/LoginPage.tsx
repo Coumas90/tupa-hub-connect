@@ -56,7 +56,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`
+            emailRedirectTo: `${window.location.origin}/app`
           }
         });
 

@@ -150,7 +150,7 @@ export default function ClientLogs() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/integrations">
+            <Link to="/app/admin/integrations">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Link>
