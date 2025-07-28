@@ -10,78 +10,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Coffee, Clock, Building, Users, Target, Lightbulb } from 'lucide-react';
+import { CalendarIcon, Coffee, Clock, Building, Users, Target, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const advisorySchema = z.object({
+const baristaTrainingSchema = z.object({
   requesterName: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
   requesterEmail: z.string().email('Email inválido'),
   requesterPhone: z.string().optional(),
-  companyName: z.string().min(2, 'Nombre de empresa requerido'),
-  companySize: z.enum(['1-10', '11-50', '51-200', '200+']),
-  advisoryType: z.enum(['menu_optimization', 'operations', 'training', 'marketing', 'equipment', 'sustainability']),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  cafeAddress: z.string().min(5, 'Dirección completa de la cafetería requerida'),
+  machineType: z.enum(['semi_automatic', 'automatic', 'super_automatic', 'manual']),
+  numberOfBaristas: z.number().min(1, 'Debe especificar al menos 1 barista').max(20, 'Máximo 20 baristas por sesión'),
+  trainingType: z.enum(['basic', 'intermediate', 'advanced', 'latte_art', 'coffee_cupping']),
   preferredDate: z.date().optional(),
   preferredTime: z.string().optional(),
-  description: z.string().min(10, 'Descripción debe tener al menos 10 caracteres'),
+  duration: z.enum(['2_hours', '4_hours', '6_hours', 'full_day']),
+  specialRequests: z.string().optional(),
 });
 
-type AdvisoryFormData = z.infer<typeof advisorySchema>;
+type BaristaTrainingFormData = z.infer<typeof baristaTrainingSchema>;
 
-interface AdvisoryRequestFormProps {
+interface BaristaTrainingFormProps {
   cafeId: string;
   onSuccess?: () => void;
 }
 
-const advisoryTypeLabels = {
-  menu_optimization: 'Optimización de Menú',
-  operations: 'Operaciones',
-  training: 'Capacitación',
-  marketing: 'Marketing',
-  equipment: 'Equipamiento',
-  sustainability: 'Sostenibilidad'
+const machineTypeLabels = {
+  semi_automatic: 'Semiautomática',
+  automatic: 'Automática',
+  super_automatic: 'Superautomática',
+  manual: 'Manual/Lever'
 };
 
-const advisoryTypeIcons = {
-  menu_optimization: Coffee,
-  operations: Building,
-  training: Users,
-  marketing: Target,
-  equipment: Clock,
-  sustainability: Lightbulb
+const trainingTypeLabels = {
+  basic: 'Básico - Fundamentos del Espresso',
+  intermediate: 'Intermedio - Técnicas Avanzadas',
+  advanced: 'Avanzado - Calibración y Ajustes',
+  latte_art: 'Latte Art - Arte en Leche',
+  coffee_cupping: 'Catación y Análisis Sensorial'
 };
 
-const priorityLabels = {
-  low: 'Baja',
-  medium: 'Media',
-  high: 'Alta',
-  urgent: 'Urgente'
+const durationLabels = {
+  '2_hours': '2 horas',
+  '4_hours': '4 horas (medio día)',
+  '6_hours': '6 horas',
+  'full_day': 'Día completo (8 horas)'
 };
 
-const companySizeLabels = {
-  '1-10': '1-10 empleados',
-  '11-50': '11-50 empleados',
-  '51-200': '51-200 empleados',
-  '200+': 'Más de 200 empleados'
-};
-
-export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryRequestFormProps) {
+export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTrainingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<AdvisoryFormData>({
-    resolver: zodResolver(advisorySchema),
+  const form = useForm<BaristaTrainingFormData>({
+    resolver: zodResolver(baristaTrainingSchema),
     defaultValues: {
-      priority: 'medium',
-      companySize: '1-10',
-      advisoryType: 'operations'
+      trainingType: 'basic',
+      machineType: 'semi_automatic',
+      duration: '4_hours',
+      numberOfBaristas: 1
     }
   });
 
-  const onSubmit = async (data: AdvisoryFormData) => {
+  const onSubmit = async (data: BaristaTrainingFormData) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -91,26 +83,26 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
           requester_name: data.requesterName,
           requester_email: data.requesterEmail,
           requester_phone: data.requesterPhone,
-          company_name: data.companyName,
-          company_size: data.companySize,
-          advisory_type: data.advisoryType,
-          priority: data.priority,
+          company_name: data.cafeAddress, // Using company_name field for cafe address
+          company_size: `${data.numberOfBaristas}_baristas`, // Using company_size for number of baristas
+          advisory_type: 'barista_training', // Fixed type for barista training
+          priority: 'medium', // Default priority for training requests
           preferred_date: data.preferredDate?.toISOString().split('T')[0],
           preferred_time: data.preferredTime,
-          description: data.description,
+          description: `Capacitación de Baristas - Tipo: ${trainingTypeLabels[data.trainingType]}, Máquina: ${machineTypeLabels[data.machineType]}, Duración: ${durationLabels[data.duration]}, Baristas: ${data.numberOfBaristas}. Solicitudes especiales: ${data.specialRequests || 'Ninguna'}`,
         });
 
       if (error) throw error;
 
       toast({
-        title: "Solicitud enviada",
-        description: "Tu solicitud de asesoría ha sido enviada exitosamente. Te contactaremos pronto.",
+        title: "Capacitación solicitada",
+        description: "Tu solicitud de capacitación para baristas ha sido enviada. Te contactaremos pronto.",
       });
 
       form.reset();
       onSuccess?.();
     } catch (error) {
-      console.error('Error submitting advisory request:', error);
+      console.error('Error submitting training request:', error);
       toast({
         title: "Error",
         description: "Hubo un problema al enviar tu solicitud. Intenta nuevamente.",
@@ -125,11 +117,11 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="text-center">
         <div className="flex items-center justify-center mb-4">
-          <Coffee className="h-8 w-8 text-warm-primary mr-3" />
-          <CardTitle className="text-2xl font-bold text-warm-primary">Solicitar Asesoría TUPÁ</CardTitle>
+          <GraduationCap className="h-8 w-8 text-warm-primary mr-3" />
+          <CardTitle className="text-2xl font-bold text-warm-primary">Capacitación de Baristas In-House</CardTitle>
         </div>
         <CardDescription>
-          Completa el formulario para solicitar una asesoría personalizada con nuestros expertos en café
+          Solicita una capacitación personalizada para tus baristas en tu cafetería
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -173,12 +165,12 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
 
               <FormField
                 control={form.control}
-                name="requesterPhone"
+                name="cafeAddress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono (Opcional)</FormLabel>
+                    <FormLabel>Dirección de la Cafetería</FormLabel>
                     <FormControl>
-                      <Input placeholder="+54 11 1234-5678" {...field} />
+                      <Input placeholder="Dirección completa donde se realizará la capacitación" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,168 +178,34 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
               />
             </div>
 
-            {/* Información de la Empresa */}
+            {/* Información de la Capacitación */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-warm-primary border-b border-warm-primary/20 pb-2">
-                Información de la Empresa
+                Detalles de la Capacitación
               </h3>
               
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre de la Empresa</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nombre de tu cafetería o empresa" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="companySize"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tamaño de la Empresa</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tamaño" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(companySizeLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Detalles de la Asesoría */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-warm-primary border-b border-warm-primary/20 pb-2">
-                Detalles de la Asesoría
-              </h3>
               
-              <FormField
-                control={form.control}
-                name="advisoryType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Asesoría</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(advisoryTypeLabels).map(([value, label]) => {
-                          const Icon = advisoryTypeIcons[value as keyof typeof advisoryTypeIcons];
-                          return (
-                            <SelectItem key={value} value={value}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="h-4 w-4" />
-                                {label}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prioridad</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona la prioridad" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(priorityLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            <div className={cn(
-                              "flex items-center gap-2",
-                              value === 'urgent' && "text-red-600",
-                              value === 'high' && "text-orange-600",
-                              value === 'medium' && "text-yellow-600",
-                              value === 'low' && "text-green-600"
-                            )}>
-                              <div className={cn(
-                                "w-2 h-2 rounded-full",
-                                value === 'urgent' && "bg-red-600",
-                                value === 'high' && "bg-orange-600",
-                                value === 'medium' && "bg-yellow-600",
-                                value === 'low' && "bg-green-600"
-                              )} />
-                              {label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="preferredDate"
+                  name="trainingType"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Fecha Preferida</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Selecciona una fecha</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <FormItem>
+                      <FormLabel>Tipo de Capacitación</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(trainingTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -355,29 +213,154 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
 
                 <FormField
                   control={form.control}
-                  name="preferredTime"
+                  name="machineType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Hora Preferida</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
+                      <FormLabel>Tipo de Máquina</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de máquina de espresso" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(machineTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="numberOfBaristas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Baristas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="20"
+                          placeholder="¿Cuántos baristas participarán?"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duración de la Capacitación</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Duración estimada" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(durationLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {/* Fecha y Hora */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-warm-primary border-b border-warm-primary/20 pb-2">
+                  Programación
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="preferredDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Fecha Preferida</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Selecciona una fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date < new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="preferredTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hora Preferida</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
               <FormField
                 control={form.control}
-                name="description"
+                name="specialRequests"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripción Detallada</FormLabel>
+                    <FormLabel>Solicitudes Especiales (Opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe los desafíos específicos que enfrentas y qué esperas lograr con la asesoría..."
-                        className="min-h-[120px]"
+                        placeholder="Menciona cualquier requerimiento específico, objetivos de la capacitación, o temas particulares que te gustaría cubrir..."
+                        className="min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
@@ -392,7 +375,7 @@ export default function AdvisoryRequestForm({ cafeId, onSuccess }: AdvisoryReque
               disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary"
             >
-              {isSubmitting ? "Enviando solicitud..." : "Enviar Solicitud de Asesoría"}
+              {isSubmitting ? "Enviando solicitud..." : "Solicitar Capacitación de Baristas"}
             </Button>
           </form>
         </Form>
