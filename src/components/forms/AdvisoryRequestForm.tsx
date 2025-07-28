@@ -95,8 +95,8 @@ export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTraini
       if (error) throw error;
 
       toast({
-        title: "Capacitación solicitada",
-        description: "Tu solicitud de capacitación para baristas ha sido enviada. Te contactaremos pronto.",
+        title: "¡Solicitud enviada exitosamente!",
+        description: "Tu solicitud de capacitación para baristas ha sido recibida. Nuestro equipo se pondrá en contacto contigo dentro de las próximas 24 horas para coordinar los detalles.",
       });
 
       form.reset();
