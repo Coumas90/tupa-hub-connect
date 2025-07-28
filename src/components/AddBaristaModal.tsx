@@ -40,8 +40,11 @@ export const AddBaristaModal: React.FC<AddBaristaModalProps> = ({
 
     try {
       // Get current user
-      const { data: currentUser } = await supabase.auth.getUser();
-      if (!currentUser.user) throw new Error('No se pudo obtener el usuario actual');
+      const { data: currentUser, error: userError } = await supabase.auth.getUser();
+      if (userError || !currentUser.user) {
+        console.error('Error getting current user:', userError);
+        throw new Error('No se pudo obtener el usuario actual. Por favor, intentá iniciar sesión nuevamente.');
+      }
 
       // Call the edge function to create barista
       const { data, error } = await supabase.functions.invoke('create-barista', {
