@@ -14,92 +14,104 @@ interface SentryConfig {
  * Initialize Sentry error tracking and performance monitoring
  */
 export function initializeSentry(): void {
-  // Get Sentry DSN from environment variables (configured in deployment)
-  const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
-  
-  if (!sentryDsn || sentryDsn.includes('YOUR_SENTRY_DSN')) {
-    console.log('⚠️ Sentry DSN not configured, error tracking disabled');
-    return;
-  }
-  
-  const config: SentryConfig = {
-    dsn: sentryDsn,
-    environment: import.meta.env.MODE || 'development',
-    release: import.meta.env.VITE_APP_VERSION || '1.0.0',
+  try {
+    // Get Sentry DSN from environment or system settings
+    let sentryDsn = import.meta.env.VITE_SENTRY_DSN;
     
-    // Session Replay Configuration
-    replaysSessionSampleRate: 0.1, // 10% of sessions will be recorded
-    replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
-    
-    // Performance Monitoring
-    tracesSampleRate: 0.1, // 10% of transactions will be traced
-    
-    // Filter sensitive data before sending to Sentry
-    beforeSend: (event, hint) => {
-      // Remove sensitive information from events
-      if (event.request?.headers) {
-        delete event.request.headers.Authorization;
-        delete event.request.headers.authorization;
-      }
-      
-      // Filter out localhost errors in development
-      if (config.environment === 'development' && 
-          event.request?.url?.includes('localhost')) {
-        return null;
-      }
-      
-      return event;
+    // If no environment DSN, try to get from system settings
+    if (!sentryDsn) {
+      // For production, we'll get this from the database
+      // For now, we'll use a placeholder that indicates it's not configured
+      sentryDsn = '⚠️ Not configured yet';
     }
-  };
-
-  Sentry.init({
-    dsn: config.dsn,
-    environment: config.environment,
-    release: config.release,
     
-    // Session Replay
-    replaysSessionSampleRate: config.replaysSessionSampleRate,
-    replaysOnErrorSampleRate: config.replaysOnErrorSampleRate,
-    
-    // Performance Monitoring
-    tracesSampleRate: config.tracesSampleRate,
-    
-    // Configure integrations
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({
-        // Mask sensitive data in replays
-        maskAllText: false,
-        maskAllInputs: true,
-        blockAllMedia: false,
-      }),
-    ],
-    
-    // Data filtering
-    beforeSend: (event, hint) => {
-      // Remove sensitive information from events
-      if (event.request?.headers) {
-        delete event.request.headers.Authorization;
-        delete event.request.headers.authorization;
-      }
-      
-      // Filter out localhost errors in development
-      if (config.environment === 'development' && 
-          event.request?.url?.includes('localhost')) {
-        return null;
-      }
-      
-      return event;
-    },
-  });
-
-  // Set user context for authenticated sessions
-  setupUserContext();
+    if (!sentryDsn || sentryDsn === '⚠️ Not configured yet' || sentryDsn.includes('YOUR_SENTRY_DSN')) {
+      console.log('⚠️ Sentry DSN not configured, error tracking disabled');
+      console.log('Configure VITE_SENTRY_DSN environment variable or system_settings.sentry_dsn to enable error tracking');
+      return;
+    }
   
-  // Setup global error handlers
-  setupGlobalErrorHandlers();
-  
-  console.log(`✅ Sentry initialized in ${config.environment} mode`);
+    const config: SentryConfig = {
+      dsn: sentryDsn,
+      environment: import.meta.env.MODE || 'development',
+      release: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      
+      // Session Replay Configuration
+      replaysSessionSampleRate: 0.1, // 10% of sessions will be recorded
+      replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
+      
+      // Performance Monitoring
+      tracesSampleRate: 0.1, // 10% of transactions will be traced
+      
+      // Filter sensitive data before sending to Sentry
+      beforeSend: (event, hint) => {
+        // Remove sensitive information from events
+        if (event.request?.headers) {
+          delete event.request.headers.Authorization;
+          delete event.request.headers.authorization;
+        }
+        
+        // Filter out localhost errors in development
+        if (config.environment === 'development' && 
+            event.request?.url?.includes('localhost')) {
+          return null;
+        }
+        
+        return event;
+      }
+    };
+
+    Sentry.init({
+      dsn: config.dsn,
+      environment: config.environment,
+      release: config.release,
+      
+      // Session Replay
+      replaysSessionSampleRate: config.replaysSessionSampleRate,
+      replaysOnErrorSampleRate: config.replaysOnErrorSampleRate,
+      
+      // Performance Monitoring
+      tracesSampleRate: config.tracesSampleRate,
+      
+      // Configure integrations
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration({
+          // Mask sensitive data in replays
+          maskAllText: false,
+          maskAllInputs: true,
+          blockAllMedia: false,
+        }),
+      ],
+      
+      // Data filtering
+      beforeSend: (event, hint) => {
+        // Remove sensitive information from events
+        if (event.request?.headers) {
+          delete event.request.headers.Authorization;
+          delete event.request.headers.authorization;
+        }
+        
+        // Filter out localhost errors in development
+        if (config.environment === 'development' && 
+            event.request?.url?.includes('localhost')) {
+          return null;
+        }
+        
+        return event;
+      },
+    });
+
+    // Set user context for authenticated sessions
+    setupUserContext();
+    
+    // Setup global error handlers
+    setupGlobalErrorHandlers();
+    
+    console.log(`✅ Sentry initialized in ${config.environment} mode`);
+  } catch (error) {
+    console.error('Failed to initialize Sentry:', error);
+  }
 }
 
 /**
