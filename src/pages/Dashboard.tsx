@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import WeatherCard from '@/components/WeatherCard';
+import AdvisoryRequestModal from '@/components/modals/AdvisoryRequestModal';
 import { useNavigate } from 'react-router-dom';
 import {
   Coffee,
@@ -28,10 +29,12 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-foreground">Bienvenido a TUPÁ Hub</h1>
             <p className="text-muted-foreground">Tu plataforma integral de gestión cafetera</p>
           </div>
-          <Button className="bg-gradient-primary hover:bg-primary/90">
-            <Calendar className="h-4 w-4 mr-2" />
-            Programar Asesoría
-          </Button>
+          <AdvisoryRequestModal cafeId="default-cafe-id">
+            <Button className="bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary">
+              <Calendar className="h-4 w-4 mr-2" />
+              Programar Asesoría
+            </Button>
+          </AdvisoryRequestModal>
         </div>
 
         {/* Clima y Café del Mes */}

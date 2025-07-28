@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      advisory_requests: {
+        Row: {
+          admin_notes: string | null
+          advisory_type: string
+          cafe_id: string
+          company_name: string
+          company_size: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          preferred_date: string | null
+          preferred_time: string | null
+          priority: string
+          requester_email: string
+          requester_name: string
+          requester_phone: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          advisory_type: string
+          cafe_id: string
+          company_name: string
+          company_size?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string
+          requester_email: string
+          requester_name: string
+          requester_phone?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          advisory_type?: string
+          cafe_id?: string
+          company_name?: string
+          company_size?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string
+          requester_email?: string
+          requester_name?: string
+          requester_phone?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisory_requests_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advisory_visibility_config: {
+        Row: {
+          cafe_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_visible: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cafe_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cafe_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisory_visibility_config_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: true
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_logs: {
         Row: {
           backup_date: string

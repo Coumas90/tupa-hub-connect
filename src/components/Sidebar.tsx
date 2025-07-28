@@ -14,7 +14,8 @@ import {
   GraduationCap,
   Menu,
   X,
-  Settings
+  Settings,
+  MessageSquare
 } from 'lucide-react';
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'FAQ', href: '/app/faq', icon: HelpCircle },
   { name: 'Admin POS', href: '/app/admin/integrations', icon: Settings },
   { name: 'Admin Cursos', href: '/app/admin/courses', icon: GraduationCap },
+  { name: 'Admin Asesorías', href: '/app/admin/advisory', icon: MessageSquare },
 ];
 
 export function Sidebar() {

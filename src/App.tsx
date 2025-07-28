@@ -28,6 +28,7 @@ import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
+import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => {
                 <Route path="faq" element={<FAQ />} />
                 <Route path="admin/integrations" element={<AdminIntegrations />} />
                 <Route path="admin/courses" element={<AdminCourses />} />
+                <Route path="admin/advisory" element={<AdvisoryAdmin />} />
                 <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
                 <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
               </Route>
