@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, Lock, Coffee, TrendingUp, Shield, Users, CheckCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginPageProps {
@@ -23,6 +24,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const toastNotifications = useToastNotifications();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -118,6 +120,39 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       
       setError(errorMessage);
       toastNotifications.showLoginError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testEmail = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-email', {
+        body: { email }
+      });
+
+      if (error) {
+        console.error('Test email error:', error);
+        toast({
+          title: "Error",
+          description: `Error enviando email de prueba: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log('Test email response:', data);
+        toast({
+          title: "Email de prueba enviado",
+          description: "Revisa tu bandeja de entrada para confirmar que Resend funciona",
+        });
+      }
+    } catch (error: any) {
+      console.error('Test email error:', error);
+      toast({
+        title: "Error",
+        description: `Error enviando email de prueba: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -377,6 +412,19 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                       {showForgotPassword 
                         ? 'Volver al inicio de sesión' 
                         : '¿Olvidaste tu contraseña?'}
+                    </Button>
+                  </div>
+
+                  {/* Botón temporal de prueba de email */}
+                  <div className="text-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={testEmail}
+                      disabled={loading || !email}
+                      className="text-sm"
+                    >
+                      🧪 Probar Email (Debug)
                     </Button>
                   </div>
                 </form>

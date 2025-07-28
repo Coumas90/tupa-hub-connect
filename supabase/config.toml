@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.update-password]
 verify_jwt = false
+
+[functions.test-email]
+verify_jwt = false
