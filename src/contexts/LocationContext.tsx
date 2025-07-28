@@ -15,8 +15,21 @@ interface Location {
   name: string;
   address?: string;
   is_main: boolean;
+  slug?: string;
+  description?: string;
+  contact_email?: string;
+  contact_phone?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface CafeMapping {
+  cafe_id: string;
+  cafe_name: string;
+  owner_id: string;
+  qr_code_url?: string;
+  brand_color?: string;
+  logo_url?: string;
 }
 
 interface LocationContextType {
@@ -26,8 +39,13 @@ interface LocationContextType {
   loading: boolean;
   error: string | null;
   setActiveLocation: (locationId: string) => Promise<void>;
+  setActiveLocationBySlug: (locationSlug: string) => Promise<void>;
+  getCafeByLocationId: (locationId: string) => Promise<CafeMapping | null>;
+  getLocationByCafeId: (cafeId: string) => Promise<Location | null>;
   refreshContext: () => Promise<void>;
   hasMultipleLocations: boolean;
+  // Backward compatibility helpers
+  activeCafe: CafeMapping | null;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -48,6 +66,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [activeLocation, setActiveLocationState] = useState<Location | null>(null);
+  const [activeCafe, setActiveCafe] = useState<CafeMapping | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -115,6 +134,34 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setLoading(false);
     }
   }, [toast]);
+
+  // Fetch cafe mapping when active location changes
+  useEffect(() => {
+    const fetchCafeMapping = async () => {
+      if (activeLocation) {
+        try {
+          const { data, error } = await supabase
+            .from('cafes_locations_mapping')
+            .select('cafe_id, cafe_name, owner_id, qr_code_url, brand_color, logo_url')
+            .eq('location_id', activeLocation.id)
+            .maybeSingle();
+
+          if (!error && data) {
+            setActiveCafe(data);
+          } else {
+            setActiveCafe(null);
+          }
+        } catch (err) {
+          console.error('Error fetching cafe mapping:', err);
+          setActiveCafe(null);
+        }
+      } else {
+        setActiveCafe(null);
+      }
+    };
+
+    fetchCafeMapping();
+  }, [activeLocation]);
 
   const setActiveLocation = useCallback(async (locationId: string) => {
     const targetLocation = locations.find(loc => loc.id === locationId);
@@ -185,6 +232,62 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   }, [locations, toast]);
 
+  const setActiveLocationBySlug = useCallback(async (locationSlug: string) => {
+    const targetLocation = locations.find(loc => loc.slug === locationSlug);
+    if (!targetLocation) {
+      toast({
+        title: "Invalid Location",
+        description: `Location with slug "${locationSlug}" not found`,
+        variant: "destructive",
+      });
+      return;
+    }
+    await setActiveLocation(targetLocation.id);
+  }, [locations, setActiveLocation, toast]);
+
+  const getCafeByLocationId = useCallback(async (locationId: string): Promise<CafeMapping | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('cafes_locations_mapping')
+        .select('cafe_id, cafe_name, owner_id, qr_code_url, brand_color, logo_url')
+        .eq('location_id', locationId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching cafe mapping:', error);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error in getCafeByLocationId:', err);
+      return null;
+    }
+  }, []);
+
+  const getLocationByCafeId = useCallback(async (cafeId: string): Promise<Location | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('cafes_locations_mapping')
+        .select('location_id, location_slug, location_name, group_id, address, is_main')
+        .eq('cafe_id', cafeId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching location by cafe:', error);
+        return null;
+      }
+
+      if (!data) return null;
+
+      // Find the full location object
+      return locations.find(loc => loc.id === data.location_id) || null;
+    } catch (err) {
+      console.error('Error in getLocationByCafeId:', err);
+      return null;
+    }
+  }, [locations]);
+
   const refreshContext = useCallback(async () => {
     const storedLocationId = sessionStorage.getItem('activeLocationId');
     await fetchLocationContext(storedLocationId || undefined);
@@ -206,6 +309,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
           setGroup(null);
           setLocations([]);
           setActiveLocationState(null);
+          setActiveCafe(null);
           setError(null);
           setLoading(false);
           sessionStorage.removeItem('activeLocationId');
@@ -240,8 +344,12 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     loading,
     error,
     setActiveLocation,
+    setActiveLocationBySlug,
+    getCafeByLocationId,
+    getLocationByCafeId,
     refreshContext,
     hasMultipleLocations,
+    activeCafe,
   };
 
   return (
