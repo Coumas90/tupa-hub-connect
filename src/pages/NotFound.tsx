@@ -22,10 +22,10 @@ const NotFound = () => {
             La página que estás buscando no existe o fue movida.
           </p>
           <a 
-            href="/" 
+            href="/app" 
             className="inline-block px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Volver al Inicio
+            Volver al Dashboard
           </a>
         </div>
       </div>

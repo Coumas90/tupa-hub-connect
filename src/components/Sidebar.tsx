@@ -18,17 +18,17 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Recetas', href: '/recetas', icon: Coffee },
-  { name: 'Academia', href: '/academia', icon: GraduationCap },
-  { name: 'Consumo', href: '/consumo', icon: BarChart3 },
-  { name: 'Recursos', href: '/recursos', icon: FileText },
-  { name: 'Mi Equipo', href: '/mi-equipo', icon: Users },
-  { name: 'Reposición', href: '/reposicion', icon: Package },
-  { name: 'Barista Pool', href: '/barista-pool', icon: Clock },
-  { name: 'FAQ', href: '/faq', icon: HelpCircle },
-  { name: 'Admin POS', href: '/admin/integrations', icon: Settings },
-  { name: 'Admin Cursos', href: '/admin/courses', icon: GraduationCap },
+  { name: 'Dashboard', href: '/app/dashboard', icon: BarChart3 },
+  { name: 'Recetas', href: '/app/recetas', icon: Coffee },
+  { name: 'Academia', href: '/app/academia', icon: GraduationCap },
+  { name: 'Consumo', href: '/app/consumo', icon: BarChart3 },
+  { name: 'Recursos', href: '/app/recursos', icon: FileText },
+  { name: 'Mi Equipo', href: '/app/mi-equipo', icon: Users },
+  { name: 'Reposición', href: '/app/reposicion', icon: Package },
+  { name: 'Barista Pool', href: '/app/barista-pool', icon: Clock },
+  { name: 'FAQ', href: '/app/faq', icon: HelpCircle },
+  { name: 'Admin POS', href: '/app/admin/integrations', icon: Settings },
+  { name: 'Admin Cursos', href: '/app/admin/courses', icon: GraduationCap },
 ];
 
 export function Sidebar() {
