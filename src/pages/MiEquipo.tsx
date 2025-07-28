@@ -20,6 +20,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useState } from 'react';
+import { AddBaristaModal } from '@/components/AddBaristaModal';
 
 const miembrosEquipo = [
   {
@@ -88,6 +89,7 @@ import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 
 export default function MiEquipo() {
   const [vistaDetallada, setVistaDetallada] = useState(false);
+  const [showAddBaristaModal, setShowAddBaristaModal] = useState(false);
 
   const getRolColor = (rol: string) => {
     switch (rol) {
@@ -125,7 +127,10 @@ export default function MiEquipo() {
             <Eye className="h-4 w-4 mr-2" />
             {vistaDetallada ? 'Vista Simple' : 'Vista Detallada'}
           </Button>
-          <Button className="bg-gradient-primary hover:bg-primary/90">
+          <Button 
+            className="bg-gradient-primary hover:bg-primary/90"
+            onClick={() => setShowAddBaristaModal(true)}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Solicitar Alta
           </Button>
@@ -393,12 +398,24 @@ export default function MiEquipo() {
           <p className="text-muted-foreground mb-4">
             Solicitá el alta de nuevos baristas para tu equipo. TUPÁ te ayudará con el proceso de selección y capacitación.
           </p>
-          <Button className="bg-gradient-primary hover:bg-primary/90">
+          <Button 
+            className="bg-gradient-primary hover:bg-primary/90"
+            onClick={() => setShowAddBaristaModal(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Solicitar Nuevo Integrante
           </Button>
         </CardContent>
       </Card>
+      
+      <AddBaristaModal 
+        open={showAddBaristaModal}
+        onOpenChange={setShowAddBaristaModal}
+        onSuccess={() => {
+          // Aquí podrías refrescar la lista de miembros del equipo
+          console.log('Barista agregado exitosamente');
+        }}
+      />
       </div>
     </ModuleAccessGuard>
   );
