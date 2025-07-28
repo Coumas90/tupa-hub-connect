@@ -53,17 +53,23 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+      // Call our password reset edge function
+      const { data, error } = await supabase.functions.invoke('password-reset', {
+        body: { 
+          email: email.trim(),
+          resetUrl: `${window.location.origin}/auth/reset`
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Error enviando email de recuperación');
+      }
 
       setResetSent(true);
       toastNotifications.showSuccess('Email de recuperación enviado. Revisa tu bandeja de entrada.');
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setError('Error al enviar email de recuperación. Verifica que el email esté registrado.');
+      setError('Error al enviar email de recuperación. Intenta nuevamente.');
       toastNotifications.showLoginError('Error al enviar email de recuperación');
     } finally {
       setLoading(false);

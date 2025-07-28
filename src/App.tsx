@@ -22,6 +22,7 @@ import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
+import PasswordResetPage from "./pages/PasswordResetPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
@@ -62,6 +63,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<LoginPage />} />
+              <Route path="/auth/reset" element={<PasswordResetPage />} />
               <Route path="/app" element={<Layout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="recetas" element={<Recetas />} />

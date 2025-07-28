@@ -32,3 +32,12 @@ verify_jwt = false
 
 [functions.consumption-alerts]
 verify_jwt = true
+
+[functions.password-reset]
+verify_jwt = false
+
+[functions.validate-reset-token]
+verify_jwt = false
+
+[functions.update-password]
+verify_jwt = false
