@@ -709,6 +709,56 @@ export type Database = {
         }
         Relationships: []
       }
+      invitation_tokens: {
+        Row: {
+          cafe_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          id: string
+          role: string
+          token: string
+          used: boolean
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cafe_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          role?: string
+          token: string
+          used?: boolean
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cafe_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: string
+          token?: string
+          used?: boolean
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_tokens_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string | null
@@ -1430,6 +1480,10 @@ export type Database = {
       enforce_session_limit: {
         Args: { target_user_id: string; max_sessions?: number }
         Returns: undefined
+      }
+      generate_invitation_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       generate_prize_code: {
         Args: Record<PropertyKey, never>

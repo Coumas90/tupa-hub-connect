@@ -21,6 +21,7 @@ import Reposicion from "./pages/Reposicion";
 import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import ActivateAccount from "./pages/ActivateAccount";
 import LoginPage from "./pages/LoginPage";
 import PasswordResetPage from "./pages/PasswordResetPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
@@ -82,6 +83,7 @@ const App = () => {
               </Route>
               <Route path="feedback/:cafeId" element={<FeedbackForm />} />
               <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
+              <Route path="/activate-account" element={<ActivateAccount />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </BrowserRouter>
