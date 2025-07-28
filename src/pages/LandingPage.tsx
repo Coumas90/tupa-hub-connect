@@ -3,9 +3,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Coffee, Star, CheckCircle, ArrowRight, MapPin, Users, Building, BarChart3, Zap, Leaf, Package, Award, Clock, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CoffeeTastingModal from "@/components/CoffeeTastingModal";
+import React, { useState } from "react";
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [selectedCoffee, setSelectedCoffee] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleCoffeeClick = (coffee: any) => {
+    setSelectedCoffee(coffee);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCoffee(null);
+  };
 
   const coffeeOrigins = [
     { name: "Colombia Huila", profile: "Cítrico, Chocolate", altitude: "1,800m", character: "/lovable-uploads/d2a8bff4-70da-4e7e-962a-54fba4666246.png" },
@@ -204,7 +218,11 @@ export default function LandingPage() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
             {coffeeOrigins.map((origin, index) => (
-              <Card key={index} className="group hover:scale-105 transition-transform duration-300 border-orange-100 hover:shadow-xl">
+              <Card 
+                key={index} 
+                className="group hover:scale-105 transition-transform duration-300 border-orange-100 hover:shadow-xl cursor-pointer"
+                onClick={() => handleCoffeeClick(origin)}
+              >
                 <CardContent className="p-6 text-center space-y-4">
                   <div className="relative">
                     <img 
@@ -544,6 +562,13 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Coffee Tasting Modal */}
+      <CoffeeTastingModal 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        coffee={selectedCoffee}
+      />
     </div>
   );
 }
