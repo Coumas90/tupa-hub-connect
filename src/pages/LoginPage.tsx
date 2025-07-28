@@ -98,7 +98,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     try {
       await signInWithEmail(email, password);
       toastNotifications.showLoginSuccess();
-      onLoginSuccess?.();
+      // La redirección por rol se maneja automáticamente en AuthContext
     } catch (error: any) {
       console.error('Auth error:', error);
       
