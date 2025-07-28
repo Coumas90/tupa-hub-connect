@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.send-barista-invitation]
 verify_jwt = false
+
+[functions.create-barista]
+verify_jwt = false
