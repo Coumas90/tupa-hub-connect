@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
-import { useAuthGuard, useAdminGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useEffect, useState } from 'react';
 import { Layout } from '@/components/Layout';
+import { RouteGuard, ManagementGuard, AuthenticatedGuard } from './guards';
+import { ROUTE_PERMISSIONS } from '@/constants/routes';
 
 // Import existing pages
 import Dashboard from '@/pages/Dashboard';
@@ -69,35 +71,9 @@ function TenantRouteWrapper({ children }: TenantRouteWrapperProps) {
   return <>{children}</>;
 }
 
-interface RoleGuardProps {
-  roles: string[];
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-}
+// RoleGuardProps moved to guards.tsx
 
-function RoleGuard({ roles, children, fallback }: RoleGuardProps) {
-  const { isAuthenticated } = useAuthGuard();
-  const { isAdmin } = useAdminGuard();
-  
-  // For now, we'll implement basic role checking
-  // This can be enhanced with more granular role management later
-  const hasAccess = isAdmin || roles.includes('user'); // Simplified for initial implementation
-  
-  if (!hasAccess) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-destructive mb-2">Access Denied</h1>
-          <p className="text-muted-foreground">
-            You don't have permission to access this area.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}
+// RoleGuard moved to guards.tsx for better organization
 
 export function TenantRoutes() {
   return (
@@ -110,79 +86,79 @@ export function TenantRoutes() {
         {/* Dashboard Routes by Role */}
         <Route path="dashboard" element={<Navigate to="dashboard/overview" replace />} />
         <Route path="dashboard/overview" element={
-          <RoleGuard roles={['owner', 'manager', 'barista', 'user']}>
+          <AuthenticatedGuard>
             <Dashboard />
-          </RoleGuard>
+          </AuthenticatedGuard>
         } />
         <Route path="dashboard/owner" element={
-          <RoleGuard roles={['owner', 'admin']}>
+          <RouteGuard permission="OWNER_ONLY">
             <Dashboard />
-          </RoleGuard>
+          </RouteGuard>
         } />
         <Route path="dashboard/manager" element={
-          <RoleGuard roles={['owner', 'manager', 'admin']}>
+          <ManagementGuard>
             <Dashboard />
-          </RoleGuard>
+          </ManagementGuard>
         } />
         <Route path="dashboard/barista" element={
-          <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+          <AuthenticatedGuard>
             <Dashboard />
-          </RoleGuard>
+          </AuthenticatedGuard>
         } />
 
         {/* Operations Routes */}
         <Route path="operations">
           <Route path="consumption" element={
-            <RoleGuard roles={['owner', 'manager', 'admin']}>
+            <ManagementGuard>
               <Consumo />
-            </RoleGuard>
+            </ManagementGuard>
           } />
           <Route path="recipes" element={
-            <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+            <AuthenticatedGuard>
               <Recetas />
-            </RoleGuard>
+            </AuthenticatedGuard>
           } />
           <Route path="staff" element={
-            <RoleGuard roles={['owner', 'manager', 'admin']}>
+            <ManagementGuard>
               <MiEquipo />
-            </RoleGuard>
+            </ManagementGuard>
           } />
           <Route path="inventory" element={
-            <RoleGuard roles={['owner', 'manager', 'admin']}>
+            <ManagementGuard>
               <Reposicion />
-            </RoleGuard>
+            </ManagementGuard>
           } />
           <Route path="resources" element={
-            <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+            <AuthenticatedGuard>
               <Recursos />
-            </RoleGuard>
+            </AuthenticatedGuard>
           } />
         </Route>
 
         {/* Academy Routes */}
         <Route path="academy">
           <Route index element={
-            <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+            <AuthenticatedGuard>
               <Academia />
-            </RoleGuard>
+            </AuthenticatedGuard>
           } />
           <Route path="courses" element={
-            <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+            <AuthenticatedGuard>
               <Academia />
-            </RoleGuard>
+            </AuthenticatedGuard>
           } />
         </Route>
 
         {/* Other Routes */}
         <Route path="barista-pool" element={
-          <RoleGuard roles={['owner', 'manager', 'admin']}>
+          <ManagementGuard>
             <BaristaPool />
-          </RoleGuard>
+          </ManagementGuard>
         } />
         <Route path="faq" element={
-          <RoleGuard roles={['owner', 'manager', 'barista', 'admin']}>
+          <AuthenticatedGuard>
             <FAQ />
-          </RoleGuard>
+          </AuthenticatedGuard>
         } />
 
         {/* Default redirect */}

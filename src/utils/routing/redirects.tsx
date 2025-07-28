@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { buildTenantRoute, buildPublicRoute } from './helpers';
 
 /**
  * Legacy Route Redirector
@@ -18,16 +19,16 @@ export function LegacyRouteRedirector() {
     if (!activeLocation?.slug) return;
 
     const redirectMappings: Record<string, string> = {
-      '/app': `/tenants/${activeLocation.slug}/dashboard/overview`,
-      '/app/recetas': `/tenants/${activeLocation.slug}/operations/recipes`,
-      '/app/academia': `/tenants/${activeLocation.slug}/academy`,
-      '/app/consumo': `/tenants/${activeLocation.slug}/operations/consumption`,
-      '/app/recursos': `/tenants/${activeLocation.slug}/operations/resources`,
-      '/app/mi-equipo': `/tenants/${activeLocation.slug}/operations/staff`,
-      '/app/reposicion': `/tenants/${activeLocation.slug}/operations/inventory`,
-      '/app/barista-pool': `/tenants/${activeLocation.slug}/barista-pool`,
-      '/app/faq': `/tenants/${activeLocation.slug}/faq`,
-      '/recipes': `/tenants/${activeLocation.slug}/operations/recipes`,
+      '/app': buildTenantRoute.dashboard.overview({ locationSlug: activeLocation.slug }),
+      '/app/recetas': buildTenantRoute.operations.recipes({ locationSlug: activeLocation.slug }),
+      '/app/academia': buildTenantRoute.academy.root({ locationSlug: activeLocation.slug }),
+      '/app/consumo': buildTenantRoute.operations.consumption({ locationSlug: activeLocation.slug }),
+      '/app/recursos': buildTenantRoute.operations.resources({ locationSlug: activeLocation.slug }),
+      '/app/mi-equipo': buildTenantRoute.operations.staff({ locationSlug: activeLocation.slug }),
+      '/app/reposicion': buildTenantRoute.operations.inventory({ locationSlug: activeLocation.slug }),
+      '/app/barista-pool': buildTenantRoute.baristaPool({ locationSlug: activeLocation.slug }),
+      '/app/faq': buildTenantRoute.faq({ locationSlug: activeLocation.slug }),
+      '/recipes': buildTenantRoute.operations.recipes({ locationSlug: activeLocation.slug }),
     };
 
     const targetPath = redirectMappings[currentPath];
@@ -61,7 +62,7 @@ export function CafeRouteRedirector() {
         try {
           const locationData = await getLocationByCafeId(cafeId);
           if (locationData?.slug) {
-            const newPath = `/tenants/${locationData.slug}/dashboard/owner`;
+            const newPath = buildTenantRoute.dashboard.owner({ locationSlug: locationData.slug });
             console.log(`Redirecting cafe dashboard from ${currentPath} to ${newPath}`);
             navigate(newPath, { replace: true });
           }
@@ -96,11 +97,30 @@ export function useSmartNavigation() {
   };
 
   const navigateToRole = (role: 'owner' | 'manager' | 'barista' | 'overview' = 'overview') => {
-    navigateToTenant(`dashboard/${role}`);
+    if (!activeLocation?.slug) return;
+    
+    const routes = {
+      overview: buildTenantRoute.dashboard.overview,
+      owner: buildTenantRoute.dashboard.owner,
+      manager: buildTenantRoute.dashboard.manager,
+      barista: buildTenantRoute.dashboard.barista,
+    };
+    
+    navigate(routes[role]({ locationSlug: activeLocation.slug }));
   };
 
   const navigateToOperation = (operation: 'consumption' | 'recipes' | 'staff' | 'inventory' | 'resources') => {
-    navigateToTenant(`operations/${operation}`);
+    if (!activeLocation?.slug) return;
+    
+    const routes = {
+      consumption: buildTenantRoute.operations.consumption,
+      recipes: buildTenantRoute.operations.recipes,
+      staff: buildTenantRoute.operations.staff,
+      inventory: buildTenantRoute.operations.inventory,
+      resources: buildTenantRoute.operations.resources,
+    };
+    
+    navigate(routes[operation]({ locationSlug: activeLocation.slug }));
   };
 
   return {

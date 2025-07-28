@@ -13,6 +13,7 @@ import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
+import { AdminGuard } from "./utils/routing/guards";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
@@ -83,8 +84,12 @@ const App = () => {
                 {/* New Tenant Routes */}
                 <Route path="/tenants/*" element={<TenantRoutes />} />
                 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<Layout />}>
+                {/* Admin Routes - Protected */}
+                <Route path="/admin" element={
+                  <AdminGuard>
+                    <Layout />
+                  </AdminGuard>
+                }>
                   <Route index element={<AdminIntegrations />} />
                   <Route path="integrations" element={<AdminIntegrations />} />
                   <Route path="courses" element={<AdminCourses />} />
@@ -110,7 +115,10 @@ const App = () => {
                   <Route path="faq" element={<FAQ />} />
                 </Route>
                 
-                {/* Cafe Routes (backward compatibility) */}
+                {/* Public Feedback Route - Migrated */}
+                <Route path="public/feedback/:locationSlug" element={<FeedbackForm />} />
+                
+                {/* Legacy Routes (will redirect via middleware) */}
                 <Route path="feedback/:cafeId" element={<FeedbackForm />} />
                 <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
                 
