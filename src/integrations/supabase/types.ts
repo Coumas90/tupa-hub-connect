@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_logs: {
+        Row: {
+          backup_date: string
+          backup_id: string
+          backup_type: string
+          created_at: string
+          file_path: string | null
+          id: string
+          metadata: Json | null
+          records_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          backup_date: string
+          backup_id: string
+          backup_type: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          metadata?: Json | null
+          records_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          backup_date?: string
+          backup_id?: string
+          backup_type?: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          metadata?: Json | null
+          records_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cafes: {
         Row: {
           address: string | null
