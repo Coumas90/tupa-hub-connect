@@ -15,9 +15,7 @@ interface SentryConfig {
  */
 export function initializeSentry(): void {
   // Get Sentry DSN from environment variables (configured in deployment)
-  const sentryDsn = import.meta.env.PROD ? 
-    'https://YOUR_SENTRY_DSN@YOUR_ORG.ingest.sentry.io/YOUR_PROJECT_ID' : 
-    ''; // Replace with actual DSN in production deployment
+  const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
   
   if (!sentryDsn || sentryDsn.includes('YOUR_SENTRY_DSN')) {
     console.log('⚠️ Sentry DSN not configured, error tracking disabled');

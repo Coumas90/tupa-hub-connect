@@ -41,8 +41,16 @@ export class SecurityLogger {
         session_id: this.getSessionId()
       };
 
-      // For now, we'll log to console and Sentry
-      // TODO: Create security_logs table in database for persistent logging
+      // Store in database for persistent audit trail
+      await supabase.rpc('log_security_event', {
+        p_event_type: event.event_type,
+        p_user_id: event.user_id || null,
+        p_ip_address: clientInfo.ip_address || null,
+        p_user_agent: clientInfo.user_agent || null,
+        p_details: event.details || null,
+        p_severity: event.severity,
+        p_session_id: this.getSessionId()
+      });
 
       // Log to Sentry for high/critical severity events
       if (event.severity === 'high' || event.severity === 'critical') {
