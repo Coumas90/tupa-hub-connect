@@ -20,7 +20,7 @@ AUDIT_SESSION_ID="AUDIT_${TIMESTAMP}"
 # Create audit logs directory
 mkdir -p "$AUDIT_LOG_DIR"
 
-# Audit phases in execution order
+# Audit phases in execution order (Complete 7-phase audit system)
 PHASES=(
   "SECURITY_SCAN"
   "ARCHITECTURE_VALIDATION" 
@@ -306,41 +306,190 @@ generate_audit_report() {
 generate_basic_report() {
   local report_file=$1
   
+  # Calculate phase statistics
+  local passed_phases=0
+  local failed_phases=0
+  local warning_phases=0
+  
+  for phase in "${PHASES[@]}"; do
+    local status=${PHASE_STATUS[$phase]:-"NOT_RUN"}
+    case $status in
+      "SUCCESS") passed_phases=$((passed_phases + 1)) ;;
+      "FAILED") failed_phases=$((failed_phases + 1)) ;;
+      *) warning_phases=$((warning_phases + 1)) ;;
+    esac
+  done
+  
+  # Determine overall risk level
+  local risk_level="🟢 LOW"
+  if [[ $failed_phases -gt 2 ]]; then
+    risk_level="🔴 CRITICAL"
+  elif [[ $failed_phases -gt 0 ]]; then
+    risk_level="🟠 HIGH"
+  elif [[ $warning_phases -gt 2 ]]; then
+    risk_level="🟡 MEDIUM"
+  fi
+  
   cat > "$report_file" << EOF
-# TUPÁ Hub Pre-Tenant Audit Report
-**Session ID:** $AUDIT_SESSION_ID  
-**Generated:** $(date)  
-**Critical Failures:** $CRITICAL_FAILURES
+# 🏰 TUPÁ Hub Pre-Tenant Audit Report
 
-## Phase Results
+**Session ID:** \`$AUDIT_SESSION_ID\`  
+**Generated:** $(date)  
+**Duration:** $(($(date +%s) - start_time))s  
+**Risk Level:** $risk_level  
+
+## 📊 Executive Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Phases | $TOTAL_PHASES |
+| ✅ Passed | $passed_phases |
+| ❌ Failed | $failed_phases |
+| ⚠️ Warnings | $warning_phases |
+| 🔥 Critical Issues | $CRITICAL_FAILURES |
+
+## 🎯 Phase Results
+
 EOF
 
   for phase in "${PHASES[@]}"; do
     local status=${PHASE_STATUS[$phase]:-"NOT_RUN"}
     local icon="❓"
+    local badge="UNKNOWN"
     
     case $status in
-      "SUCCESS") icon="✅" ;;
-      "FAILED") icon="❌" ;;
-      "RUNNING") icon="🔄" ;;
-      "MISSING") icon="⚠️" ;;
+      "SUCCESS") 
+        icon="✅" 
+        badge="PASSED"
+        ;;
+      "FAILED") 
+        icon="❌" 
+        badge="FAILED"
+        ;;
+      "RUNNING") 
+        icon="🔄" 
+        badge="IN PROGRESS"
+        ;;
+      "MISSING") 
+        icon="⚠️" 
+        badge="MISSING"
+        ;;
     esac
     
-    echo "- $icon **$phase**: $status" >> "$report_file"
+    echo "### $icon $phase" >> "$report_file"
+    echo "**Status:** \`$badge\`" >> "$report_file"
     
     if [[ -n "${PHASE_ERRORS[$phase]:-}" ]]; then
-      echo "  - Error: ${PHASE_ERRORS[$phase]}" >> "$report_file"
+      echo "**Error:** ${PHASE_ERRORS[$phase]}" >> "$report_file"
     fi
+    
+    if [[ -n "${PHASE_RETRIES[$phase]:-}" ]] && [[ ${PHASE_RETRIES[$phase]} -gt 0 ]]; then
+      echo "**Retries:** ${PHASE_RETRIES[$phase]}/$MAX_RETRIES" >> "$report_file"
+    fi
+    echo "" >> "$report_file"
   done
   
+  # Risk hotspots analysis
+  cat >> "$report_file" << EOF
+## 🔥 Risk Hotspots
+
+EOF
+
+  # Identify critical issues
+  if [[ $failed_phases -gt 0 ]]; then
+    echo "### 🚨 Critical Security Issues" >> "$report_file"
+    for phase in "${PHASES[@]}"; do
+      if [[ "${PHASE_STATUS[$phase]}" == "FAILED" ]]; then
+        case $phase in
+          "SECURITY_SCAN") echo "- **Security vulnerabilities detected** - Immediate patching required" >> "$report_file" ;;
+          "DEPENDENCY_FORTRESS") echo "- **Vulnerable dependencies found** - Update packages urgently" >> "$report_file" ;;
+          "CODE_PURIFICATION") echo "- **Code quality issues** - Technical debt poses security risk" >> "$report_file" ;;
+          "DOCS_COMPLETENESS") echo "- **Missing critical documentation** - Operational risk for incidents" >> "$report_file" ;;
+          *) echo "- **$phase failure** - Review logs for specific issues" >> "$report_file" ;;
+        esac
+      fi
+    done
+    echo "" >> "$report_file"
+  fi
+  
+  # Performance warnings
+  if [[ "${PHASE_STATUS[PERFORMANCE_STRESS_TEST]}" == "FAILED" ]]; then
+    echo "### ⚡ Performance Concerns" >> "$report_file"
+    echo "- System may not handle production load" >> "$report_file"
+    echo "- Database optimization required" >> "$report_file"
+    echo "- Consider infrastructure scaling" >> "$report_file"
+    echo "" >> "$report_file"
+  fi
+  
+  cat >> "$report_file" << EOF
+## 🔧 Recommended Actions
+
+### Immediate (Next 24 hours)
+EOF
+
+  if [[ $failed_phases -gt 0 ]]; then
+    echo "1. 🚨 **Address critical failures**: Focus on failed phases" >> "$report_file"
+    echo "2. 🔄 **Run auto-fix scripts**: Execute phase-specific auto-fixes" >> "$report_file"
+    echo "3. 📋 **Review logs**: Analyze detailed error logs in \`audit-logs/\`" >> "$report_file"
+  else
+    echo "1. ✅ **All phases passed** - Proceed with deployment preparation" >> "$report_file"
+    echo "2. 📋 **Review warnings**: Address any warning-level issues" >> "$report_file"
+    echo "3. 🎯 **Optimize performance**: Fine-tune based on test results" >> "$report_file"
+  fi
+
   cat >> "$report_file" << EOF
 
-## Rollback Instructions
+### Short-term (Next Week)
+1. 🔒 **Security hardening**: Implement additional security measures
+2. 📚 **Documentation updates**: Complete any missing documentation
+3. 🧪 **Testing validation**: Verify all fixes work correctly
+
+### Long-term (Next Month)
+1. 🔄 **Regular audits**: Schedule monthly audit runs
+2. 📊 **Monitoring setup**: Implement continuous monitoring
+3. 🎓 **Team training**: Security and best practices training
+
+## 🚨 Emergency Rollback Instructions
+
+### Immediate Rollback
 \`\`\`bash
-# Emergency rollback to safety checkpoint
+# Navigate to project directory
 cd $PROJECT_ROOT
+
+# Rollback to safety checkpoint
 git reset --hard \$(cat $AUDIT_LOG_DIR/safety-checkpoint.txt)
+
+# Verify rollback
+git log --oneline -1
 \`\`\`
+
+### Database Rollback (if needed)
+\`\`\`bash
+# Restore database backup (if database changes were made)
+# [Add specific database restore commands based on your setup]
+\`\`\`
+
+### Verify System Health
+\`\`\`bash
+# Check application starts correctly
+npm run dev
+
+# Verify critical endpoints
+curl -f http://localhost:5173/health || echo "Health check failed"
+\`\`\`
+
+## 📁 Audit Artifacts
+
+- **Detailed logs**: \`$AUDIT_LOG_DIR/\`
+- **Phase reports**: Individual phase logs with timestamps
+- **Auto-fix logs**: Results of automated fixes
+- **Safety checkpoint**: \`$AUDIT_LOG_DIR/safety-checkpoint.txt\`
+
+---
+
+**Next Audit Recommended:** $(date -d '+1 month' '+%Y-%m-%d')  
+**Contact:** TUPÁ Hub Security Team  
+**Report Generated:** $(date)
 EOF
 }
 
