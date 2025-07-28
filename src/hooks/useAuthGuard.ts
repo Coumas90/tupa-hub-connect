@@ -161,7 +161,7 @@ export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdm
         try {
           // Use the secure database function to check admin role
           const { data, error } = await supabase.rpc('is_admin', {
-            user_id: authState.session.user.id
+            _user_id: authState.session.user.id
           });
           
           if (error) {
