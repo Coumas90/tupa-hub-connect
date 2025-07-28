@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sanitizeEmail, sanitizePassword } from '@/utils/sanitize';
+import { isValidEmailFormat, validateEmailWithMessage } from '@/utils/emailValidation';
+import { useFormRateLimit } from '@/hooks/useFormRateLimit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Mail, Lock, Coffee, TrendingUp, Shield, Users, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, Mail, Lock, Coffee, TrendingUp, Shield, Users, CheckCircle, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useToast } from '@/hooks/use-toast';
@@ -22,18 +24,45 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const toastNotifications = useToastNotifications();
   const { toast } = useToast();
   const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+  
+  // Rate limiting hook
+  const { 
+    isSubmitting, 
+    canSubmit, 
+    attempts, 
+    timeUntilReset, 
+    attemptSubmission, 
+    cleanup 
+  } = useFormRateLimit({
+    debounceMs: 500,
+    maxAttempts: 3,
+    cooldownMs: 10000 // 10 seconds cooldown
+  });
+
+  // Cleanup rate limit timers on unmount
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
 
   const validateForm = () => {
-    if (!email.trim()) {
-      setError('Email requerido');
+    setError('');
+    setEmailError('');
+    
+    // Validate email format
+    const emailValidation = validateEmailWithMessage(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || 'Email inválido');
+      setError(emailValidation.error || 'Email inválido');
       return false;
     }
+    
     if (!showForgotPassword && !password.trim()) {
       setError('Contraseña requerida');
       return false;
@@ -43,6 +72,24 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return false;
     }
     return true;
+  };
+
+  // Real-time email validation
+  const handleEmailChange = (value: string) => {
+    const sanitizedEmail = sanitizeEmail(value);
+    setEmail(sanitizedEmail);
+    
+    // Clear previous errors
+    setEmailError('');
+    setError('');
+    
+    // Validate email format in real-time (but only after user starts typing)
+    if (sanitizedEmail.length > 0) {
+      const validation = validateEmailWithMessage(sanitizedEmail);
+      if (!validation.isValid && sanitizedEmail.length > 3) {
+        setEmailError(validation.error || 'Formato de email inválido');
+      }
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -95,21 +142,23 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return;
     }
 
-    try {
-      await signInWithEmail(email, password);
+    // Use rate-limited submission
+    const result = await attemptSubmission(async () => {
+      return await signInWithEmail(email, password);
+    });
+
+    if (result.success) {
       toastNotifications.showLoginSuccess();
       // La redirección por rol se maneja automáticamente en AuthContext
-    } catch (error: any) {
-      console.error('Auth error:', error);
+    } else {
+      console.error('Auth error:', result.error);
       
-      let errorMessage = 'Error de autenticación';
+      let errorMessage = result.error || 'Error de autenticación';
       
-      if (error.message?.includes('Invalid login credentials')) {
+      if (errorMessage.includes('Invalid login credentials')) {
         errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña';
-      } else if (error.message?.includes('Email not confirmed')) {
+      } else if (errorMessage.includes('Email not confirmed')) {
         errorMessage = 'Email no confirmado. Revisa tu bandeja de entrada';
-      } else if (error.message) {
-        errorMessage = error.message;
       }
       
       setError(errorMessage);
@@ -353,15 +402,23 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                       <Label htmlFor="email" className="text-base font-semibold text-warm-primary">Email corporativo</Label>
                       <div className="relative group">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="director@tucafeteria.com"
-                          value={email}
-                          onChange={(e) => setEmail(sanitizeEmail(e.target.value))}
-                          className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
-                          disabled={loading}
-                        />
+                         <Input
+                           id="email"
+                           type="email"
+                           placeholder="director@tucafeteria.com"
+                           value={email}
+                           onChange={(e) => handleEmailChange(e.target.value)}
+                           className={`pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300 ${
+                             emailError ? 'border-red-400 focus:border-red-500' : ''
+                           }`}
+                           disabled={loading || isSubmitting}
+                         />
+                         {emailError && (
+                           <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
+                             <AlertTriangle className="h-4 w-4" />
+                             {emailError}
+                           </div>
+                         )}
                       </div>
                     </div>
 
@@ -370,31 +427,41 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                         <Label htmlFor="password" className="text-base font-semibold text-warm-primary">Contraseña</Label>
                         <div className="relative group">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(sanitizePassword(e.target.value))}
-                            className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
-                            disabled={loading}
-                          />
+                           <Input
+                             id="password"
+                             type="password"
+                             placeholder="••••••••••••"
+                             value={password}
+                             onChange={(e) => setPassword(sanitizePassword(e.target.value))}
+                             className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
+                             disabled={loading || isSubmitting}
+                           />
                         </div>
                       </div>
                     )}
                   </div>
 
+                  {/* Rate limiting warning */}
+                  {!canSubmit && timeUntilReset > 0 && (
+                    <Alert className="border-orange-200 bg-orange-50/80 backdrop-blur-sm">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-700">
+                        Demasiados intentos. Espera {Math.ceil(timeUntilReset / 1000)} segundos antes de intentar nuevamente.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <Button 
-                    type="submit" 
-                    className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                        {showForgotPassword ? 'Enviando email...' : 'Verificando credenciales...'}
-                      </>
-                    ) : (
+                     type="submit" 
+                     className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:transform-none" 
+                     disabled={loading || isSubmitting || !canSubmit || !!emailError}
+                   >
+                     {loading || isSubmitting ? (
+                       <>
+                         <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                         {showForgotPassword ? 'Enviando email...' : 'Verificando credenciales...'}
+                       </>
+                     ) : (
                       <>
                         {showForgotPassword ? 'Enviar enlace de recuperación' : 'Acceder a mi Hub'}
                         <Coffee className="ml-3 h-5 w-5" />
