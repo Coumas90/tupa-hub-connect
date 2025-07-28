@@ -807,6 +807,36 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          updated_at: string
+          used: boolean
+          user_email: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          updated_at?: string
+          used?: boolean
+          user_email: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          updated_at?: string
+          used?: boolean
+          user_email?: string
+        }
+        Relationships: []
+      }
       pending_reviews: {
         Row: {
           auto_approved: boolean
@@ -1389,6 +1419,10 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_password_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined
