@@ -60,6 +60,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<LoginPage />} />
               <Route path="/" element={<Layout />}>
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="recetas" element={<Recetas />} />
@@ -74,7 +75,6 @@ const App = () => {
                 <Route path="admin/courses" element={<AdminCourses />} />
                 <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
                 <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
-                <Route path="auth" element={<LoginPage />} />
               </Route>
               <Route path="feedback/:cafeId" element={<FeedbackForm />} />
               <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
