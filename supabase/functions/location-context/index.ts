@@ -38,7 +38,16 @@ Deno.serve(async (req) => {
     }
 
     // Set the auth header for the client
-    supabase.auth.setAuth(authHeader.replace('Bearer ', ''))
+    const token = authHeader.replace('Bearer ', '')
+    if (!token) {
+      console.error('Empty token after Bearer removal')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token format' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    supabase.auth.setAuth(token)
 
     // Get user from JWT
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -195,8 +204,21 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Unexpected error in location-context function:', error)
+    
+    // Enhanced error logging for debugging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+    
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        ...(Deno.env.get('DENO_ENV') === 'development' && { 
+          details: error instanceof Error ? error.message : String(error) 
+        })
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

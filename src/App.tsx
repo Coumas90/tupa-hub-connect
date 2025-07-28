@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
+import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { Layout } from "./components/Layout";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,9 @@ import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Initialize security monitoring
+  useSecurityMonitor();
+  
   // Initialize auth listeners on app startup
   useEffect(() => {
     const cleanup = initializeAuthListeners();
