@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdminGuard } from '@/hooks/useAuthGuard';
+import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
+import { useRequireAdmin } from '@/hooks/useOptimizedAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDebugPanel() {
-  const authContext = useAuth();
-  const adminGuard = useAdminGuard();
+  const authContext = useOptimizedAuth();
+  const adminGuard = useRequireAdmin();
 
   const testAdminFunction = async () => {
     if (!authContext.session?.user) {
@@ -78,7 +78,6 @@ export function AdminDebugPanel() {
               <div>Is Authenticated: <Badge variant={adminGuard.isAuthenticated ? 'default' : 'secondary'}>{adminGuard.isAuthenticated ? 'Yes' : 'No'}</Badge></div>
               <div>Loading: <Badge variant="outline">{adminGuard.loading ? 'Yes' : 'No'}</Badge></div>
               <div>Error: <Badge variant={adminGuard.error ? 'destructive' : 'outline'}>{adminGuard.error || 'None'}</Badge></div>
-              <div>Admin Check Error: <Badge variant={(adminGuard as any).adminCheckError ? 'destructive' : 'outline'}>{(adminGuard as any).adminCheckError || 'None'}</Badge></div>
             </div>
           </div>
         </div>
@@ -91,8 +90,8 @@ export function AdminDebugPanel() {
           <Button onClick={testDirectQuery} variant="outline" size="sm">
             Test Direct Query
           </Button>
-          <Button onClick={authContext.refreshAdminStatus} variant="outline" size="sm">
-            Refresh Admin Status
+          <Button onClick={authContext.refreshUserData} variant="outline" size="sm">
+            Refresh User Data
           </Button>
         </div>
 
@@ -101,7 +100,7 @@ export function AdminDebugPanel() {
           <p className="font-medium mb-1">Debug Instructions:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Check the console for detailed logs when clicking test buttons</li>
-            <li>If "Is Admin" shows "No" but you should have admin access, click "Refresh Admin Status"</li>
+            <li>If "Is Admin" shows "No" but you should have admin access, click "Refresh User Data"</li>
             <li>If tests fail, check your network connection and database permissions</li>
           </ul>
         </div>

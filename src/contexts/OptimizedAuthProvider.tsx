@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useUserRoleQuery, useInvalidateUserRole } from '@/utils/authQueries';
+import { useAuthCache } from '@/hooks/useAuthCache';
 
 interface AuthState {
   user: User | null;
@@ -12,15 +14,19 @@ interface AuthState {
   error: string | null;
 }
 
-interface AuthContextType extends AuthState {
+interface OptimizedAuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
   refreshUserData: () => Promise<void>;
+  // Performance helpers
+  isSessionExpired: () => boolean;
+  getSessionTimeLeft: () => number;
+  invalidateCache: () => void;
 }
 
-const OptimizedAuthContext = createContext<AuthContextType | undefined>(undefined);
+const OptimizedAuthContext = createContext<OptimizedAuthContextType | undefined>(undefined);
 
 export function useOptimizedAuth() {
   const context = useContext(OptimizedAuthContext);
@@ -46,34 +52,35 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
 
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Auth cache for session persistence
+  const sessionCache = useAuthCache<Session>({ defaultTtl: 55 * 60 * 1000 }); // 55 minutes (slightly less than token expiry)
+  
+  // Role cache invalidation
+  const invalidateUserRole = useInvalidateUserRole();
+  
+  // Single auth state change listener reference
+  const authListenerRef = useRef<{ subscription: any } | null>(null);
 
-  // Single optimized query for user role and admin status
-  const getUserRoleAndAdminStatus = useCallback(async (userId: string): Promise<{ role: string | null; isAdmin: boolean }> => {
-    try {
-      console.info('🔍 OptimizedAuth: Fetching role and admin status for user:', userId);
-      
-      // Single query to get role information
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+  // React Query for role data with automatic caching
+  const { 
+    data: roleData, 
+    isLoading: roleLoading, 
+    error: roleError,
+    refetch: refetchRole 
+  } = useUserRoleQuery(authState.user?.id || null);
 
-      if (error) {
-        console.error('❌ OptimizedAuth: Error fetching user role:', error);
-        return { role: null, isAdmin: false };
-      }
-
-      const role = data?.role || null;
-      const isAdmin = role === 'admin';
-      
-      console.info('✅ OptimizedAuth: User data fetched:', { role, isAdmin });
-      return { role, isAdmin };
-    } catch (error) {
-      console.error('❌ OptimizedAuth: Error in getUserRoleAndAdminStatus:', error);
-      return { role: null, isAdmin: false };
+  // Update auth state when role data changes
+  useEffect(() => {
+    if (roleData && authState.user) {
+      setAuthState(prev => ({
+        ...prev,
+        userRole: roleData.role,
+        isAdmin: roleData.isAdmin,
+        loading: false
+      }));
     }
-  }, []);
+  }, [roleData, authState.user]);
 
   // Redirect user based on role
   const redirectByRole = useCallback((role: string | null, isAdmin: boolean) => {
@@ -92,15 +99,15 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
       return;
     }
     
-    // Don't redirect if already on correct path
+    // Role-based redirects for non-admin users
     switch (role.toLowerCase()) {
       case 'client':
-        if (!currentPath.startsWith('/app')) {
+        if (!currentPath.startsWith('/app') && !isAdmin) {
           navigate('/app');
         }
         break;
       case 'barista':
-        if (!currentPath.startsWith('/recipes')) {
+        if (!currentPath.startsWith('/recipes') && !isAdmin) {
           navigate('/recipes');
         }
         break;
@@ -112,50 +119,62 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     }
   }, [navigate, location.pathname]);
 
-  // Refresh user data function
-  const refreshUserData = useCallback(async () => {
-    if (!authState.session?.user) return;
+  // Session management utilities
+  const isSessionExpired = useCallback(() => {
+    if (!authState.session) return true;
     
-    console.info('🔄 OptimizedAuth: Refreshing user data...');
-    const { role, isAdmin } = await getUserRoleAndAdminStatus(authState.session.user.id);
+    const expiresAt = authState.session.expires_at;
+    if (!expiresAt) return false;
     
-    setAuthState(prev => ({
-      ...prev,
-      userRole: role,
-      isAdmin
-    }));
-    
-    console.info('✅ OptimizedAuth: User data refreshed:', { role, isAdmin });
-  }, [authState.session?.user, getUserRoleAndAdminStatus]);
+    // Add 60 second buffer
+    return (expiresAt * 1000) <= (Date.now() + 60000);
+  }, [authState.session]);
 
-  // Handle authentication state changes - SINGLE LISTENER
+  const getSessionTimeLeft = useCallback(() => {
+    if (!authState.session?.expires_at) return 0;
+    return Math.max(0, (authState.session.expires_at * 1000) - Date.now());
+  }, [authState.session]);
+
+  // Cache invalidation
+  const invalidateCache = useCallback(() => {
+    if (authState.user?.id) {
+      invalidateUserRole(authState.user.id);
+    }
+    sessionCache.clear();
+  }, [authState.user?.id, invalidateUserRole, sessionCache]);
+
+  // SINGLE auth state change listener
   useEffect(() => {
+    // Cleanup existing listener
+    if (authListenerRef.current) {
+      authListenerRef.current.subscription.unsubscribe();
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 OptimizedAuth: Auth state changed:', event, !!session);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // User just logged in, fetch their role and admin status in single query
-          console.info('🔄 OptimizedAuth: User signed in, fetching user data...');
-          const { role, isAdmin } = await getUserRoleAndAdminStatus(session.user.id);
+          console.info('🔄 OptimizedAuth: User signed in');
           
-          setAuthState({
+          // Cache the session
+          sessionCache.set('current', session);
+          
+          setAuthState(prev => ({
+            ...prev,
             user: session.user,
             session,
-            userRole: role,
-            isAdmin,
-            loading: false,
+            loading: roleLoading, // Will be false when role query completes
             error: null,
-          });
-
-          console.info('✅ OptimizedAuth: User state updated:', { role, isAdmin });
-          
-          // Handle redirect after state is set
-          setTimeout(() => redirectByRole(role, isAdmin), 100);
+          }));
           
         } else if (event === 'SIGNED_OUT') {
-          // User logged out
           console.info('🔄 OptimizedAuth: User signed out');
+          
+          // Clear caches
+          sessionCache.clear();
+          invalidateCache();
+          
           setAuthState({
             user: null,
             session: null,
@@ -165,30 +184,58 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
             error: null,
           });
           
-          // Redirect to landing page
           navigate('/');
           
         } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Token refreshed, maintain current state - no need to refetch role
           console.info('🔄 OptimizedAuth: Token refreshed');
+          
+          // Update cached session
+          sessionCache.set('current', session);
           
           setAuthState(prev => ({
             ...prev,
             session,
             user: session.user,
-            loading: false,
           }));
         }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [getUserRoleAndAdminStatus, redirectByRole, navigate]);
+    authListenerRef.current = { subscription };
 
-  // Initial session check
+    return () => {
+      if (authListenerRef.current) {
+        authListenerRef.current.subscription.unsubscribe();
+      }
+    };
+  }, [roleLoading, sessionCache, invalidateCache, navigate]);
+
+  // Redirect when role data is available
+  useEffect(() => {
+    if (roleData && authState.user && !roleLoading) {
+      // Small delay to ensure state is updated
+      setTimeout(() => redirectByRole(roleData.role, roleData.isAdmin), 100);
+    }
+  }, [roleData, authState.user, roleLoading, redirectByRole]);
+
+  // Initial session check with cache
   useEffect(() => {
     const checkInitialSession = async () => {
       try {
+        // Try to get cached session first
+        const cachedSession = sessionCache.get('current');
+        
+        if (cachedSession && !isSessionExpired()) {
+          console.info('🔍 OptimizedAuth: Using cached session');
+          setAuthState(prev => ({
+            ...prev,
+            user: cachedSession.user,
+            session: cachedSession,
+          }));
+          return;
+        }
+
+        // Fetch fresh session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -202,21 +249,18 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
         }
 
         if (session?.user) {
-          console.info('🔍 OptimizedAuth: Initial session found, checking user data...');
-          const { role, isAdmin } = await getUserRoleAndAdminStatus(session.user.id);
+          console.info('🔍 OptimizedAuth: Fresh session found');
           
-          setAuthState({
+          // Cache the session
+          sessionCache.set('current', session);
+          
+          setAuthState(prev => ({
+            ...prev,
             user: session.user,
             session,
-            userRole: role,
-            isAdmin,
-            loading: false,
-            error: null,
-          });
-
-          console.info('✅ OptimizedAuth: Initial state set:', { role, isAdmin });
+          }));
         } else {
-          console.info('🔍 OptimizedAuth: No initial session found');
+          console.info('🔍 OptimizedAuth: No session found');
           setAuthState(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
@@ -230,7 +274,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     };
 
     checkInitialSession();
-  }, [getUserRoleAndAdminStatus]);
+  }, [sessionCache, isSessionExpired]);
 
   // Auth methods
   const signInWithGoogle = async () => {
@@ -275,7 +319,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
         loading: false, 
         error: error.message || 'Error en login' 
       }));
-      throw error; // Re-throw for component handling
+      throw error;
     }
   };
 
@@ -301,13 +345,25 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
-  const contextValue: AuthContextType = {
+  const refreshUserData = async () => {
+    if (!authState.user?.id) return;
+    
+    console.info('🔄 OptimizedAuth: Refreshing user data...');
+    await refetchRole();
+  };
+
+  const contextValue: OptimizedAuthContextType = {
     ...authState,
+    loading: authState.loading || roleLoading,
+    error: authState.error || (roleError?.message || null),
     signInWithGoogle,
     signInWithEmail,
     signOut,
     clearError,
     refreshUserData,
+    isSessionExpired,
+    getSessionTimeLeft,
+    invalidateCache,
   };
 
   return (

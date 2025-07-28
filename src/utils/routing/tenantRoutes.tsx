@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useRequireAuth } from '@/hooks/useOptimizedAuth';
 import { useEffect, useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { RouteGuard, ManagementGuard, AuthenticatedGuard } from './guards';
@@ -26,11 +26,7 @@ function TenantRouteWrapper({ children }: TenantRouteWrapperProps) {
   const { setActiveLocationBySlug, activeLocation, loading, error } = useLocationContext();
   const [locationSet, setLocationSet] = useState(false);
   
-  // Ensure user is authenticated
-  const { isAuthenticated, loading: authLoading } = useAuthGuard({ 
-    requireAuth: true,
-    redirectTo: '/auth'
-  });
+  const { isAuthenticated, loading: authLoading } = useRequireAuth();
 
   useEffect(() => {
     if (locationSlug && !loading && !locationSet) {

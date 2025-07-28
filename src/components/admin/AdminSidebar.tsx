@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Coffee, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAVIGATION, getNavItemsForRole } from "@/constants/adminNavigation";
-import { useAdminGuard } from "@/hooks/useAuthGuard";
+import { useRequireAdmin } from "@/hooks/useOptimizedAuth";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -15,7 +15,7 @@ export function AdminSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['DASHBOARD']);
   const location = useLocation();
-  const { isAdmin } = useAdminGuard();
+  const { isAdmin } = useRequireAdmin();
   
   // Mock user role - in real app this would come from auth context
   const userRole = isAdmin ? 'admin' : 'user';

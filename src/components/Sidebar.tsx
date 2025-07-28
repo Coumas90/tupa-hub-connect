@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useSmartNavigation } from "@/utils/routing/redirects";
-import { useAdminGuard } from "@/hooks/useAuthGuard";
+import { useRequireAdmin } from "@/hooks/useOptimizedAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const { activeLocation } = useLocationContext();
-  const { isAdmin } = useAdminGuard();
+  const { isAdmin } = useRequireAdmin();
   const { currentTenantSlug, canNavigate } = useSmartNavigation();
 
   // Determine if we're in tenant context or not

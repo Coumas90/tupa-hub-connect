@@ -1,11 +1,11 @@
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ShieldCheck, User, Settings } from 'lucide-react';
 
 const AuthDebugPanel: React.FC = () => {
-  const { user, session, userRole, loading } = useAuth();
+  const { user, session, userRole, loading } = useOptimizedAuth();
 
   if (loading) {
     return (

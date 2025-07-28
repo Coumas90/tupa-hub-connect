@@ -36,7 +36,7 @@ import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
-import { AuthProvider } from "./contexts/AuthContext";
+import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 
 const queryClient = new QueryClient();
@@ -71,7 +71,7 @@ const App = () => {
               theme="light"
             />
           <BrowserRouter>
-            <AuthProvider>
+            <OptimizedAuthProvider>
               {/* Legacy route redirectors */}
               <LegacyRouteRedirector />
               <CafeRouteRedirector />
@@ -132,7 +132,7 @@ const App = () => {
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </AuthProvider>
+            </OptimizedAuthProvider>
           </BrowserRouter>
         </LocationProvider>
         </TooltipProvider>

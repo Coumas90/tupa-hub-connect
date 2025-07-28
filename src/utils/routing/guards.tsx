@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useAuthGuard, useAdminGuard } from '@/hooks/useAuthGuard';
+import { useRequireAuth, useRequireAdmin } from '@/hooks/useOptimizedAuth';
 import { ROUTE_PERMISSIONS, UserRole } from '@/constants/routes';
 
 interface RoleGuardProps {
@@ -19,8 +19,8 @@ interface RouteGuardProps {
  * Enhanced Role Guard with proper type safety and admin checking
  */
 export function RoleGuard({ roles, children, fallback, requireAdmin = false }: RoleGuardProps) {
-  const { isAuthenticated, loading: authLoading } = useAuthGuard({ requireAuth: true });
-  const { isAdmin, loading: adminLoading } = useAdminGuard();
+  const { isAuthenticated, loading: authLoading } = useRequireAuth();
+  const { isAdmin, loading: adminLoading } = useRequireAdmin();
   
   const loading = authLoading || adminLoading;
   

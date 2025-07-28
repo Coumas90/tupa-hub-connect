@@ -10,14 +10,14 @@ import AdvisoryRequestModal from '@/components/modals/AdvisoryRequestModal';
 import { Coffee, TrendingUp, Users, BookOpen, MapPin, Building, GraduationCap, Package, Calendar } from "lucide-react";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useSmartNavigation } from "@/utils/routing/redirects";
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useRequireAuth } from '@/hooks/useOptimizedAuth';
 
 export default function Dashboard() {
   const location = useLocation();
   const params = useParams();
   const { activeLocation, activeCafe, loading } = useLocationContext();
   const { navigateToOperation, navigateToTenant } = useSmartNavigation();
-  const { isAuthenticated } = useAuthGuard({ requireAuth: true });
+  const { isAuthenticated } = useRequireAuth();
 
   // Determine dashboard context (role-based view for tenant routes)
   const isInTenantContext = location.pathname.startsWith('/tenants/');

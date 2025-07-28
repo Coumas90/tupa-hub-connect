@@ -12,7 +12,7 @@ import { Loader2, Mail, Lock, Coffee, TrendingUp, Shield, Users, CheckCircle, Ar
 import { supabase } from '@/integrations/supabase/client';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginPageProps {
@@ -29,7 +29,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [resetSent, setResetSent] = useState(false);
   const toastNotifications = useToastNotifications();
   const { toast } = useToast();
-  const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useAuth();
+  const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useOptimizedAuth();
   const navigate = useNavigate();
   
   // Rate limiting hook
