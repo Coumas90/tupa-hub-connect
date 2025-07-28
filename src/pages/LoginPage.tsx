@@ -20,7 +20,8 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const toastNotifications = useToastNotifications();
   const navigate = useNavigate();
 
@@ -29,19 +30,54 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       setError('Email requerido');
       return false;
     }
-    if (!password.trim()) {
+    if (!showForgotPassword && !password.trim()) {
       setError('Contraseña requerida');
       return false;
     }
-    if (password.length < 6) {
+    if (!showForgotPassword && password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       return false;
     }
     return true;
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email.trim()) {
+      setError('Email requerido para recuperar contraseña');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      setResetSent(true);
+      toastNotifications.showSuccess('Email de recuperación enviado. Revisa tu bandeja de entrada.');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      setError('Error al enviar email de recuperación. Verifica que el email esté registrado.');
+      toastNotifications.showLoginError('Error al enviar email de recuperación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (showForgotPassword) {
+      handleForgotPassword(e);
+      return;
+    }
+
     setError('');
 
     if (!validateForm()) {
@@ -51,30 +87,16 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/app`
-          }
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toastNotifications.showSuccess('Cuenta creada exitosamente. Revisa tu email para confirmar.');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        toastNotifications.showLoginSuccess();
-        navigate('/app');
-        onLoginSuccess?.();
-      }
+      toastNotifications.showLoginSuccess();
+      navigate('/app');
+      onLoginSuccess?.();
     } catch (error: any) {
       console.error('Auth error:', error);
       
@@ -82,8 +104,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña';
-      } else if (error.message?.includes('User already registered')) {
-        errorMessage = 'Este email ya está registrado. Intenta iniciar sesión';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Email no confirmado. Revisa tu bandeja de entrada';
       } else if (error.message) {
@@ -239,11 +259,11 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             </div>
             
             <h1 className="text-4xl font-bold mb-3 font-display bg-gradient-to-r from-warm-primary to-warm-earth bg-clip-text text-transparent">
-              {isSignUp ? 'Únete a TUPÁ' : 'Bienvenido'}
+              {showForgotPassword ? 'Recuperar Contraseña' : 'Bienvenido'}
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              {isSignUp 
-                ? 'Comienza tu viaje hacia el café de especialidad' 
+              {showForgotPassword 
+                ? 'Ingresa tu email para recibir un enlace de recuperación' 
                 : 'Tu plataforma de gestión cafetera te espera'}
             </p>
           </div>
@@ -251,91 +271,110 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           {/* Premium Form */}
           <Card className="border-0 shadow-2xl bg-white/50 backdrop-blur-sm">
             <CardContent className="p-10">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {error && (
-                  <Alert variant="destructive" className="border-red-200 bg-red-50/80 backdrop-blur-sm">
-                    <AlertDescription className="text-red-700">{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="email" className="text-base font-semibold text-warm-primary">Email corporativo</Label>
-                    <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="director@tucafeteria.com"
-                        value={email}
-                        onChange={(e) => setEmail(sanitizeEmail(e.target.value))}
-                        className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
-                        disabled={loading}
-                      />
-                    </div>
+              {resetSent ? (
+                <div className="text-center space-y-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-
-                  <div className="space-y-3">
-                    <Label htmlFor="password" className="text-base font-semibold text-warm-primary">Contraseña</Label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(sanitizePassword(e.target.value))}
-                        className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                      {isSignUp ? 'Creando tu acceso...' : 'Verificando credenciales...'}
-                    </>
-                  ) : (
-                    <>
-                      {isSignUp ? 'Crear mi cuenta TUPÁ' : 'Acceder a mi Hub'}
-                      <Coffee className="ml-3 h-5 w-5" />
-                    </>
-                  )}
-                </Button>
-
-                <div className="text-center pt-4">
+                  <h3 className="text-xl font-semibold text-warm-primary">Email enviado</h3>
+                  <p className="text-muted-foreground">
+                    Hemos enviado un enlace de recuperación a <strong>{email}</strong>. 
+                    Revisa tu bandeja de entrada y sigue las instrucciones.
+                  </p>
                   <Button
-                    type="button"
-                    variant="link"
                     onClick={() => {
-                      setIsSignUp(!isSignUp);
+                      setShowForgotPassword(false);
+                      setResetSent(false);
+                      setEmail('');
                       setError('');
                     }}
-                    disabled={loading}
-                    className="text-base text-warm-earth hover:text-warm-primary transition-colors"
+                    variant="outline"
+                    className="w-full"
                   >
-                    {isSignUp 
-                      ? '¿Ya eres parte de TUPÁ? Inicia sesión' 
-                      : '¿Primera vez en TUPÁ? Crear cuenta'}
+                    Volver al inicio de sesión
                   </Button>
                 </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {error && (
+                    <Alert variant="destructive" className="border-red-200 bg-red-50/80 backdrop-blur-sm">
+                      <AlertDescription className="text-red-700">{error}</AlertDescription>
+                    </Alert>
+                  )}
 
-                {isSignUp && (
-                  <div className="text-sm text-muted-foreground text-center pt-6 border-t border-warm-earth/10">
-                    Al crear una cuenta, aceptas nuestros{' '}
-                    <a href="#" className="text-warm-primary hover:text-warm-earth transition-colors font-medium">Términos de Servicio</a>{' '}
-                    y{' '}
-                    <a href="#" className="text-warm-primary hover:text-warm-earth transition-colors font-medium">Política de Privacidad</a>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Label htmlFor="email" className="text-base font-semibold text-warm-primary">Email corporativo</Label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="director@tucafeteria.com"
+                          value={email}
+                          onChange={(e) => setEmail(sanitizeEmail(e.target.value))}
+                          className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+                    {!showForgotPassword && (
+                      <div className="space-y-3">
+                        <Label htmlFor="password" className="text-base font-semibold text-warm-primary">Contraseña</Label>
+                        <div className="relative group">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-earth/60 group-focus-within:text-warm-primary transition-colors" />
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(sanitizePassword(e.target.value))}
+                            className="pl-12 h-14 text-lg border-warm-earth/20 focus:border-warm-primary bg-white/80 backdrop-blur-sm transition-all duration-300"
+                            disabled={loading}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </form>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                        {showForgotPassword ? 'Enviando email...' : 'Verificando credenciales...'}
+                      </>
+                    ) : (
+                      <>
+                        {showForgotPassword ? 'Enviar enlace de recuperación' : 'Acceder a mi Hub'}
+                        <Coffee className="ml-3 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="text-center pt-4">
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={() => {
+                        setShowForgotPassword(!showForgotPassword);
+                        setError('');
+                        setPassword('');
+                      }}
+                      disabled={loading}
+                      className="text-base text-warm-earth hover:text-warm-primary transition-colors"
+                    >
+                      {showForgotPassword 
+                        ? 'Volver al inicio de sesión' 
+                        : '¿Olvidaste tu contraseña?'}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
 
