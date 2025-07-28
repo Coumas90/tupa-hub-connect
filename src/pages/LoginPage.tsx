@@ -106,12 +106,83 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Login Form */}
+      {/* Left Side - Visual with Characters */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-warm-primary via-warm-earth to-warm-accent relative overflow-hidden">
+        {/* Character Images */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="grid grid-cols-2 gap-8 opacity-90">
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/0c926fb9-1671-49ea-8637-ea2bd44a302c.png" 
+                alt="Caficultor TUPÁ" 
+                className="w-48 h-64 object-contain transform hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative mt-8">
+              <img 
+                src="/lovable-uploads/7dcd3851-da8d-49d3-9b4b-a9633980df82.png" 
+                alt="Productor de café" 
+                className="w-48 h-64 object-contain transform hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative -mt-4">
+              <img 
+                src="/lovable-uploads/23811a7b-920d-4c12-836e-92f0102bfb3e.png" 
+                alt="Tostador artesanal" 
+                className="w-48 h-64 object-contain transform hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative mt-4">
+              <img 
+                src="/lovable-uploads/37d919c1-7dd1-4049-834a-0bf16097bbfc.png" 
+                alt="Maestro cafetero" 
+                className="w-48 h-64 object-contain transform hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Coffee Bean Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-20 w-8 h-12 bg-warm-cream/30 rounded-full rotate-45"></div>
+          <div className="absolute top-40 right-32 w-6 h-9 bg-warm-cream/20 rounded-full rotate-12"></div>
+          <div className="absolute bottom-32 left-16 w-10 h-15 bg-warm-cream/25 rounded-full -rotate-30"></div>
+          <div className="absolute bottom-48 right-20 w-7 h-10 bg-warm-cream/15 rounded-full rotate-60"></div>
+          <div className="absolute top-1/2 left-1/3 w-5 h-8 bg-warm-cream/20 rounded-full -rotate-15"></div>
+        </div>
+        
+        {/* Content Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-16 bg-gradient-to-t from-warm-primary/90 to-transparent">
+          <div className="text-warm-cream">
+            <Badge variant="secondary" className="mb-4 bg-warm-cream/20 text-warm-cream border-warm-cream/30 font-medium">
+              Desde el origen hasta tu mesa
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4 leading-tight font-display">
+              Conocé a nuestros
+              <br />
+              <span className="text-warm-accent bg-gradient-to-r from-warm-accent to-warm-gold bg-clip-text text-transparent">
+                productores de café
+              </span>
+            </h2>
+            <p className="text-lg opacity-90 leading-relaxed">
+              Cada grano cuenta una historia. Trabajamos directamente con caficultores 
+              de toda Latinoamérica para traerte el mejor café de especialidad.
+            </p>
+          </div>
+        </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute top-16 right-16 w-24 h-24 bg-warm-gold/20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-20 right-32 w-32 h-32 bg-warm-accent/10 rounded-full blur-2xl"></div>
+        <div className="absolute top-1/3 right-8 w-16 h-16 bg-warm-earth/30 rounded-full blur-lg"></div>
+      </div>
+
+      {/* Right Side - Login Form */}
       <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 xl:px-32 bg-background relative">
         <Button
           variant="ghost"
           onClick={() => navigate('/')}
-          className="absolute top-8 left-8 flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          className="absolute top-8 right-8 flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio
@@ -121,10 +192,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-6">
-              <Coffee className="h-10 w-10 text-primary mr-3" />
-              <span className="text-3xl font-bold text-primary">TUPÁ Hub</span>
+              <Coffee className="h-10 w-10 text-warm-primary mr-3" />
+              <span className="text-3xl font-bold text-warm-primary font-display">TUPÁ Hub</span>
             </div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-2 font-display">
               {isSignUp ? 'Crear cuenta' : 'Bienvenido de vuelta'}
             </h1>
             <p className="text-muted-foreground">
@@ -209,87 +280,15 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 {isSignUp && (
                   <div className="text-xs text-muted-foreground text-center">
                     Al crear una cuenta, aceptas nuestros{' '}
-                    <a href="#" className="text-primary hover:underline">Términos de Servicio</a>{' '}
+                    <a href="#" className="text-warm-primary hover:underline">Términos de Servicio</a>{' '}
                     y{' '}
-                    <a href="#" className="text-primary hover:underline">Política de Privacidad</a>
+                    <a href="#" className="text-warm-primary hover:underline">Política de Privacidad</a>
                   </div>
                 )}
               </form>
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Right Side - Visual */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-warm-primary via-warm-earth to-warm-accent relative overflow-hidden">
-        {/* Coffee Bean Pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-20 w-8 h-12 bg-warm-cream/30 rounded-full rotate-45"></div>
-          <div className="absolute top-40 right-32 w-6 h-9 bg-warm-cream/20 rounded-full rotate-12"></div>
-          <div className="absolute bottom-32 left-16 w-10 h-15 bg-warm-cream/25 rounded-full -rotate-30"></div>
-          <div className="absolute bottom-48 right-20 w-7 h-10 bg-warm-cream/15 rounded-full rotate-60"></div>
-          <div className="absolute top-1/2 left-1/3 w-5 h-8 bg-warm-cream/20 rounded-full -rotate-15"></div>
-        </div>
-        
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-16 text-warm-cream">
-          <div className="mb-8">
-            <Badge variant="secondary" className="mb-6 bg-warm-cream/20 text-warm-cream border-warm-cream/30 font-medium">
-              + de 500 empresas confían en TUPÁ
-            </Badge>
-            <h2 className="text-4xl font-bold mb-6 leading-tight font-display">
-              Café de especialidad
-              <br />
-              <span className="text-warm-accent bg-gradient-to-r from-warm-accent to-warm-gold bg-clip-text text-transparent">
-                directo del origen
-              </span>
-              <br />
-              a tu empresa
-            </h2>
-            <p className="text-xl opacity-90 mb-8 leading-relaxed">
-              Conectamos tostadores artesanales con cafeterías, oficinas y restaurantes. 
-              Tecnología + tradición para el mejor café de cada región.
-            </p>
-          </div>
-
-          {/* Features */}
-          <div className="space-y-5">
-            {[
-              { icon: Coffee, text: "Café de especialidad trazable" },
-              { icon: TrendingUp, text: "Dashboard de consumo inteligente" },
-              { icon: Users, text: "Servicio personalizado semanal" },
-              { icon: Shield, text: "Calidad garantizada en cada envío" }
-            ].map((feature, index) => (
-              <div key={index} className="flex items-center space-x-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-warm-cream/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-warm-cream/10">
-                  <feature.icon className="h-6 w-6 text-warm-accent" />
-                </div>
-                <span className="text-lg font-medium">{feature.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-warm-cream/20">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-warm-accent">12+</div>
-              <div className="text-sm opacity-75 font-medium">Regiones cafeteras</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-warm-accent">98%</div>
-              <div className="text-sm opacity-75 font-medium">Satisfacción</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-warm-accent">48h</div>
-              <div className="text-sm opacity-75 font-medium">Del tueste a tu mesa</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Coffee Elements */}
-        <div className="absolute top-16 right-16 w-24 h-24 bg-warm-gold/20 rounded-full blur-xl"></div>
-        <div className="absolute bottom-20 right-32 w-32 h-32 bg-warm-accent/10 rounded-full blur-2xl"></div>
-        <div className="absolute top-1/3 right-8 w-16 h-16 bg-warm-earth/30 rounded-full blur-lg"></div>
       </div>
     </div>
   );
