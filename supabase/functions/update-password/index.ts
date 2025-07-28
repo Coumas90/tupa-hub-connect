@@ -105,10 +105,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get user by email
-    const { data: authUser, error: getUserError } = await supabase.auth.admin.getUserByEmail(tokenData.user_email);
+    // Get user by email from auth.users table using service role
+    const { data: authUsers, error: getUserError } = await supabase
+      .from("auth.users")
+      .select("id")
+      .eq("email", tokenData.user_email)
+      .single();
     
-    if (getUserError || !authUser) {
+    if (getUserError || !authUsers) {
       console.error("User not found:", getUserError);
       return new Response(
         JSON.stringify({ 
@@ -122,9 +126,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Update user password
+    // Update user password using auth admin API
     const { error: updateError } = await supabase.auth.admin.updateUserById(
-      authUser.user.id,
+      authUsers.id,
       { password: newPassword }
     );
 
