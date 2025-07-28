@@ -86,6 +86,13 @@ export type Database = {
             referencedRelation: "cafes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "advisory_requests_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
+          },
         ]
       }
       advisory_visibility_config: {
@@ -123,6 +130,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "cafes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advisory_visibility_config_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: true
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
           },
         ]
       }
@@ -336,6 +350,13 @@ export type Database = {
             foreignKeyName: "consumptions_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "consumptions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
@@ -489,6 +510,13 @@ export type Database = {
             referencedRelation: "cafes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "feedbacks_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
+          },
         ]
       }
       giveaway_participants: {
@@ -532,6 +560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cafes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "giveaway_participants_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
           },
         ]
       }
@@ -591,6 +626,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cafes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_giveaway_winners_cafe"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
           },
           {
             foreignKeyName: "fk_giveaway_winners_participant"
@@ -757,39 +799,58 @@ export type Database = {
             referencedRelation: "cafes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invitation_tokens_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["cafe_id"]
+          },
         ]
       }
       locations: {
         Row: {
           address: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string | null
           created_by: string | null
+          description: string | null
           group_id: string
           id: string
           is_main: boolean | null
           name: string
+          slug: string | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           group_id: string
           id?: string
           is_main?: boolean | null
           name: string
+          slug?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           group_id?: string
           id?: string
           is_main?: boolean | null
           name?: string
+          slug?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -847,6 +908,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["location_id"]
           },
           {
             foreignKeyName: "orders_location_id_fkey"
@@ -1238,6 +1306,13 @@ export type Database = {
             foreignKeyName: "recipes_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "recipes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
@@ -1554,6 +1629,13 @@ export type Database = {
             foreignKeyName: "users_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "cafes_locations_mapping"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "users_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
@@ -1561,6 +1643,33 @@ export type Database = {
       }
     }
     Views: {
+      cafes_locations_mapping: {
+        Row: {
+          address: string | null
+          brand_color: string | null
+          cafe_created_at: string | null
+          cafe_id: string | null
+          cafe_name: string | null
+          group_id: string | null
+          is_main: boolean | null
+          location_created_at: string | null
+          location_id: string | null
+          location_name: string | null
+          location_slug: string | null
+          logo_url: string | null
+          owner_id: string | null
+          qr_code_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       giveaway_winner_stats: {
         Row: {
           emails_failed: number | null
@@ -1603,6 +1712,28 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_cafe_by_location_id: {
+        Args: { p_location_id: string }
+        Returns: {
+          cafe_id: string
+          cafe_name: string
+          owner_id: string
+          qr_code_url: string
+          brand_color: string
+          logo_url: string
+        }[]
+      }
+      get_location_by_cafe_id: {
+        Args: { p_cafe_id: string }
+        Returns: {
+          location_id: string
+          location_slug: string
+          location_name: string
+          group_id: string
+          address: string
+          is_main: boolean
+        }[]
+      }
       get_system_setting: {
         Args: { p_setting_key: string }
         Returns: string
@@ -1610,6 +1741,21 @@ export type Database = {
       get_user_cafe_id: {
         Args: { _user_id: string }
         Returns: string
+      }
+      get_user_location_context: {
+        Args: { _user_id?: string }
+        Returns: {
+          group_id: string
+          group_name: string
+          location_id: string
+          location_name: string
+          location_slug: string
+          location_address: string
+          is_main_location: boolean
+          cafe_id: string
+          cafe_name: string
+          total_locations_in_group: number
+        }[]
       }
       get_user_location_id: {
         Args: { _user_id?: string }
