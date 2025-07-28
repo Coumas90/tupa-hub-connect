@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminDebugPanel } from '@/components/debug/AdminDebugPanel';
 
 interface SystemStats {
   totalTenants: number;
@@ -87,6 +88,8 @@ export default function AdminDashboard() {
           </p>
         </div>
       </div>
+
+      <AdminDebugPanel />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

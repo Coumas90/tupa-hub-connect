@@ -146,7 +146,7 @@ export function useOptionalAuth(redirectTo?: string): UseAuthGuardReturn {
  * Auth guard hook specifically for admin pages with additional role checking
  * @param redirectTo Optional redirect path (defaults to '/auth')
  */
-export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdmin: boolean } {
+export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdmin: boolean; adminCheckError?: string | null } {
   const authState = useAuthGuard({
     requireAuth: true,
     redirectTo,
@@ -154,33 +154,65 @@ export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdm
   });
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminCheckError, setAdminCheckError] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAdminRole() {
-      if (authState.session?.user) {
-        try {
-          // Use the secure database function to check admin role
-          const { data, error } = await supabase.rpc('is_admin', {
-            _user_id: authState.session.user.id
-          });
-          
-          if (error) {
-            console.error('❌ useAdminGuard: Error checking admin role:', error);
-            setIsAdmin(false);
-            return;
-          }
-          
-          setIsAdmin(data || false);
-          
-          if (!data && authState.session) {
-            console.warn('❌ useAdminGuard: User lacks admin privileges');
-            // Could redirect to unauthorized page or dashboard
-          }
-        } catch (err) {
-          console.error('❌ useAdminGuard: Admin role check failed:', err);
-          setIsAdmin(false);
+      if (!authState.session?.user) {
+        console.info('🔐 useAdminGuard: No session/user, setting isAdmin to false');
+        setIsAdmin(false);
+        setAdminCheckError(null);
+        return;
+      }
+
+      const userId = authState.session.user.id;
+      console.info('🔐 useAdminGuard: Checking admin role for user:', userId);
+
+      try {
+        setAdminCheckError(null);
+
+        // Method 1: Try the is_admin function first
+        console.info('🔐 useAdminGuard: Trying is_admin() function...');
+        const { data: isAdminFunc, error: funcError } = await supabase.rpc('is_admin', {
+          _user_id: userId
+        });
+        
+        if (!funcError && isAdminFunc !== null) {
+          console.info('✅ useAdminGuard: is_admin() function returned:', isAdminFunc);
+          setIsAdmin(isAdminFunc);
+          return;
         }
-      } else {
+        
+        console.warn('⚠️ useAdminGuard: is_admin() function failed:', funcError?.message);
+
+        // Method 2: Direct query to user_roles table as fallback
+        console.info('🔐 useAdminGuard: Trying direct query to user_roles...');
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (roleError) {
+          console.error('❌ useAdminGuard: Direct role query failed:', roleError);
+          setAdminCheckError(`Role query failed: ${roleError.message}`);
+          setIsAdmin(false);
+          return;
+        }
+
+        const hasAdminRole = !!roleData;
+        console.info('✅ useAdminGuard: Direct query result - has admin role:', hasAdminRole);
+        setIsAdmin(hasAdminRole);
+
+        if (!hasAdminRole) {
+          console.warn('❌ useAdminGuard: User lacks admin privileges');
+        }
+
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('❌ useAdminGuard: Admin role check failed:', errorMessage);
+        setAdminCheckError(`Admin check failed: ${errorMessage}`);
         setIsAdmin(false);
       }
     }
@@ -188,8 +220,26 @@ export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdm
     checkAdminRole();
   }, [authState.session]);
 
+  // Add debug information to the return value
+  const debugInfo = {
+    sessionExists: !!authState.session,
+    userExists: !!authState.session?.user,
+    userId: authState.session?.user?.id,
+    adminCheckError,
+    authLoading: authState.loading,
+    authError: authState.error
+  };
+
+  console.info('🔐 useAdminGuard: Current state:', { 
+    isAdmin, 
+    isAuthenticated: authState.isAuthenticated, 
+    loading: authState.loading,
+    debugInfo 
+  });
+
   return {
     ...authState,
-    isAdmin
+    isAdmin,
+    adminCheckError
   };
 }

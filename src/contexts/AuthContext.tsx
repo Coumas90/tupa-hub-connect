@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   userRole: string | null;
+  isAdmin: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -16,6 +17,7 @@ interface AuthContextType extends AuthState {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  refreshAdminStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: null,
     session: null,
     userRole: null,
+    isAdmin: false,
     loading: true,
     error: null,
   });
@@ -47,21 +50,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Get user role from database
   const getUserRole = async (userId: string): Promise<string | null> => {
     try {
+      console.info('🔍 AuthContext: Fetching role for user:', userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching user role:', error);
+        console.error('❌ AuthContext: Error fetching user role:', error);
         return null;
       }
 
+      console.info('✅ AuthContext: User role data:', data);
       return data?.role || null;
     } catch (error) {
-      console.error('Error in getUserRole:', error);
+      console.error('❌ AuthContext: Error in getUserRole:', error);
       return null;
+    }
+  };
+
+  // Check if user has admin role
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
+    try {
+      console.info('🔍 AuthContext: Checking admin role for user:', userId);
+      
+      // Method 1: Try is_admin function
+      const { data: isAdminFunc, error: funcError } = await supabase.rpc('is_admin', {
+        _user_id: userId
+      });
+      
+      if (!funcError && isAdminFunc !== null) {
+        console.info('✅ AuthContext: is_admin() function returned:', isAdminFunc);
+        return isAdminFunc;
+      }
+      
+      console.warn('⚠️ AuthContext: is_admin() function failed, trying direct query:', funcError?.message);
+
+      // Method 2: Direct query as fallback
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('❌ AuthContext: Direct admin check failed:', roleError);
+        return false;
+      }
+
+      const hasAdminRole = !!roleData;
+      console.info('✅ AuthContext: Direct admin check result:', hasAdminRole);
+      return hasAdminRole;
+    } catch (error) {
+      console.error('❌ AuthContext: Error in checkAdminRole:', error);
+      return false;
     }
   };
 
@@ -105,26 +149,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('🔄 Auth state changed:', event, !!session);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // User just logged in, fetch their role and redirect
+          // User just logged in, fetch their role and admin status
+          console.info('🔄 AuthContext: User signed in, fetching role and admin status...');
           const role = await getUserRole(session.user.id);
+          const isAdmin = await checkAdminRole(session.user.id);
           
           setAuthState({
             user: session.user,
             session,
             userRole: role,
+            isAdmin,
             loading: false,
             error: null,
           });
 
-          // Redirect based on role
-          setTimeout(() => redirectByRole(role), 100);
+          console.info('✅ AuthContext: User state updated:', { role, isAdmin });
+          
+          // Only redirect if not already on admin path and user is admin
+          if (isAdmin && !location.pathname.startsWith('/admin')) {
+            console.info('🔄 AuthContext: Redirecting admin to admin panel...');
+            setTimeout(() => navigate('/admin'), 100);
+          } else if (role && !isAdmin) {
+            setTimeout(() => redirectByRole(role), 100);
+          }
           
         } else if (event === 'SIGNED_OUT') {
           // User logged out
+          console.info('🔄 AuthContext: User signed out');
           setAuthState({
             user: null,
             session: null,
             userRole: null,
+            isAdmin: false,
             loading: false,
             error: null,
           });
@@ -133,11 +189,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           navigate('/');
           
         } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Token refreshed, maintain current state
+          // Token refreshed, maintain current state but check admin status
+          console.info('🔄 AuthContext: Token refreshed');
+          const isAdmin = session.user ? await checkAdminRole(session.user.id) : false;
+          
           setAuthState(prev => ({
             ...prev,
             session,
             user: session.user,
+            isAdmin,
             loading: false,
           }));
         }
@@ -164,16 +224,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         if (session?.user) {
+          console.info('🔍 AuthContext: Initial session found, checking role and admin status...');
           const role = await getUserRole(session.user.id);
+          const isAdmin = await checkAdminRole(session.user.id);
           
           setAuthState({
             user: session.user,
             session,
             userRole: role,
+            isAdmin,
             loading: false,
             error: null,
           });
+
+          console.info('✅ AuthContext: Initial state set:', { role, isAdmin });
         } else {
+          console.info('🔍 AuthContext: No initial session found');
           setAuthState(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
@@ -257,12 +323,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
+  const refreshAdminStatus = async () => {
+    if (!authState.session?.user) return;
+    
+    console.info('🔄 AuthContext: Refreshing admin status...');
+    const isAdmin = await checkAdminRole(authState.session.user.id);
+    
+    setAuthState(prev => ({
+      ...prev,
+      isAdmin
+    }));
+    
+    console.info('✅ AuthContext: Admin status refreshed:', isAdmin);
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     signInWithGoogle,
     signInWithEmail,
     signOut,
     clearError,
+    refreshAdminStatus,
   };
 
   return (
