@@ -53,7 +53,7 @@ export default function LandingPage() {
             <Button variant="ghost" onClick={() => navigate('/auth')}>
               Iniciar Sesión
             </Button>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate('/app')}>
               Ir al Dashboard
             </Button>
           </div>
@@ -75,7 +75,7 @@ export default function LandingPage() {
             optimizando cada paso de la cadena de valor del café.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate('/dashboard')} className="text-lg px-8 py-6">
+            <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-6">
               Comenzar Ahora
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6">
@@ -140,7 +140,7 @@ export default function LandingPage() {
             size="lg" 
             variant="secondary" 
             className="text-lg px-8 py-6"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/app')}
           >
             Empezar Gratis
           </Button>

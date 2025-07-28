@@ -72,7 +72,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         if (error) throw error;
 
         toastNotifications.showLoginSuccess();
-        navigate('/dashboard');
+        navigate('/app');
         onLoginSuccess?.();
       }
     } catch (error: any) {
