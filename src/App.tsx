@@ -10,7 +10,7 @@ import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { Layout } from "./components/Layout";
-import Index from "./pages/Index";
+import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
 import Academia from "./pages/Academia";
@@ -59,9 +59,9 @@ const App = () => {
             />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Index />} />
-                <Route path="dashboard" element={<Dashboard />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/dashboard" element={<Layout />}>
+                <Route index element={<Dashboard />} />
                 <Route path="recetas" element={<Recetas />} />
                 <Route path="academia" element={<Academia />} />
                 <Route path="consumo" element={<Consumo />} />
@@ -75,7 +75,6 @@ const App = () => {
                 <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
                 <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
                 <Route path="auth" element={<LoginPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               </Route>
               <Route path="feedback/:cafeId" element={<FeedbackForm />} />
               <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
