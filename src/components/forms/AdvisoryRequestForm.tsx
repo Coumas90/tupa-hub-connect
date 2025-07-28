@@ -117,11 +117,11 @@ export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTraini
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="text-center">
         <div className="flex items-center justify-center mb-4">
-          <GraduationCap className="h-8 w-8 text-warm-primary mr-3" />
-          <CardTitle className="text-2xl font-bold text-warm-primary">Capacitación de Baristas In-House</CardTitle>
+          <Coffee className="h-8 w-8 text-warm-primary mr-3" />
+          <CardTitle className="text-2xl font-bold text-warm-primary">Capacitación de Baristas</CardTitle>
         </div>
         <CardDescription>
-          Solicita una capacitación personalizada para tus baristas en tu cafetería
+          Solicita una capacitación especializada en café para tus baristas en tu cafetería o negocio gastronómico
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -163,15 +163,15 @@ export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTraini
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="cafeAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dirección de la Cafetería</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Dirección completa donde se realizará la capacitación" {...field} />
-                    </FormControl>
+                <FormField
+                  control={form.control}
+                  name="cafeAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dirección de tu Cafetería/Negocio</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dirección completa de tu cafetería o negocio gastronómico" {...field} />
+                      </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
