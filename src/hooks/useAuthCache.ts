@@ -65,17 +65,30 @@ export function useAuthCache<T>(options: AuthCacheOptions = {}) {
     return entry.data;
   }, []);
 
-  // Set value in cache
+  // Set value in cache with change detection
   const set = useCallback((key: string, data: T, ttl = defaultTtl) => {
+    const cache = cacheRef.current;
+    const existing = cache.get(key);
+    
+    // Check if data actually changed to prevent unnecessary re-renders
+    const hasChanged = !existing || 
+      JSON.stringify(existing.data) !== JSON.stringify(data) ||
+      existing.ttl !== ttl;
+    
+    if (!hasChanged) {
+      console.debug('🔄 AuthCache: No change detected for key:', key);
+      return;
+    }
+    
     cleanupExpired();
     
-    const cache = cacheRef.current;
     cache.set(key, {
       data,
       timestamp: Date.now(),
       ttl
     });
     
+    // Only trigger update if data actually changed
     triggerUpdate();
     
     console.info('🔄 AuthCache: Cached data for key:', key, { ttl: `${ttl}ms` });

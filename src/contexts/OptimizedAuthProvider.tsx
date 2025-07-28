@@ -53,8 +53,11 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Auth cache for session persistence
-  const sessionCache = useAuthCache<Session>({ defaultTtl: 55 * 60 * 1000 }); // 55 minutes (slightly less than token expiry)
+  // Auth cache for session persistence - Memoized to prevent re-creation
+  const sessionCache = useAuthCache<Session>({ 
+    defaultTtl: 55 * 60 * 1000, // 55 minutes (slightly less than token expiry)
+    maxSize: 5 // Small cache for auth sessions
+  });
   
   // Role cache invalidation
   const invalidateUserRole = useInvalidateUserRole();
@@ -70,17 +73,23 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     refetch: refetchRole 
   } = useUserRoleQuery(authState.user?.id || null);
 
-  // Update auth state when role data changes
+  // Update auth state when role data changes - Only if data actually changed
   useEffect(() => {
-    if (roleData && authState.user) {
+    if (roleData && authState.user && 
+        (authState.userRole !== roleData.role || authState.isAdmin !== roleData.isAdmin)) {
+      console.info('🔄 OptimizedAuth: Updating role data:', { role: roleData.role, isAdmin: roleData.isAdmin });
+      
       setAuthState(prev => ({
         ...prev,
         userRole: roleData.role,
         isAdmin: roleData.isAdmin,
         loading: false
       }));
+    } else if (roleData && authState.user && !authState.loading) {
+      // Role data loaded but no change - just clear loading state
+      setAuthState(prev => ({ ...prev, loading: false }));
     }
-  }, [roleData, authState.user]);
+  }, [roleData, authState.user, authState.userRole, authState.isAdmin, authState.loading]);
 
   // Redirect user based on role
   const redirectByRole = useCallback((role: string | null, isAdmin: boolean) => {
@@ -143,7 +152,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     sessionCache.clear();
   }, [authState.user?.id, invalidateUserRole, sessionCache]);
 
-  // SINGLE auth state change listener
+  // SINGLE auth state change listener with safeguards
   useEffect(() => {
     // Cleanup existing listener
     if (authListenerRef.current) {
@@ -157,16 +166,24 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
         if (event === 'SIGNED_IN' && session?.user) {
           console.info('🔄 OptimizedAuth: User signed in');
           
-          // Cache the session
-          sessionCache.set('current', session);
+          // Only update if session or user actually changed
+          const currentSession = authState.session;
+          const sessionChanged = !currentSession || 
+            currentSession.access_token !== session.access_token ||
+            currentSession.user.id !== session.user.id;
           
-          setAuthState(prev => ({
-            ...prev,
-            user: session.user,
-            session,
-            loading: roleLoading, // Will be false when role query completes
-            error: null,
-          }));
+          if (sessionChanged) {
+            // Cache the session
+            sessionCache.set('current', session);
+            
+            setAuthState(prev => ({
+              ...prev,
+              user: session.user,
+              session,
+              loading: roleLoading, // Will be false when role query completes
+              error: null,
+            }));
+          }
           
         } else if (event === 'SIGNED_OUT') {
           console.info('🔄 OptimizedAuth: User signed out');
@@ -189,14 +206,21 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
         } else if (event === 'TOKEN_REFRESHED' && session) {
           console.info('🔄 OptimizedAuth: Token refreshed');
           
-          // Update cached session
-          sessionCache.set('current', session);
+          // Only update if token actually changed
+          const currentSession = authState.session;
+          const tokenChanged = !currentSession || 
+            currentSession.access_token !== session.access_token;
           
-          setAuthState(prev => ({
-            ...prev,
-            session,
-            user: session.user,
-          }));
+          if (tokenChanged) {
+            // Update cached session
+            sessionCache.set('current', session);
+            
+            setAuthState(prev => ({
+              ...prev,
+              session,
+              user: session.user,
+            }));
+          }
         }
       }
     );
@@ -208,14 +232,30 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
         authListenerRef.current.subscription.unsubscribe();
       }
     };
-  }, [roleLoading, sessionCache, invalidateCache, navigate]);
+  }, [roleLoading, sessionCache, invalidateCache, navigate, authState.session]);
 
-  // Redirect when role data is available
+  // Redirect when role data is available - With debounce to prevent multiple redirects
+  const redirectTimeoutRef = useRef<NodeJS.Timeout>();
+  
   useEffect(() => {
     if (roleData && authState.user && !roleLoading) {
-      // Small delay to ensure state is updated
-      setTimeout(() => redirectByRole(roleData.role, roleData.isAdmin), 100);
+      // Clear any existing timeout
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+      
+      // Debounce redirect to prevent multiple calls
+      redirectTimeoutRef.current = setTimeout(() => {
+        redirectByRole(roleData.role, roleData.isAdmin);
+      }, 100);
     }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
   }, [roleData, authState.user, roleLoading, redirectByRole]);
 
   // Initial session check with cache - Run only once on mount
