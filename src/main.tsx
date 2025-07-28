@@ -4,8 +4,8 @@ import App from './App.tsx'
 import './index.css'
 import { initializeSentry } from '@/lib/sentry'
 
-// Initialize Sentry as early as possible
-initializeSentry();
+// Initialize Sentry asynchronously with database check
+initializeSentry().catch(console.error);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

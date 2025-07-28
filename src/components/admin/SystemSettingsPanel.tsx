@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Settings, Shield, AlertTriangle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useSystemSettings, SystemSetting } from '@/hooks/useSystemSettings';
 import { useToast } from '@/hooks/use-toast';
+import SentryConfigurationCard from './SentryConfigurationCard';
 
 const SystemSettingsPanel: React.FC = () => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
@@ -173,6 +174,8 @@ const SystemSettingsPanel: React.FC = () => {
         <Settings className="h-6 w-6" />
         <h2 className="text-2xl font-bold">System Settings</h2>
       </div>
+
+      <SentryConfigurationCard />
 
       <Alert>
         <Shield className="h-4 w-4" />

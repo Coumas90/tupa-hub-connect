@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SentryConfig {
   dsn: string;
@@ -11,23 +12,46 @@ interface SentryConfig {
 }
 
 /**
+ * Fetch Sentry DSN from system settings
+ */
+async function getSentryDsnFromSettings(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_system_setting', {
+      p_setting_key: 'sentry_dsn'
+    });
+    
+    if (error) {
+      console.warn('Failed to fetch Sentry DSN from settings:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('Error fetching Sentry DSN:', error);
+    return null;
+  }
+}
+
+/**
  * Initialize Sentry error tracking and performance monitoring
  */
-export function initializeSentry(): void {
+export async function initializeSentry(): Promise<void> {
   try {
-    // Get Sentry DSN from environment or system settings
+    // Priority: Environment variable first, then database setting
     let sentryDsn = import.meta.env.VITE_SENTRY_DSN;
     
     // If no environment DSN, try to get from system settings
     if (!sentryDsn) {
-      // For production, we'll get this from the database
-      // For now, we'll use a placeholder that indicates it's not configured
-      sentryDsn = '⚠️ Not configured yet';
+      sentryDsn = await getSentryDsnFromSettings();
     }
     
-    if (!sentryDsn || sentryDsn === '⚠️ Not configured yet' || sentryDsn.includes('YOUR_SENTRY_DSN')) {
+    // Check if DSN is configured properly
+    if (!sentryDsn || 
+        sentryDsn === '⚠️ Not configured yet' || 
+        sentryDsn.includes('YOUR_SENTRY_DSN') ||
+        sentryDsn.trim() === '') {
       console.log('⚠️ Sentry DSN not configured, error tracking disabled');
-      console.log('Configure VITE_SENTRY_DSN environment variable or system_settings.sentry_dsn to enable error tracking');
+      console.log('💡 Configure VITE_SENTRY_DSN environment variable or update system_settings.sentry_dsn to enable error tracking');
       return;
     }
   
