@@ -10,6 +10,7 @@ import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { Layout } from "./components/Layout";
+import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
 import Academia from "./pages/Academia";
@@ -59,7 +60,8 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
+                <Route index element={<Index />} />
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="recetas" element={<Recetas />} />
                 <Route path="academia" element={<Academia />} />
                 <Route path="consumo" element={<Consumo />} />
