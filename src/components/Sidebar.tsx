@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/app/dashboard', icon: BarChart3 },
+  { name: 'Dashboard', href: '/app', icon: BarChart3 },
   { name: 'Recetas', href: '/app/recetas', icon: Coffee },
   { name: 'Academia', href: '/app/academia', icon: GraduationCap },
   { name: 'Consumo', href: '/app/consumo', icon: BarChart3 },
