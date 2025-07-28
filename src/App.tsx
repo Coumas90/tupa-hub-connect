@@ -30,6 +30,7 @@ import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
+import { AuthProvider } from "./contexts/AuthContext";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 
 const queryClient = new QueryClient();
@@ -61,33 +62,49 @@ const App = () => {
               theme="light"
             />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/auth" element={<LoginPage />} />
-              <Route path="/auth/reset" element={<PasswordResetPage />} />
-              <Route path="/app" element={<Layout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="recetas" element={<Recetas />} />
-                <Route path="academia" element={<Academia />} />
-                <Route path="consumo" element={<Consumo />} />
-                <Route path="recursos" element={<Recursos />} />
-                <Route path="mi-equipo" element={<MiEquipo />} />
-                <Route path="reposicion" element={<Reposicion />} />
-                <Route path="barista-pool" element={<BaristaPool />} />
-                <Route path="faq" element={<FAQ />} />
-                <Route path="admin/integrations" element={<AdminIntegrations />} />
-                <Route path="admin/courses" element={<AdminCourses />} />
-                <Route path="admin/advisory" element={<AdvisoryAdmin />} />
-                <Route path="admin/integrations/logs/:clientId" element={<ClientLogs />} />
-                <Route path="admin/integrations/:clientId" element={<ClientConfiguration />} />
-              </Route>
-              <Route path="feedback/:cafeId" element={<FeedbackForm />} />
-              <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
-              <Route path="/activate-account" element={<ActivateAccount />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            </BrowserRouter>
-          </LocationProvider>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<LoginPage />} />
+                <Route path="/auth/reset" element={<PasswordResetPage />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<Layout />}>
+                  <Route index element={<AdminIntegrations />} />
+                  <Route path="integrations" element={<AdminIntegrations />} />
+                  <Route path="courses" element={<AdminCourses />} />
+                  <Route path="advisory" element={<AdvisoryAdmin />} />
+                  <Route path="integrations/logs/:clientId" element={<ClientLogs />} />
+                  <Route path="integrations/:clientId" element={<ClientConfiguration />} />
+                </Route>
+                
+                {/* Recipes Route (for Baristas) */}
+                <Route path="/recipes" element={<Layout />}>
+                  <Route index element={<Recetas />} />
+                </Route>
+                
+                {/* App Routes (for Clients) */}
+                <Route path="/app" element={<Layout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="recetas" element={<Recetas />} />
+                  <Route path="academia" element={<Academia />} />
+                  <Route path="consumo" element={<Consumo />} />
+                  <Route path="recursos" element={<Recursos />} />
+                  <Route path="mi-equipo" element={<MiEquipo />} />
+                  <Route path="reposicion" element={<Reposicion />} />
+                  <Route path="barista-pool" element={<BaristaPool />} />
+                  <Route path="faq" element={<FAQ />} />
+                </Route>
+                
+                {/* Other Routes */}
+                <Route path="feedback/:cafeId" element={<FeedbackForm />} />
+                <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
+                <Route path="/activate-account" element={<ActivateAccount />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </LocationProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </SentryErrorBoundary>
