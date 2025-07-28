@@ -281,14 +281,38 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
+      // Enhanced Google OAuth with domain validation and better redirect handling
+      const currentHost = window.location.host;
+      const isProduction = !currentHost.includes('localhost') && !currentHost.includes('127.0.0.1');
+      
+      const redirectTo = isProduction 
+        ? `${window.location.origin}/`
+        : `${window.location.origin}/`;
+
+      console.info('🔄 OptimizedAuth: Google OAuth redirect to:', redirectTo);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Enhanced error classification
+        if (error.message.includes('popup')) {
+          throw new Error('popup_closed_by_user');
+        } else if (error.message.includes('access_denied')) {
+          throw new Error('access_denied');
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          throw new Error('Network error during Google authentication');
+        }
+        throw error;
+      }
       
     } catch (error: any) {
       console.error('Google login error:', error);

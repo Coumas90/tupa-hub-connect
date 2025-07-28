@@ -142,40 +142,122 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return;
     }
 
-    // Use rate-limited submission
+    // Use rate-limited submission with enhanced error handling
     const result = await attemptSubmission(async () => {
       return await signInWithEmail(email, password);
     });
 
     if (result.success) {
-      toastNotifications.showLoginSuccess();
-      // La redirección por rol se maneja automáticamente en AuthContext
+      toast({
+        title: "Login exitoso",
+        description: "Bienvenido a TUPÁ Hub",
+      });
     } else {
       console.error('Auth error:', result.error);
       
+      // Enhanced error feedback with specific messages and suggestions
+      let errorTitle = "Error de login";
       let errorMessage = result.error || 'Error de autenticación';
-      
+      let suggestion = "";
+
       if (errorMessage.includes('Invalid login credentials')) {
-        errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña';
+        errorTitle = "Credenciales incorrectas";
+        errorMessage = "Email o contraseña incorrectos";
+        suggestion = "Verifica tus datos o usa 'Olvidé mi contraseña'";
       } else if (errorMessage.includes('Email not confirmed')) {
-        errorMessage = 'Email no confirmado. Revisa tu bandeja de entrada';
+        errorTitle = "Email no confirmado";
+        errorMessage = "Debes confirmar tu email antes de iniciar sesión";
+        suggestion = "Revisa tu bandeja de entrada y spam";
+      } else if (errorMessage.includes('Too many requests')) {
+        errorTitle = "Demasiados intentos";
+        errorMessage = "Has excedido el límite de intentos";
+        suggestion = "Espera unos minutos antes de intentar nuevamente";
+      } else if (errorMessage.includes('Network') || errorMessage.includes('fetch')) {
+        errorTitle = "Error de conexión";
+        errorMessage = "Problema de conectividad";
+        suggestion = "Verifica tu conexión a internet";
+        
+        // Auto-retry for network errors after 2 seconds
+        setTimeout(() => {
+          if (!loading && !isSubmitting) {
+            toast({
+              title: "Reintentando...",
+              description: "Intentando conectar nuevamente",
+            });
+            handleSubmit(e);
+          }
+        }, 2000);
       }
+
+      const fullMessage = `${errorMessage}${suggestion ? `. ${suggestion}` : ''}`;
+      setError(fullMessage);
       
-      setError(errorMessage);
-      toastNotifications.showLoginError(errorMessage);
+      toast({
+        title: errorTitle,
+        description: fullMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (!canSubmit) return;
+    
+    setLoading(true);
     clearError();
+    
     try {
       await signInWithGoogle();
-      toastNotifications.showLoginSuccess();
+      toast({
+        title: "Login exitoso",
+        description: "Bienvenido a TUPÁ Hub",
+      });
     } catch (error: any) {
       console.error('Google login error:', error);
-      const errorMessage = error.message || 'Error en login con Google';
-      setError(errorMessage);
-      toastNotifications.showLoginError(errorMessage);
+      
+      // Enhanced Google OAuth error handling
+      let errorTitle = "Error con Google";
+      let errorMessage = error.message || "No se pudo completar el login con Google";
+      let suggestion = "";
+
+      if (errorMessage.includes('popup_closed_by_user')) {
+        errorTitle = "Login cancelado";
+        errorMessage = "Cerraste la ventana de Google";
+        suggestion = "Intenta nuevamente y completa el proceso";
+      } else if (errorMessage.includes('access_denied')) {
+        errorTitle = "Acceso denegado";
+        errorMessage = "No se otorgaron los permisos necesarios";
+        suggestion = "Acepta los permisos de Google para continuar";
+      } else if (errorMessage.includes('Network') || errorMessage.includes('fetch')) {
+        errorTitle = "Error de conexión";
+        errorMessage = "Problema conectando con Google";
+        suggestion = "Verifica tu conexión e intenta nuevamente";
+        
+        // Auto-retry for network errors
+        setTimeout(() => {
+          if (!loading && !isSubmitting) {
+            toast({
+              title: "Reintentando Google...",
+              description: "Intentando conectar con Google nuevamente",
+            });
+            handleGoogleLogin();
+          }
+        }, 3000);
+      } else {
+        // Fallback to email login on Google failure
+        suggestion = "Puedes usar tu email y contraseña como alternativa";
+      }
+
+      const fullMessage = `${errorMessage}${suggestion ? `. ${suggestion}` : ''}`;
+      setError(fullMessage);
+
+      toast({
+        title: errorTitle,
+        description: fullMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

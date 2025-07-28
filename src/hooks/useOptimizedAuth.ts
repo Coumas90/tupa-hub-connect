@@ -186,43 +186,4 @@ export function useOptionalAuth(): UseOptimizedAuthGuardReturn {
   });
 }
 
-/**
- * Hook for monitoring session health and triggering warnings
- */
-export function useSessionMonitor(warningThresholdMinutes = 5) {
-  const { getSessionTimeLeft, isSessionExpired, refreshUserData } = useOptimizedAuth();
-  const [showWarning, setShowWarning] = useState(false);
-
-  const sessionTimeLeft = getSessionTimeLeft();
-  const warningThresholdMs = warningThresholdMinutes * 60 * 1000;
-
-  useEffect(() => {
-    const sessionExpired = isSessionExpired();
-    if (sessionExpired) {
-      setShowWarning(false);
-      return;
-    }
-
-    if (sessionTimeLeft <= warningThresholdMs && sessionTimeLeft > 0) {
-      setShowWarning(true);
-    } else {
-      setShowWarning(false);
-    }
-  }, [sessionTimeLeft, warningThresholdMs, isSessionExpired]);
-
-  const extendSession = useCallback(async () => {
-    try {
-      await refreshUserData();
-      setShowWarning(false);
-    } catch (error) {
-      console.error('Failed to extend session:', error);
-    }
-  }, [refreshUserData]);
-
-  return {
-    showWarning,
-    timeLeftMinutes: Math.floor(sessionTimeLeft / 1000 / 60),
-    extendSession,
-    isExpired: isSessionExpired()
-  };
-}
+// Session monitor moved to separate hook file for better organization
