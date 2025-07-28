@@ -163,15 +163,29 @@ export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTraini
                 />
               </div>
 
-                <FormField
-                  control={form.control}
-                  name="cafeAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dirección de tu Cafetería/Negocio</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Dirección completa de tu cafetería o negocio gastronómico" {...field} />
-                      </FormControl>
+              <FormField
+                control={form.control}
+                name="requesterPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+54 11 1234-5678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cafeAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dirección de tu Cafetería/Negocio</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dirección completa de tu cafetería o negocio gastronómico" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
