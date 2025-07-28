@@ -11,6 +11,8 @@ import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { Layout } from "./components/Layout";
+import { TenantRoutes } from "./utils/routing/tenantRoutes";
+import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
@@ -67,10 +69,19 @@ const App = () => {
             />
           <BrowserRouter>
             <AuthProvider>
+              {/* Legacy route redirectors */}
+              <LegacyRouteRedirector />
+              <CafeRouteRedirector />
+              
               <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<LoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
+                <Route path="/activate-account" element={<ActivateAccount />} />
+                
+                {/* New Tenant Routes */}
+                <Route path="/tenants/*" element={<TenantRoutes />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<Layout />}>
@@ -82,12 +93,11 @@ const App = () => {
                   <Route path="integrations/:clientId" element={<ClientConfiguration />} />
                 </Route>
                 
-                {/* Recipes Route (for Baristas) */}
+                {/* Legacy Routes (will be redirected) */}
                 <Route path="/recipes" element={<Layout />}>
                   <Route index element={<Recetas />} />
                 </Route>
                 
-                {/* App Routes (for Clients) */}
                 <Route path="/app" element={<Layout />}>
                   <Route index element={<Dashboard />} />
                   <Route path="recetas" element={<Recetas />} />
@@ -100,10 +110,11 @@ const App = () => {
                   <Route path="faq" element={<FAQ />} />
                 </Route>
                 
-                {/* Other Routes */}
+                {/* Cafe Routes (backward compatibility) */}
                 <Route path="feedback/:cafeId" element={<FeedbackForm />} />
                 <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
-                <Route path="/activate-account" element={<ActivateAccount />} />
+                
+                {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
