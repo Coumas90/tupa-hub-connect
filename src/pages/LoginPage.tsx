@@ -288,7 +288,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         <div className="w-full max-w-md mx-auto">
           {/* Premium Header */}
           <div className="text-center mb-10">
-            <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center justify-center mb-8 flex-wrap">
               <div className="relative">
                 <Coffee className="h-12 w-12 text-warm-primary" />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-warm-accent rounded-full animate-pulse"></div>
