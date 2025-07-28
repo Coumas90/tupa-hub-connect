@@ -55,15 +55,20 @@ export const buildTenantRoute = {
 
 // ===== ADMIN ROUTE BUILDERS =====
 export const buildAdminRoute = {
-  integrations: {
-    root: () => ADMIN_ROUTES.INTEGRATIONS.ROOT,
-    logs: (params: ClientRouteParams) => 
-      ADMIN_ROUTES.INTEGRATIONS.LOGS.replace(':clientId', params.clientId),
-    client: (params: ClientRouteParams) => 
-      ADMIN_ROUTES.INTEGRATIONS.CLIENT.replace(':clientId', params.clientId),
+  dashboard: () => ADMIN_ROUTES.DASHBOARD.ROOT,
+  operations: {
+    root: () => ADMIN_ROUTES.OPERATIONS.ROOT,
+    pos: () => ADMIN_ROUTES.OPERATIONS.POS,
+    consumption: () => ADMIN_ROUTES.OPERATIONS.CONSUMPTION,
+    odoo: () => ADMIN_ROUTES.OPERATIONS.ODOO,
   },
+  academy: {
+    courses: () => ADMIN_ROUTES.ACADEMY.COURSES,
+  },
+  advisory: () => ADMIN_ROUTES.ADVISORY.ROOT,
+  // Legacy compatibility
+  integrations: () => ADMIN_ROUTES.INTEGRATIONS,
   courses: () => ADMIN_ROUTES.COURSES,
-  advisory: () => ADMIN_ROUTES.ADVISORY,
   monitoring: () => ADMIN_ROUTES.MONITORING,
 };
 
@@ -136,10 +141,10 @@ export const routeUtils = {
     } else if (routeUtils.isAdminRoute(pathname)) {
       breadcrumbs.push({ label: 'Admin', path: ADMIN_ROUTES.ROOT });
       
-      if (pathname.includes('/integrations/')) {
-        breadcrumbs.push({ label: 'Integrations', path: buildAdminRoute.integrations.root() });
-      } else if (pathname.includes('/courses')) {
-        breadcrumbs.push({ label: 'Courses', path: buildAdminRoute.courses() });
+      if (pathname.includes('/integrations/') || pathname.includes('/operations/')) {
+        breadcrumbs.push({ label: 'Operations', path: buildAdminRoute.operations.root() });
+      } else if (pathname.includes('/courses') || pathname.includes('/academy/')) {
+        breadcrumbs.push({ label: 'Academy', path: buildAdminRoute.academy.courses() });
       }
     }
     

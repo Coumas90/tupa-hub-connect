@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useEffect } from 'react';
@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import ActivateAccount from "./pages/ActivateAccount";
 import LoginPage from "./pages/LoginPage";
 import PasswordResetPage from "./pages/PasswordResetPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminOperationsPage from "./pages/admin/AdminOperationsPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
@@ -90,12 +92,17 @@ const App = () => {
                     <Layout />
                   </AdminGuard>
                 }>
-                  <Route index element={<AdminIntegrations />} />
-                  <Route path="integrations" element={<AdminIntegrations />} />
-                  <Route path="courses" element={<AdminCourses />} />
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="dashboard" element={<AdminDashboardPage />} />
+                  <Route path="operations/:section?" element={<AdminOperationsPage />} />
+                  <Route path="academy/courses" element={<AdminCourses />} />
                   <Route path="advisory" element={<AdvisoryAdmin />} />
                   <Route path="integrations/logs/:clientId" element={<ClientLogs />} />
                   <Route path="integrations/:clientId" element={<ClientConfiguration />} />
+                  
+                  {/* Legacy redirects */}
+                  <Route path="integrations" element={<Navigate to="/admin/operations/pos" replace />} />
+                  <Route path="courses" element={<Navigate to="/admin/academy/courses" replace />} />
                 </Route>
                 
                 {/* Legacy Routes (will be redirected) */}

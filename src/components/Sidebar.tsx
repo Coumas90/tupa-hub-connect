@@ -80,19 +80,25 @@ export function Sidebar() {
 
   const getAdminNavItems = () => [
     {
-      title: "Integraciones",
-      url: "/admin/integrations",
+      title: "Dashboard",
+      url: "/admin/dashboard",
+      icon: Home,
+      group: "admin"
+    },
+    {
+      title: "Operations",
+      url: "/admin/operations",
       icon: Settings,
       group: "admin"
     },
     {
-      title: "Cursos",
-      url: "/admin/courses", 
+      title: "Academy",
+      url: "/admin/academy",
       icon: GraduationCap,
       group: "admin"
     },
     {
-      title: "Asesorías",
+      title: "Advisory",
       url: "/admin/advisory",
       icon: UserPlus,
       group: "admin"

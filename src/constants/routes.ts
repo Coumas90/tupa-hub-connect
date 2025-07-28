@@ -43,14 +43,51 @@ export const TENANT_ROUTES = {
 // ===== ADMIN ROUTES =====
 export const ADMIN_ROUTES = {
   ROOT: '/admin',
-  INTEGRATIONS: {
-    ROOT: '/admin/integrations',
-    LOGS: '/admin/integrations/logs/:clientId',
-    CLIENT: '/admin/integrations/:clientId',
+  DASHBOARD: {
+    ROOT: '/admin/dashboard',
+    ANALYTICS: '/admin/dashboard/analytics',
+    ALERTS: '/admin/dashboard/alerts',
   },
-  COURSES: '/admin/courses',
-  ADVISORY: '/admin/advisory',
-  MONITORING: '/admin/monitoring',
+  TENANTS: {
+    ROOT: '/admin/tenants',
+    LOCATIONS: '/admin/tenants/locations',
+    MIGRATION: '/admin/tenants/migration',
+    MONITORING: '/admin/tenants/monitoring',
+  },
+  OPERATIONS: {
+    ROOT: '/admin/operations',
+    CONSUMPTION: '/admin/operations/consumption',
+    POS: '/admin/operations/pos',
+    ODOO: '/admin/operations/odoo',
+  },
+  ENGAGEMENT: {
+    ROOT: '/admin/engagement',
+    FEEDBACK: '/admin/engagement/feedback',
+    CAMPAIGNS: '/admin/engagement/campaigns',
+    QR: '/admin/engagement/qr',
+  },
+  ACADEMY: {
+    ROOT: '/admin/academy',
+    COURSES: '/admin/academy/courses',
+    PROGRESS: '/admin/academy/progress',
+    INSTRUCTORS: '/admin/academy/instructors',
+  },
+  ADVISORY: {
+    ROOT: '/admin/advisory',
+    REQUESTS: '/admin/advisory/requests',
+    SCHEDULE: '/admin/advisory/schedule',
+    REPORTS: '/admin/advisory/reports',
+  },
+  SYSTEM: {
+    ROOT: '/admin/system',
+    SETTINGS: '/admin/system/settings',
+    USERS: '/admin/system/users',
+    AUDIT: '/admin/system/audit',
+  },
+  // Legacy compatibility
+  INTEGRATIONS: '/admin/operations/pos',
+  COURSES: '/admin/academy/courses',
+  MONITORING: '/admin/tenants/monitoring',
 } as const;
 
 // ===== LEGACY ROUTES (for redirects only) =====
