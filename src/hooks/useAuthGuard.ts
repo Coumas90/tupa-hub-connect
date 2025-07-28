@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { checkAndRefreshSession } from '@/utils/authGuard';
+import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
 interface UseAuthGuardReturn {
@@ -155,26 +156,36 @@ export function useAdminGuard(redirectTo?: string): UseAuthGuardReturn & { isAdm
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Check if user has admin role
-    // This would typically involve checking user metadata or making an API call
-    if (authState.session?.user) {
-      // For now, we'll check if the user email contains 'admin' or has admin metadata
-      const userEmail = authState.session.user.email;
-      const userMetadata = authState.session.user.user_metadata;
-      
-      const hasAdminRole = userEmail?.includes('admin') || 
-                          userMetadata?.role === 'admin' ||
-                          userMetadata?.is_admin === true;
-      
-      setIsAdmin(hasAdminRole);
-      
-      if (!hasAdminRole && authState.session) {
-        console.warn('❌ useAdminGuard: User lacks admin privileges');
-        // Could redirect to unauthorized page or dashboard
+    async function checkAdminRole() {
+      if (authState.session?.user) {
+        try {
+          // Use the secure database function to check admin role
+          const { data, error } = await supabase.rpc('is_admin', {
+            user_id: authState.session.user.id
+          });
+          
+          if (error) {
+            console.error('❌ useAdminGuard: Error checking admin role:', error);
+            setIsAdmin(false);
+            return;
+          }
+          
+          setIsAdmin(data || false);
+          
+          if (!data && authState.session) {
+            console.warn('❌ useAdminGuard: User lacks admin privileges');
+            // Could redirect to unauthorized page or dashboard
+          }
+        } catch (err) {
+          console.error('❌ useAdminGuard: Admin role check failed:', err);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
       }
-    } else {
-      setIsAdmin(false);
     }
+    
+    checkAdminRole();
   }, [authState.session]);
 
   return {
