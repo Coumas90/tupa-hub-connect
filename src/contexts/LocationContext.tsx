@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { tenantCache } from '@/lib/cache/tenant-cache';
+import { sentryUtils } from '@/lib/sentry';
 
 interface Group {
   id: string;
@@ -122,6 +123,14 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setLocations(data.data.locations);
       setActiveLocationState(data.data.activeLocation);
 
+      // Set tenant context in Sentry for monitoring
+      sentryUtils.setTenantContext({
+        groupId: data.data.group?.id,
+        groupName: data.data.group?.name,
+        locationId: data.data.activeLocation?.id,
+        locationName: data.data.activeLocation?.name,
+      });
+
       // Cache the data for future requests
       tenantCache.set(session.user.id, {
         group: data.data.group,
@@ -197,6 +206,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       return;
     }
 
+    const startTime = Date.now();
+    const previousLocation = activeLocation?.name;
+
     // Optimistic update
     setActiveLocationState(targetLocation);
 
@@ -226,7 +238,19 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         setGroup(data.data.group);
         setLocations(data.data.locations);
         setActiveLocationState(data.data.activeLocation);
+        
+        // Update tenant context in Sentry
+        sentryUtils.setTenantContext({
+          groupId: data.data.group?.id,
+          groupName: data.data.group?.name,
+          locationId: data.data.activeLocation?.id,
+          locationName: data.data.activeLocation?.name,
+        });
       }
+
+      // Log tenant switch performance
+      const switchTime = Date.now() - startTime;
+      sentryUtils.logTenantSwitch(previousLocation, targetLocation.name, switchTime);
 
       // Store in session
       sessionStorage.setItem('activeLocationId', locationId);

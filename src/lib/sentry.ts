@@ -51,7 +51,7 @@ if (sentryDsn) {
 export const SentryErrorBoundary = Sentry.ErrorBoundary;
 
 /**
- * Utility functions for manual error tracking
+ * Utility functions for manual error tracking with tenant context
  */
 export const sentryUtils = {
   /**
@@ -105,10 +105,96 @@ export const sentryUtils = {
   },
 
   /**
-   * Performance monitoring
+   * Set tenant context for multi-tenant monitoring
    */
-  startTransaction: (name: string, operation: string) => {
-    return Sentry.startSpan({ name, op: operation }, () => {});
+  setTenantContext: (tenantInfo: {
+    groupId?: string;
+    groupName?: string;
+    locationId?: string;
+    locationName?: string;
+    cafeId?: string;
+    cafeName?: string;
+  }) => {
+    Sentry.withScope((scope) => {
+      scope.setContext('tenant', {
+        group_id: tenantInfo.groupId,
+        group_name: tenantInfo.groupName,
+        location_id: tenantInfo.locationId,
+        location_name: tenantInfo.locationName,
+        cafe_id: tenantInfo.cafeId,
+        cafe_name: tenantInfo.cafeName,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Set tags for filtering in Sentry
+      if (tenantInfo.groupId) scope.setTag('tenant.group_id', tenantInfo.groupId);
+      if (tenantInfo.locationId) scope.setTag('tenant.location_id', tenantInfo.locationId);
+      if (tenantInfo.cafeId) scope.setTag('tenant.cafe_id', tenantInfo.cafeId);
+    });
+  },
+
+  /**
+   * Log tenant switching events for performance monitoring
+   */
+  logTenantSwitch: (fromLocation?: string, toLocation?: string, switchTime?: number) => {
+    Sentry.addBreadcrumb({
+      message: 'Tenant location switched',
+      category: 'tenant.switch',
+      data: {
+        from_location: fromLocation,
+        to_location: toLocation,
+        switch_time_ms: switchTime,
+      },
+      level: 'info',
+    });
+  },
+
+  /**
+   * Log cross-tenant contamination alerts
+   */
+  logContaminationAlert: (userId: string, expectedTenant: string, actualTenant: string, operation: string) => {
+    Sentry.withScope((scope) => {
+      scope.setLevel('error');
+      scope.setContext('contamination', {
+        user_id: userId,
+        expected_tenant: expectedTenant,
+        actual_tenant: actualTenant,
+        operation,
+        timestamp: new Date().toISOString(),
+      });
+      
+      Sentry.captureMessage(
+        `Cross-tenant contamination detected: User ${userId} accessed ${actualTenant} data while in ${expectedTenant} context`,
+        'error'
+      );
+    });
+  },
+
+  /**
+   * Performance monitoring with tenant context
+   */
+  startTransaction: (name: string, operation: string, tenantId?: string) => {
+    return Sentry.startSpan({ 
+      name, 
+      op: operation,
+      attributes: tenantId ? { 'tenant.id': tenantId } : {}
+    }, () => {});
+  },
+
+  /**
+   * Monitor cache performance
+   */
+  logCacheEvent: (event: 'hit' | 'miss' | 'set' | 'invalidate', key: string, tenantId?: string) => {
+    Sentry.addBreadcrumb({
+      message: `Cache ${event}`,
+      category: 'cache',
+      data: {
+        cache_key: key,
+        tenant_id: tenantId,
+        timestamp: Date.now(),
+      },
+      level: 'info',
+    });
   },
 };
 
