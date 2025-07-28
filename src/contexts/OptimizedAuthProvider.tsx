@@ -119,21 +119,21 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     }
   }, [navigate, location.pathname]);
 
-  // Session management utilities
+  // Session management utilities - Memoized to prevent infinite loops
   const isSessionExpired = useCallback(() => {
     if (!authState.session) return true;
     
-    const expiresAt = authState.session.expires_at;
+    const expiresAt = authState.session?.expires_at;
     if (!expiresAt) return false;
     
     // Add 60 second buffer
     return (expiresAt * 1000) <= (Date.now() + 60000);
-  }, [authState.session]);
+  }, [authState.session?.expires_at]);
 
   const getSessionTimeLeft = useCallback(() => {
     if (!authState.session?.expires_at) return 0;
     return Math.max(0, (authState.session.expires_at * 1000) - Date.now());
-  }, [authState.session]);
+  }, [authState.session?.expires_at]);
 
   // Cache invalidation
   const invalidateCache = useCallback(() => {
@@ -218,14 +218,23 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     }
   }, [roleData, authState.user, roleLoading, redirectByRole]);
 
-  // Initial session check with cache
+  // Initial session check with cache - Run only once on mount
+  const hasInitializedRef = useRef(false);
+  
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
     const checkInitialSession = async () => {
       try {
         // Try to get cached session first
         const cachedSession = sessionCache.get('current');
+        const sessionExpired = cachedSession ? 
+          !cachedSession.expires_at || (cachedSession.expires_at * 1000) <= (Date.now() + 60000) : 
+          true;
         
-        if (cachedSession && !isSessionExpired()) {
+        if (cachedSession && !sessionExpired) {
           console.info('🔍 OptimizedAuth: Using cached session');
           setAuthState(prev => ({
             ...prev,
@@ -274,7 +283,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     };
 
     checkInitialSession();
-  }, [sessionCache, isSessionExpired]);
+  }, []); // Empty dependencies - run only once
 
   // Auth methods
   const signInWithGoogle = async () => {
