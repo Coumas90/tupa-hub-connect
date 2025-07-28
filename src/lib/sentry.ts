@@ -14,8 +14,16 @@ interface SentryConfig {
  * Initialize Sentry error tracking and performance monitoring
  */
 export function initializeSentry(): void {
+  // Only initialize Sentry if DSN is provided in production
+  const sentryDsn = import.meta.env.PROD ? '' : ''; // Configure in production deployment
+  
+  if (!sentryDsn && import.meta.env.PROD) {
+    console.log('⚠️ Sentry DSN not configured, error tracking disabled');
+    return;
+  }
+  
   const config: SentryConfig = {
-    dsn: 'https://your-dsn@sentry.io/project-id', // Replace with your actual DSN
+    dsn: sentryDsn,
     environment: import.meta.env.MODE || 'development',
     release: import.meta.env.VITE_APP_VERSION || '1.0.0',
     

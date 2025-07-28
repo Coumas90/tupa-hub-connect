@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logSecurityEvent } from '@/lib/security-logger';
 
 interface DeviceInfo {
   user_agent?: string;
