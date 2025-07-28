@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
-import { initializeSentry } from '@/lib/sentry';
 
 const SentryConfigurationCard: React.FC = () => {
   const [sentryStatus, setSentryStatus] = useState<'checking' | 'configured' | 'not-configured'>('checking');
@@ -30,10 +29,10 @@ const SentryConfigurationCard: React.FC = () => {
   const reinitializeSentry = async () => {
     setIsReinitializing(true);
     try {
-      await initializeSentry();
+      // Sentry is now initialized automatically - just check status
       await checkSentryStatus();
     } catch (error) {
-      console.error('Error reinitializing Sentry:', error);
+      console.error('Error checking Sentry status:', error);
     } finally {
       setIsReinitializing(false);
     }

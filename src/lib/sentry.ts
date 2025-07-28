@@ -1,207 +1,48 @@
 import * as Sentry from '@sentry/react';
-import { supabase } from '@/integrations/supabase/client';
 
-interface SentryConfig {
-  dsn: string;
-  environment: string;
-  release?: string;
-  replaysSessionSampleRate: number;
-  replaysOnErrorSampleRate: number;
-  tracesSampleRate: number;
-  beforeSend?: (event: Sentry.Event, hint: Sentry.EventHint) => Sentry.Event | null;
-}
+// Get Sentry DSN from environment or use empty string to disable
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN || '';
 
-/**
- * Fetch Sentry DSN from system settings
- */
-async function getSentryDsnFromSettings(): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.rpc('get_system_setting', {
-      p_setting_key: 'sentry_dsn'
-    });
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE || 'development',
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
+        maskAllText: false,
+        blockAllMedia: false,
+      }),
+    ],
+    // Performance Monitoring
+    tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
+    // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+    tracePropagationTargets: ["localhost", /^https:\/\/.*\.supabase\.co\//, /^https:\/\/.*\.lovableproject\.com\//],
+    // Session Replay
+    replaysSessionSampleRate: import.meta.env.MODE === 'production' ? 0.01 : 0.1,
+    replaysOnErrorSampleRate: 1.0,
     
-    if (error) {
-      console.warn('Failed to fetch Sentry DSN from settings:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.warn('Error fetching Sentry DSN:', error);
-    return null;
-  }
-}
-
-/**
- * Initialize Sentry error tracking and performance monitoring
- */
-export async function initializeSentry(): Promise<void> {
-  try {
-    // Priority: Environment variable first, then database setting
-    let sentryDsn = import.meta.env.VITE_SENTRY_DSN;
-    
-    // If no environment DSN, try to get from system settings
-    if (!sentryDsn) {
-      sentryDsn = await getSentryDsnFromSettings();
-    }
-    
-    // Check if DSN is configured properly
-    if (!sentryDsn || 
-        sentryDsn === '⚠️ Not configured yet' || 
-        sentryDsn.includes('YOUR_SENTRY_DSN') ||
-        sentryDsn.trim() === '') {
-      console.log('⚠️ Sentry DSN not configured, error tracking disabled');
-      console.log('💡 Configure VITE_SENTRY_DSN environment variable or update system_settings.sentry_dsn to enable error tracking');
-      return;
-    }
-  
-    const config: SentryConfig = {
-      dsn: sentryDsn,
-      environment: import.meta.env.MODE || 'development',
-      release: import.meta.env.VITE_APP_VERSION || '1.0.0',
-      
-      // Session Replay Configuration
-      replaysSessionSampleRate: 0.1, // 10% of sessions will be recorded
-      replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
-      
-      // Performance Monitoring
-      tracesSampleRate: 0.1, // 10% of transactions will be traced
-      
-      // Filter sensitive data before sending to Sentry
-      beforeSend: (event, hint) => {
-        // Remove sensitive information from events
-        if (event.request?.headers) {
-          delete event.request.headers.Authorization;
-          delete event.request.headers.authorization;
-        }
-        
-        // Filter out localhost errors in development
-        if (config.environment === 'development' && 
-            event.request?.url?.includes('localhost')) {
-          return null;
-        }
-        
-        return event;
+    // Security-focused error filtering
+    beforeSend(event, hint) {
+      // Don't send events containing sensitive data
+      if (event.message?.includes('password') || 
+          event.message?.includes('token') ||
+          event.message?.includes('secret')) {
+        return null;
       }
-    };
-
-    Sentry.init({
-      dsn: config.dsn,
-      environment: config.environment,
-      release: config.release,
       
-      // Session Replay
-      replaysSessionSampleRate: config.replaysSessionSampleRate,
-      replaysOnErrorSampleRate: config.replaysOnErrorSampleRate,
-      
-      // Performance Monitoring
-      tracesSampleRate: config.tracesSampleRate,
-      
-      // Configure integrations
-      integrations: [
-        Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration({
-          // Mask sensitive data in replays
-          maskAllText: false,
-          maskAllInputs: true,
-          blockAllMedia: false,
-        }),
-      ],
-      
-      // Data filtering
-      beforeSend: (event, hint) => {
-        // Remove sensitive information from events
-        if (event.request?.headers) {
-          delete event.request.headers.Authorization;
-          delete event.request.headers.authorization;
-        }
-        
-        // Filter out localhost errors in development
-        if (config.environment === 'development' && 
-            event.request?.url?.includes('localhost')) {
-          return null;
-        }
-        
-        return event;
-      },
-    });
-
-    // Set user context for authenticated sessions
-    setupUserContext();
-    
-    // Setup global error handlers
-    setupGlobalErrorHandlers();
-    
-    console.log(`✅ Sentry initialized in ${config.environment} mode`);
-  } catch (error) {
-    console.error('Failed to initialize Sentry:', error);
-  }
-}
-
-/**
- * Setup user context for Sentry
- */
-function setupUserContext(): void {
-  // This will be called when user logs in
-  const updateUserContext = (user: any) => {
-    Sentry.setUser({
-      id: user?.id,
-      email: user?.email,
-      username: user?.user_metadata?.name,
-    });
-  };
-
-  // Listen for auth state changes
-  if (typeof window !== 'undefined') {
-    window.addEventListener('auth-state-change', (event: any) => {
-      const { session } = event.detail;
-      if (session?.user) {
-        updateUserContext(session.user);
-      } else {
-        Sentry.setUser(null);
+      // Remove sensitive data from context
+      if (event.extra) {
+        delete event.extra.password;
+        delete event.extra.token;
+        delete event.extra.secret;
       }
-    });
-  }
-}
-
-/**
- * Setup additional global error handlers
- */
-function setupGlobalErrorHandlers(): void {
-  // Capture unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
-    Sentry.captureException(event.reason, {
-      tags: {
-        errorType: 'unhandledRejection',
-      },
-      extra: {
-        promise: event.promise,
-        reason: event.reason,
-      },
-    });
-  });
-
-  // Capture global errors
-  window.addEventListener('error', (event) => {
-    Sentry.captureException(event.error || new Error(event.message), {
-      tags: {
-        errorType: 'globalError',
-      },
-      extra: {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        message: event.message,
-      },
-    });
-  });
-
-  // Capture resource loading errors
-  window.addEventListener('error', (event) => {
-    if (event.target !== window) {
-      Sentry.captureMessage(`Resource loading error: ${(event.target as any)?.src || 'unknown'}`, 'warning');
+      
+      return event;
     }
-  }, true);
+  });
+} else {
+  console.warn('Sentry DSN not configured. Error tracking disabled.');
 }
 
 /**
@@ -271,4 +112,4 @@ export const sentryUtils = {
   },
 };
 
-export default { initializeSentry, SentryErrorBoundary, sentryUtils };
+export default { SentryErrorBoundary, sentryUtils };
