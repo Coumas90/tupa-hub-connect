@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       const resetLink = `${resetUrl}?token=${token}`;
       
       const emailResponse = await resend.emails.send({
-        from: "TUPÁ Hub <noreply@tupahub.com>",
+        from: "TUPÁ Hub <onboarding@resend.dev>",
         to: [email],
         subject: "Recupera tu contraseña - TUPÁ Hub",
         html: `
