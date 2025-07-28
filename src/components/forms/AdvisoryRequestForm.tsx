@@ -216,7 +216,7 @@ export default function BaristaTrainingForm({ cafeId, onSuccess }: BaristaTraini
                   name="machineType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Máquina</FormLabel>
+                      <FormLabel>Tipo de Máquina de Espresso</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
