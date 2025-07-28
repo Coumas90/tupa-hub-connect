@@ -91,8 +91,10 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     }
   }, [roleData, authState.user, authState.userRole, authState.isAdmin, authState.loading]);
 
-  // Redirect user based on role
+  // Redirect user based on role - Optimized with performance tracking
   const redirectByRole = useCallback((role: string | null, isAdmin: boolean) => {
+    const startTime = performance.now();
+    
     if (!role) {
       console.warn('No role found, redirecting to login');
       navigate('/auth');
@@ -103,26 +105,44 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     
     // Admin users always go to admin panel
     if (isAdmin && !currentPath.startsWith('/admin')) {
-      console.info('🔄 OptimizedAuth: Redirecting admin to admin panel...');
+      console.info('🔄 OptimizedAuth: Redirecting admin to admin panel...', {
+        from: currentPath,
+        to: '/admin',
+        duration: `${(performance.now() - startTime).toFixed(2)}ms`
+      });
       navigate('/admin');
       return;
     }
     
-    // Role-based redirects for non-admin users
+    // Role-based redirects for non-admin users with performance logging
     switch (role.toLowerCase()) {
       case 'client':
         if (!currentPath.startsWith('/app') && !isAdmin) {
+          console.info('🔄 OptimizedAuth: Redirecting client to app', {
+            from: currentPath,
+            to: '/app',
+            duration: `${(performance.now() - startTime).toFixed(2)}ms`
+          });
           navigate('/app');
         }
         break;
       case 'barista':
         if (!currentPath.startsWith('/recipes') && !isAdmin) {
+          console.info('🔄 OptimizedAuth: Redirecting barista to recipes', {
+            from: currentPath,
+            to: '/recipes',
+            duration: `${(performance.now() - startTime).toFixed(2)}ms`
+          });
           navigate('/recipes');
         }
         break;
       default:
         if (!isAdmin) {
-          console.warn(`Unknown role: ${role}, redirecting to dashboard`);
+          console.warn(`Unknown role: ${role}, redirecting to dashboard`, {
+            from: currentPath,
+            to: '/app',
+            duration: `${(performance.now() - startTime).toFixed(2)}ms`
+          });
           navigate('/app');
         }
     }
@@ -421,8 +441,20 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
   const refreshUserData = async () => {
     if (!authState.user?.id) return;
     
+    const startTime = performance.now();
     console.info('🔄 OptimizedAuth: Refreshing user data...');
-    await refetchRole();
+    
+    try {
+      await refetchRole();
+      console.info('✅ OptimizedAuth: User data refreshed successfully', {
+        duration: `${(performance.now() - startTime).toFixed(2)}ms`
+      });
+    } catch (error) {
+      console.error('❌ OptimizedAuth: Failed to refresh user data:', error, {
+        duration: `${(performance.now() - startTime).toFixed(2)}ms`
+      });
+      throw error;
+    }
   };
 
   const contextValue: OptimizedAuthContextType = {
