@@ -1,7 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 import { supabase } from '@/integrations/supabase/client';
 import * as Sentry from '@sentry/browser';
-import CircuitBreaker from 'opossum';
 import type { Session } from '@supabase/supabase-js';
 
 interface JWTPayload {
@@ -30,45 +29,22 @@ export function isTokenExpired(token: string): boolean {
 }
 
 /**
- * Refresh session function with error handling
+ * Refresh session function with timeout protection
  */
-async function refreshSessionInternal(): Promise<Session | null> {
-  const { data, error } = await supabase.auth.refreshSession();
-  
-  if (error) {
-    throw new Error(`Session refresh failed: ${error.message}`);
-  }
-  
-  return data.session;
+async function refreshSessionWithTimeout(): Promise<Session | null> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('Session refresh timeout')), 10000);
+  });
+
+  const refreshPromise = supabase.auth.refreshSession().then(({ data, error }) => {
+    if (error) {
+      throw new Error(`Session refresh failed: ${error.message}`);
+    }
+    return data.session;
+  });
+
+  return Promise.race([refreshPromise, timeoutPromise]);
 }
-
-// Circuit breaker configuration
-const circuitBreakerOptions = {
-  timeout: 10000, // 10 seconds timeout
-  errorThresholdPercentage: 50, // Open circuit if 50% of requests fail
-  resetTimeout: 30000, // Try again after 30 seconds
-  rollingCountTimeout: 60000, // 1 minute rolling window
-  rollingCountBuckets: 10, // Number of buckets in the rolling window
-  name: 'sessionRefresh',
-  group: 'auth'
-};
-
-// Create circuit breaker for session refresh
-const refreshCircuitBreaker = new CircuitBreaker(refreshSessionInternal, circuitBreakerOptions);
-
-// Circuit breaker event handlers
-refreshCircuitBreaker.on('open', () => {
-  console.warn('🔥 Session refresh circuit breaker opened - too many failures');
-  Sentry.captureMessage('Session refresh circuit breaker opened', 'warning');
-});
-
-refreshCircuitBreaker.on('halfOpen', () => {
-  console.info('🔄 Session refresh circuit breaker half-open - testing...');
-});
-
-refreshCircuitBreaker.on('close', () => {
-  console.info('✅ Session refresh circuit breaker closed - service recovered');
-});
 
 /**
  * Checks current session and refreshes if needed with circuit breaker protection
@@ -97,8 +73,8 @@ export async function checkAndRefreshSession(): Promise<Session | null> {
     
     console.info('🔄 Access token expired, attempting refresh...');
     
-    // Use circuit breaker for refresh
-    const refreshedSession = await refreshCircuitBreaker.fire();
+    // Use timeout-protected refresh
+    const refreshedSession = await refreshSessionWithTimeout();
     
     if (refreshedSession) {
       console.info('✅ Session refreshed successfully');
@@ -118,30 +94,22 @@ export async function checkAndRefreshSession(): Promise<Session | null> {
         operation: 'checkAndRefreshSession'
       },
       extra: {
-        circuitBreakerState: refreshCircuitBreaker.stats,
         errorMessage
       }
     });
     
     console.error('❌ Critical error in session refresh:', errorMessage);
     
-    // If circuit breaker is open, return null gracefully
-    if (refreshCircuitBreaker.opened) {
-      console.warn('🚫 Circuit breaker is open, skipping refresh attempt');
-      return null;
-    }
-    
     return null;
   }
 }
 
 /**
- * Get circuit breaker stats for monitoring
+ * Get auth guard stats for monitoring
  */
 export function getAuthGuardStats() {
   return {
-    circuitBreakerStats: refreshCircuitBreaker.stats,
-    isCircuitBreakerOpen: refreshCircuitBreaker.opened,
-    isCircuitBreakerHalfOpen: refreshCircuitBreaker.halfOpen
+    refreshMethod: 'timeout-based',
+    timeoutMs: 10000
   };
 }

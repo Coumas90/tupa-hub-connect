@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { tenantCache } from '@/lib/cache/tenant-cache';
 
 interface Group {
   id: string;
@@ -87,6 +88,21 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         return;
       }
 
+      // Check cache first
+      const cached = tenantCache.get(session.user.id, preferredLocationId);
+      if (cached) {
+        setGroup(cached.group);
+        setLocations(cached.locations);
+        setActiveLocationState(cached.activeLocation);
+        setLoading(false);
+        console.log('Location context loaded from cache:', {
+          group: cached.group?.name,
+          locations: cached.locations?.length,
+          activeLocation: cached.activeLocation?.name
+        });
+        return;
+      }
+
       const { data, error: functionError } = await supabase.functions.invoke('location-context', {
         body: preferredLocationId ? { preferredLocationId } : {},
         headers: {
@@ -106,12 +122,19 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setLocations(data.data.locations);
       setActiveLocationState(data.data.activeLocation);
 
+      // Cache the data for future requests
+      tenantCache.set(session.user.id, {
+        group: data.data.group,
+        locations: data.data.locations,
+        activeLocation: data.data.activeLocation
+      }, preferredLocationId);
+
       // Store active location in session storage for persistence
       if (data.data.activeLocation) {
         sessionStorage.setItem('activeLocationId', data.data.activeLocation.id);
       }
 
-      console.log('Location context loaded:', {
+      console.log('Location context loaded from API:', {
         group: data.data.group?.name,
         locations: data.data.locations?.length,
         activeLocation: data.data.activeLocation?.name
@@ -302,6 +325,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         
         if (event === 'SIGNED_IN' && session) {
           // User just logged in, fetch location context
+          tenantCache.invalidate(session.user.id); // Invalidate old cache
           const storedLocationId = sessionStorage.getItem('activeLocationId');
           await fetchLocationContext(storedLocationId || undefined);
         } else if (event === 'SIGNED_OUT') {
@@ -313,6 +337,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
           setError(null);
           setLoading(false);
           sessionStorage.removeItem('activeLocationId');
+          tenantCache.clear(); // Clear cache on logout
         }
       }
     );
