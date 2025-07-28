@@ -1,4 +1,4 @@
-import { logger, loggerUtils } from '@/lib/logger';
+import { logger, loggerUtils } from '@/lib/browser-logger';
 import { supabase } from '@/integrations/supabase/client';
 
 /**

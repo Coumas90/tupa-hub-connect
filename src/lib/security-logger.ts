@@ -1,3 +1,4 @@
+import { logger } from '@/lib/browser-logger';
 import { supabase } from '@/integrations/supabase/client';
 import { sentryUtils } from '@/lib/sentry';
 

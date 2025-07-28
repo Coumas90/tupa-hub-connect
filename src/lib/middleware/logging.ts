@@ -1,4 +1,4 @@
-import { logger, loggerUtils } from '@/lib/logger';
+import { logger, loggerUtils } from '@/lib/browser-logger';
 
 // Types for middleware
 interface LoggingRequest extends Request {
@@ -232,7 +232,7 @@ export function logApplicationStart() {
     type: 'application',
     event: 'startup',
     environment: import.meta.env.MODE,
-    nodeVersion: process?.version || 'unknown',
+    nodeVersion: 'browser',
     timestamp: new Date().toISOString()
   });
 }
