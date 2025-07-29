@@ -17,6 +17,7 @@ import Reposicion from '@/pages/Reposicion';
 import BaristaPool from '@/pages/BaristaPool';
 import FAQ from '@/pages/FAQ';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { SettingsPage } from '@/pages/SettingsPage';
 
 interface TenantRouteWrapperProps {
   children: React.ReactNode;
@@ -162,6 +163,13 @@ export function TenantRoutes() {
         <Route path="profile" element={
           <AuthenticatedGuard>
             <ProfilePage />
+          </AuthenticatedGuard>
+        } />
+
+        {/* Settings Route */}
+        <Route path="settings" element={
+          <AuthenticatedGuard>
+            <SettingsPage />
           </AuthenticatedGuard>
         } />
 

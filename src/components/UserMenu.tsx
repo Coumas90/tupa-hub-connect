@@ -94,7 +94,13 @@ export function UserMenu() {
           </DropdownMenuItem>
           
           <DropdownMenuItem 
-            onClick={() => navigate('/settings')}
+            onClick={() => {
+              const currentPath = window.location.pathname;
+              const settingsPath = currentPath.startsWith('/admin') ? '/admin/settings' : 
+                                   currentPath.startsWith('/tenants/') ? window.location.pathname.replace(/\/[^\/]*$/, '/settings') :
+                                   '/app/settings';
+              navigate(settingsPath);
+            }}
             className="cursor-pointer"
           >
             <Settings className="mr-2 h-4 w-4" />
