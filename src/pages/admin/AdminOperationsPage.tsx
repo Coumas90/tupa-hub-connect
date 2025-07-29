@@ -10,7 +10,8 @@ import OdooManagement from '@/components/admin/OdooManagement';
 import { ConsumptionCharts } from '@/components/admin/ConsumptionCharts';
 import { ConsumptionFilters } from '@/components/admin/ConsumptionFilters';
 import { Button } from '@/components/ui/button';
-import { Plus, Settings, BarChart3 } from 'lucide-react';
+import { Plus, Settings, BarChart3, Shield } from 'lucide-react';
+import { SecurityConfigPanel } from '@/components/admin/SecurityConfigPanel';
 
 export default function AdminOperationsPage() {
   const { section } = useParams<{ section?: string }>();
@@ -53,6 +54,10 @@ export default function AdminOperationsPage() {
           <TabsTrigger value="odoo" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Odoo Management
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Security Config
           </TabsTrigger>
         </TabsList>
         
@@ -106,6 +111,10 @@ export default function AdminOperationsPage() {
         
         <TabsContent value="odoo">
           <OdooManagement />
+        </TabsContent>
+        
+        <TabsContent value="security">
+          <SecurityConfigPanel />
         </TabsContent>
       </Tabs>
 

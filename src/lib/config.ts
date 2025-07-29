@@ -6,6 +6,10 @@ export const config = {
   },
   development: {
     enableTestingMode: import.meta.env.DEV
+  },
+  security: {
+    productionMode: import.meta.env.PROD,
+    blockDangerousOps: import.meta.env.PROD
   }
 } as const;
 
@@ -18,12 +22,21 @@ class TestingMode {
   }
   
   static enable(): void {
+    // CRITICAL: Block in production
+    if (config.security.productionMode) {
+      console.error('🚫 SECURITY VIOLATION: Testing mode cannot be enabled in production!');
+      console.error('This could compromise security. Contact system administrator.');
+      return;
+    }
+    
     if (!config.development.enableTestingMode) {
       console.warn('Testing Mode only available in development');
       return;
     }
+    
     this.isEnabled = true;
     console.warn('🔓 TESTING MODE ENABLED - Admin guards bypassed');
+    console.warn('⚠️  WARNING: This is for development only. Never use in production.');
   }
   
   static disable(): void {
@@ -33,6 +46,14 @@ class TestingMode {
   
   static toggle(): void {
     this.enabled ? this.disable() : this.enable();
+  }
+  
+  static validateSafety(): boolean {
+    if (config.security.productionMode && this.isEnabled) {
+      console.error('🚨 CRITICAL SECURITY ISSUE: Testing mode is active in production!');
+      return false;
+    }
+    return true;
   }
 }
 

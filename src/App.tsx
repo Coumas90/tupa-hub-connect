@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { useLocationPreloader } from '@/hooks/useLocationPreloader';
+import { productionGuard } from '@/lib/security/production-guard';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
@@ -54,9 +55,13 @@ const App = () => {
   // Initialize security monitoring
   useSecurityMonitor();
   
-  // Initialize auth listeners on app startup
+  // Initialize auth listeners and production security monitoring
   useEffect(() => {
     const cleanup = initializeAuthListeners();
+    
+    // Start production security monitoring
+    productionGuard.startProductionMonitoring();
+    
     return cleanup;
   }, []);
 
