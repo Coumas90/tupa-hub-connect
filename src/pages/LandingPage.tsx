@@ -45,8 +45,17 @@ export default function LandingPage() {
     {
       icon: Building,
       title: "Oficinas",
-      subtitle: "Experiencia premium diaria",
-      benefits: ["Dashboard de consumo en tiempo real", "Variedad rotativa mensual", "Setup completo de equipos", "Gestión sin complicaciones"],
+      subtitle: "Café premium que impulsa la productividad",
+      benefits: [
+        "Dashboard de consumo y métricas de equipo",
+        "Variedad rotativa mensual con perfiles únicos",
+        "Setup completo: máquinas + capacitación",
+        "Reposición automática sin interrupciones",
+        "Servicio técnico incluido 24/7",
+        "Reportes de satisfacción y uso",
+        "Blends energizantes para diferentes momentos",
+        "Opciones descafeinadas y alternativas plant-based"
+      ],
       color: "from-amber-500 to-orange-600"
     },
     {
@@ -60,7 +69,7 @@ export default function LandingPage() {
 
   const testimonials = [
     { name: "María González", role: "Dueña de Café Central", text: "Nuestros clientes notan la diferencia. El café TUPÁ elevó completamente la experiencia en nuestro local." },
-    { name: "Carlos Méndez", role: "Gerente de Operaciones", text: "La plataforma nos simplificó todo. Ya no nos preocupamos por quedarnos sin café o calcular consumos." },
+    { name: "Carlos Méndez", role: "Gerente de HR - Tech Corp", text: "El café TUPÁ transformó el ambiente de oficina. Los reportes de consumo nos ayudan a entender mejor las preferencias del equipo y la productividad aumentó notablemente." },
     { name: "Ana Herrera", role: "Chef Ejecutiva", text: "Los maridajes que nos sugirieron transformaron nuestro menú de postres. Café de autor, literal." }
   ];
 
