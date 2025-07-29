@@ -1,22 +1,31 @@
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import { AdaptiveSidebar } from '@/components/navigation/AdaptiveSidebar';
+import { SmartBreadcrumbs } from '@/components/navigation/SmartBreadcrumbs';
 import { LocationSwitcher } from './LocationSwitcher';
 import { UserMenu } from './UserMenu';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 export function Layout() {
+  const { canAccessTenantFeatures } = useEnhancedAuth();
+
   return (
-    <div className="min-h-screen bg-gradient-light flex">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="flex justify-between items-center p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex-1" />
-          <div className="flex items-center gap-4">
-            <LocationSwitcher />
+    <div className="flex h-screen bg-background">
+      <AdaptiveSidebar />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-background border-b">
+          <SmartBreadcrumbs />
+          
+          <div className="flex items-center justify-end px-6 py-2 space-x-4">
+            {canAccessTenantFeatures && <LocationSwitcher />}
             <UserMenu />
           </div>
-        </div>
-        <Outlet />
-      </main>
+        </header>
+        
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -7,17 +7,24 @@ import { Progress } from '@/components/ui/progress';
 import ModuleAccessGuard from '@/components/ModuleAccessGuard';
 import WeatherCard from '@/components/WeatherCard';
 import AdvisoryRequestModal from '@/components/modals/AdvisoryRequestModal';
+import { RoleDashboard } from '@/components/dashboards/RoleDashboard';
+import { OnboardingTour, useOnboarding } from '@/components/onboarding/OnboardingTour';
 import { Coffee, TrendingUp, Users, BookOpen, MapPin, Building, GraduationCap, Package, Calendar } from "lucide-react";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useSmartNavigation } from "@/utils/routing/redirects";
-import { useRequireAuth } from '@/hooks/useOptimizedAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 export default function Dashboard() {
   const location = useLocation();
   const params = useParams();
   const { activeLocation, activeCafe, loading } = useLocationContext();
   const { navigateToOperation, navigateToTenant } = useSmartNavigation();
-  const { isAuthenticated } = useRequireAuth();
+  const { isAuthenticated, userRole, isAdmin } = useEnhancedAuth();
+  const { 
+    showOnboarding, 
+    completeOnboarding, 
+    dismissOnboarding 
+  } = useOnboarding();
 
   // Determine dashboard context (role-based view for tenant routes)
   const isInTenantContext = location.pathname.startsWith('/tenants/');
@@ -159,68 +166,17 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Quick Actions Grid */}
+      {/* Role-based Dashboard Widgets */}
       <div>
         <h2 className="text-xl font-semibold mb-4">
-          {isInTenantContext ? 'Acceso Rápido' : 'Acciones Rápidas'}
+          {isInTenantContext ? 'Panel Personalizado' : 'Acciones Rápidas'}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" 
-                onClick={() => isInTenantContext ? navigateToOperation('recipes') : navigateToTenant('operations/recipes')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recetas</CardTitle>
-              <Coffee className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">
-                +2 nuevas esta semana
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => isInTenantContext ? navigateToOperation('consumption') : navigateToTenant('operations/consumption')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Consumo</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$2,340</div>
-              <p className="text-xs text-muted-foreground">
-                +12% desde el mes pasado
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => isInTenantContext ? navigateToOperation('staff') : navigateToTenant('operations/staff')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mi Equipo</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">8</div>
-              <p className="text-xs text-muted-foreground">
-                Baristas activos
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => isInTenantContext ? navigateToTenant('academy') : navigateToTenant('academy')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Academia</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">
-                Cursos pendientes
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <RoleDashboard 
+          userRole={userRole || 'client'}
+          isAdmin={isAdmin}
+          activeLocation={activeLocation}
+          activeCafe={activeCafe}
+        />
       </div>
 
       {/* Migration Helper for Legacy Users */}
@@ -245,11 +201,25 @@ export default function Dashboard() {
     </div>
   );
 
-  return isInTenantContext ? (
-    <DashboardContent />
-  ) : (
-    <ModuleAccessGuard module="Dashboard" requiredRole="cliente">
-      <DashboardContent />
-    </ModuleAccessGuard>
+  return (
+    <>
+      {isInTenantContext ? (
+        <DashboardContent />
+      ) : (
+        <ModuleAccessGuard module="Dashboard" requiredRole="cliente">
+          <DashboardContent />
+        </ModuleAccessGuard>
+      )}
+      
+      {/* Onboarding Tour */}
+      {showOnboarding && (
+        <OnboardingTour
+          userRole={userRole || 'client'}
+          isAdmin={isAdmin}
+          onComplete={completeOnboarding}
+          onDismiss={dismissOnboarding}
+        />
+      )}
+    </>
   );
 }
