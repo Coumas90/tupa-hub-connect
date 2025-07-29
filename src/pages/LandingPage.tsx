@@ -4,12 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { Coffee, Star, CheckCircle, ArrowRight, MapPin, Users, Building, BarChart3, Zap, Leaf, Package, Award, Clock, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CoffeeTastingModal from "@/components/CoffeeTastingModal";
+import ContactFormModal from "@/components/modals/ContactFormModal";
+import { useOptimizedAuth } from "@/contexts/OptimizedAuthProvider";
+import { useSmartNavigation } from "@/utils/routing/redirects";
 import React, { useState } from "react";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [selectedCoffee, setSelectedCoffee] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user, loading } = useOptimizedAuth();
+  const { navigateToRole, canNavigate } = useSmartNavigation();
 
   const handleCoffeeClick = (coffee: any) => {
     setSelectedCoffee(coffee);
@@ -75,12 +80,23 @@ export default function LandingPage() {
             <a href="#catalogo" className="text-muted-foreground hover:text-primary transition-colors">Catálogo</a>
           </nav>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/auth')}>
-              Iniciar Sesión
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                if (user && canNavigate) {
+                  navigateToRole('overview');
+                } else {
+                  navigate('/auth');
+                }
+              }}
+            >
+              {user ? 'Dashboard' : 'Iniciar Sesión'}
             </Button>
-            <Button onClick={() => navigate('/app')} className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-              Probá TUPÁ Gratis
-            </Button>
+            <ContactFormModal>
+              <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                Probá TUPÁ Gratis
+              </Button>
+            </ContactFormModal>
           </div>
         </div>
       </header>
@@ -109,10 +125,12 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-lg px-8 py-6">
-                  Probá TUPÁ Gratis
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                <ContactFormModal>
+                  <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-lg px-8 py-6">
+                    Probá TUPÁ Gratis
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </ContactFormModal>
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-orange-200 hover:bg-orange-50">
                   Ver Catálogo
                 </Button>
@@ -485,14 +503,15 @@ export default function LandingPage() {
               Solo café extraordinario que eleva tu negocio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-12 py-6 font-semibold"
-                onClick={() => navigate('/app')}
-              >
-                Probá TUPÁ Gratis
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <ContactFormModal>
+                <Button 
+                  size="lg" 
+                  className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-12 py-6 font-semibold"
+                >
+                  Probá TUPÁ Gratis
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </ContactFormModal>
               <Button 
                 variant="outline" 
                 size="lg" 
