@@ -10,6 +10,7 @@ import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
+import { useLocationPreloader } from '@/hooks/useLocationPreloader';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
@@ -43,6 +44,12 @@ import { SettingsPage } from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
+// Component to initialize preloading
+function AppInitializer() {
+  useLocationPreloader(); // Initialize location preloading and smart caching
+  return null;
+}
+
 const App = () => {
   // Initialize security monitoring
   useSecurityMonitor();
@@ -74,6 +81,9 @@ const App = () => {
             />
           <BrowserRouter>
             <OptimizedAuthProvider>
+              {/* Initialize enhanced features */}
+              <AppInitializer />
+              
               {/* Legacy route redirectors */}
               <LegacyRouteRedirector />
               <CafeRouteRedirector />

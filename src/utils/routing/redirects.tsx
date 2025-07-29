@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { buildTenantRoute, buildPublicRoute } from './helpers';
 
 /**
@@ -79,25 +80,47 @@ export function CafeRouteRedirector() {
 }
 
 /**
- * Smart Route Handler
- * Determines the best route for a user based on their location context
+ * Enhanced Smart Route Handler with preloading and caching
  */
 export function useSmartNavigation() {
   const { activeLocation, loading } = useLocationContext();
+  const { userRole, isAdmin } = useEnhancedAuth();
   const navigate = useNavigate();
 
-  const navigateToTenant = (path: string = 'dashboard/overview') => {
+  const navigateToTenant = useCallback((path: string = 'dashboard/overview') => {
     if (!activeLocation?.slug) {
       console.warn('No active location available for navigation');
       return;
     }
 
     const targetPath = `/tenants/${activeLocation.slug}/${path}`;
+    console.info('🔄 SmartNavigation: Navigating to tenant path', { 
+      path: targetPath,
+      userRole 
+    });
     navigate(targetPath);
-  };
+  }, [activeLocation?.slug, userRole, navigate]);
 
-  const navigateToRole = (role: 'owner' | 'manager' | 'barista' | 'overview' = 'overview') => {
-    if (!activeLocation?.slug) return;
+  const navigateToRole = useCallback((role: 'owner' | 'manager' | 'barista' | 'overview' = 'overview') => {
+    if (!activeLocation?.slug) {
+      console.warn('No active location for role navigation, using fallback');
+      
+      // Intelligent fallback based on user role
+      switch (userRole?.toLowerCase()) {
+        case 'admin':
+          navigate('/admin/dashboard');
+          return;
+        case 'barista':
+          navigate('/recipes');
+          return;
+        case 'client':
+        case 'manager':
+        case 'owner':
+        default:
+          navigate('/app');
+          return;
+      }
+    }
     
     const routes = {
       overview: buildTenantRoute.dashboard.overview,
@@ -106,11 +129,20 @@ export function useSmartNavigation() {
       barista: buildTenantRoute.dashboard.barista,
     };
     
-    navigate(routes[role]({ locationSlug: activeLocation.slug }));
-  };
+    const targetPath = routes[role]({ locationSlug: activeLocation.slug });
+    console.info('🔄 SmartNavigation: Role-based navigation', { 
+      role, 
+      targetPath,
+      userRole 
+    });
+    navigate(targetPath);
+  }, [activeLocation?.slug, userRole, navigate]);
 
-  const navigateToOperation = (operation: 'consumption' | 'recipes' | 'staff' | 'inventory' | 'resources') => {
-    if (!activeLocation?.slug) return;
+  const navigateToOperation = useCallback((operation: 'consumption' | 'recipes' | 'staff' | 'inventory' | 'resources') => {
+    if (!activeLocation?.slug) {
+      console.warn('No active location for operation navigation');
+      return;
+    }
     
     const routes = {
       consumption: buildTenantRoute.operations.consumption,
@@ -120,14 +152,49 @@ export function useSmartNavigation() {
       resources: buildTenantRoute.operations.resources,
     };
     
-    navigate(routes[operation]({ locationSlug: activeLocation.slug }));
-  };
+    const targetPath = routes[operation]({ locationSlug: activeLocation.slug });
+    console.info('🔄 SmartNavigation: Operation navigation', { 
+      operation, 
+      targetPath,
+      userRole 
+    });
+    navigate(targetPath);
+  }, [activeLocation?.slug, userRole, navigate]);
+
+  // Smart navigation that considers user role and context
+  const navigateToOptimalRoute = useCallback(() => {
+    if (isAdmin) {
+      navigate('/admin/dashboard');
+      return;
+    }
+
+    if (activeLocation?.slug) {
+      navigateToRole('overview');
+      return;
+    }
+
+    // Fallback based on role when no location context
+    switch (userRole?.toLowerCase()) {
+      case 'barista':
+        navigate('/recipes');
+        break;
+      case 'client':
+      case 'manager':
+      case 'owner':
+      default:
+        navigate('/app');
+        break;
+    }
+  }, [isAdmin, activeLocation?.slug, userRole, navigate, navigateToRole]);
 
   return {
     navigateToTenant,
     navigateToRole,
     navigateToOperation,
+    navigateToOptimalRoute,
     canNavigate: !loading && !!activeLocation?.slug,
     currentTenantSlug: activeLocation?.slug,
+    hasLocationContext: !!activeLocation?.slug,
+    isLocationLoading: loading,
   };
 }
