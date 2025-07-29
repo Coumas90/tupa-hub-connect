@@ -16,6 +16,7 @@ import MiEquipo from '@/pages/MiEquipo';
 import Reposicion from '@/pages/Reposicion';
 import BaristaPool from '@/pages/BaristaPool';
 import FAQ from '@/pages/FAQ';
+import { ProfilePage } from '@/pages/ProfilePage';
 
 interface TenantRouteWrapperProps {
   children: React.ReactNode;
@@ -154,6 +155,13 @@ export function TenantRoutes() {
         <Route path="faq" element={
           <AuthenticatedGuard>
             <FAQ />
+          </AuthenticatedGuard>
+        } />
+
+        {/* Profile Route */}
+        <Route path="profile" element={
+          <AuthenticatedGuard>
+            <ProfilePage />
           </AuthenticatedGuard>
         } />
 

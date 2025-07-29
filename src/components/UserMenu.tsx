@@ -82,7 +82,11 @@ export function UserMenu() {
           <DropdownMenuSeparator />
           
           <DropdownMenuItem 
-            onClick={() => navigate('/profile')}
+            onClick={() => {
+              const currentPath = window.location.pathname;
+              const profilePath = currentPath.startsWith('/admin') ? '/admin/profile' : '/app/profile';
+              navigate(profilePath);
+            }}
             className="cursor-pointer"
           >
             <User className="mr-2 h-4 w-4" />
