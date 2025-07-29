@@ -74,7 +74,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
   // This useEffect is disabled as roles come from session.user.user_metadata.role
   // No longer need to wait for separate role query
 
-  // Redirect user based on role - Optimized with performance tracking
+  // Enhanced redirect logic based on role and location context
   const redirectByRole = useCallback((role: string | null, isAdmin: boolean) => {
     const startTime = performance.now();
     
@@ -86,48 +86,73 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
 
     const currentPath = location.pathname;
     
+    // Skip redirect if user is already on auth page or valid route
+    if (currentPath === '/auth' || currentPath === '/') {
+      return;
+    }
+    
     // Admin users always go to admin panel
     if (isAdmin && !currentPath.startsWith('/admin')) {
       console.info('🔄 OptimizedAuth: Redirecting admin to admin panel...', {
         from: currentPath,
-        to: '/admin',
+        to: '/admin/dashboard',
         duration: `${(performance.now() - startTime).toFixed(2)}ms`
       });
-      navigate('/admin');
+      navigate('/admin/dashboard');
       return;
     }
     
-    // Role-based redirects for non-admin users with performance logging
-    switch (role.toLowerCase()) {
-      case 'client':
-        if (!currentPath.startsWith('/app') && !isAdmin) {
-          console.info('🔄 OptimizedAuth: Redirecting client to app', {
-            from: currentPath,
-            to: '/app',
-            duration: `${(performance.now() - startTime).toFixed(2)}ms`
-          });
-          navigate('/app');
-        }
-        break;
-      case 'barista':
-        if (!currentPath.startsWith('/recipes') && !isAdmin) {
-          console.info('🔄 OptimizedAuth: Redirecting barista to recipes', {
-            from: currentPath,
-            to: '/recipes',
-            duration: `${(performance.now() - startTime).toFixed(2)}ms`
-          });
-          navigate('/recipes');
-        }
-        break;
-      default:
-        if (!isAdmin) {
-          console.warn(`Unknown role: ${role}, redirecting to dashboard`, {
-            from: currentPath,
-            to: '/app',
-            duration: `${(performance.now() - startTime).toFixed(2)}ms`
-          });
-          navigate('/app');
-        }
+    // Enhanced role-based redirects for non-admin users
+    if (!isAdmin) {
+      switch (role.toLowerCase()) {
+        case 'client':
+          // Smart client redirection based on current context
+          if (!currentPath.startsWith('/app') && !currentPath.startsWith('/tenants/')) {
+            console.info('🔄 OptimizedAuth: Redirecting client to dashboard', {
+              from: currentPath,
+              to: '/app',
+              duration: `${(performance.now() - startTime).toFixed(2)}ms`
+            });
+            navigate('/app');
+          }
+          break;
+          
+        case 'barista':
+          // Smart barista redirection - prioritize tenant recipes over legacy
+          if (!currentPath.startsWith('/recipes') && !currentPath.startsWith('/tenants/') && !currentPath.startsWith('/app')) {
+            console.info('🔄 OptimizedAuth: Redirecting barista to recipes', {
+              from: currentPath,
+              to: '/recipes',
+              duration: `${(performance.now() - startTime).toFixed(2)}ms`
+            });
+            navigate('/recipes');
+          }
+          break;
+          
+        case 'manager':
+        case 'owner':
+          // Smart management redirection
+          if (!currentPath.startsWith('/app') && !currentPath.startsWith('/tenants/')) {
+            console.info('🔄 OptimizedAuth: Redirecting management to dashboard', {
+              from: currentPath,
+              to: '/app',
+              duration: `${(performance.now() - startTime).toFixed(2)}ms`
+            });
+            navigate('/app');
+          }
+          break;
+          
+        default:
+          // Default fallback for unknown roles
+          if (!currentPath.startsWith('/app') && !currentPath.startsWith('/tenants/')) {
+            console.warn(`Unknown role: ${role}, redirecting to default dashboard`, {
+              from: currentPath,
+              to: '/app',
+              duration: `${(performance.now() - startTime).toFixed(2)}ms`
+            });
+            navigate('/app');
+          }
+      }
     }
   }, [navigate, location.pathname]);
 

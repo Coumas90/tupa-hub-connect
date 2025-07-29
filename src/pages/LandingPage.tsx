@@ -13,7 +13,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [selectedCoffee, setSelectedCoffee] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user, loading } = useOptimizedAuth();
+  const { user, userRole, isAdmin, loading } = useOptimizedAuth();
   const { navigateToRole, canNavigate } = useSmartNavigation();
 
   const handleCoffeeClick = (coffee: any) => {
@@ -83,13 +83,36 @@ export default function LandingPage() {
             <Button 
               variant="ghost" 
               onClick={() => {
-                console.log('🔄 LandingPage: Dashboard button clicked', { user: !!user, canNavigate });
-                if (user && canNavigate) {
-                  console.log('🔄 LandingPage: Navigating to overview...');
-                  navigateToRole('overview');
-                } else if (user && !canNavigate) {
-                  console.log('⚠️ LandingPage: User logged but cannot navigate, redirecting to /app');
-                  navigate('/app');
+                console.log('🔄 LandingPage: Dashboard button clicked', { user: !!user, canNavigate, loading });
+                
+                if (loading) {
+                  console.log('⏳ LandingPage: Still loading, waiting...');
+                  return;
+                }
+                
+                if (user) {
+                  // Intelligent navigation based on role and context
+                  if (isAdmin) {
+                    console.log('🔄 LandingPage: Admin user, going to admin dashboard');
+                    navigate('/admin/dashboard');
+                  } else if (canNavigate) {
+                    console.log('🔄 LandingPage: User with location context, using smart navigation');
+                    navigateToRole('overview');
+                  } else {
+                    // Fallback based on role
+                    console.log('🔄 LandingPage: User without location context, using role fallback');
+                    switch (userRole?.toLowerCase()) {
+                      case 'barista':
+                        navigate('/recipes');
+                        break;
+                      case 'client':
+                      case 'manager':
+                      case 'owner':
+                      default:
+                        navigate('/app');
+                        break;
+                    }
+                  }
                 } else {
                   console.log('🔄 LandingPage: No user, redirecting to auth');
                   navigate('/auth');

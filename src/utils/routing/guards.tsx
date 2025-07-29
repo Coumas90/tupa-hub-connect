@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { useRequireAuth, useRequireAdmin } from '@/hooks/useOptimizedAuth';
+import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { ROUTE_PERMISSIONS, UserRole } from '@/constants/routes';
 
 interface RoleGuardProps {
@@ -55,9 +56,25 @@ export function RoleGuard({ roles, children, fallback, requireAdmin = false }: R
     return <>{children}</>;
   }
 
-  // TODO: Implement proper role checking from user profile
-  // For now, allow authenticated users to access user-level routes
-  const hasUserAccess = roles.includes('user' as UserRole) || roles.includes('barista' as UserRole);
+  // Implement proper role checking from user metadata
+  const { user } = useOptimizedAuth();
+  const userRole = user?.user_metadata?.role;
+  
+  // Check if user has required role access
+  const hasUserAccess = roles.some(role => {
+    const roleString = role.toLowerCase();
+    const userRoleString = userRole?.toLowerCase() || '';
+    
+    // Direct role match
+    if (userRoleString === roleString) return true;
+    
+    // Allow 'user' role for basic access
+    if (roleString === 'user' && ['client', 'barista', 'manager', 'owner'].includes(userRoleString)) {
+      return true;
+    }
+    
+    return false;
+  });
   
   if (!hasUserAccess && !requireAdmin) {
     return fallback || (
