@@ -36,14 +36,15 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+    setShowLogoutDialog(false); // Cerrar dialog inmediatamente
+    
     try {
       await signOut();
-      navigate('/');
+      // No navigation here - OptimizedAuthProvider handles it automatically
     } catch (error) {
       console.error('Error during logout:', error);
-    } finally {
       setIsLoggingOut(false);
-      setShowLogoutDialog(false);
+      setShowLogoutDialog(true); // Reabrir dialog solo en caso de error
     }
   };
 
