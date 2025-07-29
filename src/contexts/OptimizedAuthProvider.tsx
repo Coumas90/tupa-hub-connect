@@ -65,31 +65,14 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
   // Single auth state change listener reference
   const authListenerRef = useRef<{ subscription: any } | null>(null);
 
-  // React Query for role data with automatic caching
-  const { 
-    data: roleData, 
-    isLoading: roleLoading, 
-    error: roleError,
-    refetch: refetchRole 
-  } = useUserRoleQuery(authState.user?.id || null);
+  // NOTE: React Query for roles is no longer needed as we get roles from user_metadata
+  // Keeping minimal structure for compatibility
+  const roleLoading = false;
+  const roleError = null;
 
-  // Update auth state when role data changes - Only if data actually changed
-  useEffect(() => {
-    if (roleData && authState.user && 
-        (authState.userRole !== roleData.role || authState.isAdmin !== roleData.isAdmin)) {
-      console.info('🔄 OptimizedAuth: Updating role data:', { role: roleData.role, isAdmin: roleData.isAdmin });
-      
-      setAuthState(prev => ({
-        ...prev,
-        userRole: roleData.role,
-        isAdmin: roleData.isAdmin,
-        loading: false
-      }));
-    } else if (roleData && authState.user && !authState.loading) {
-      // Role data loaded but no change - just clear loading state
-      setAuthState(prev => ({ ...prev, loading: false }));
-    }
-  }, [roleData, authState.user, authState.userRole, authState.isAdmin, authState.loading]);
+  // NOTE: Role data is now extracted directly from user_metadata in SIGNED_IN event
+  // This useEffect is disabled as roles come from session.user.user_metadata.role
+  // No longer need to wait for separate role query
 
   // Redirect user based on role - Optimized with performance tracking
   const redirectByRole = useCallback((role: string | null, isAdmin: boolean) => {
@@ -196,13 +179,26 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
             // Cache the session
             sessionCache.set('current', session);
             
+            // Extract role directly from user_metadata (CRITICAL IMPROVEMENT)
+            const userRole = session.user.user_metadata?.role || null;
+            const isAdmin = userRole === 'admin';
+            
+            console.info('🔄 OptimizedAuth: Extracted role from metadata:', { userRole, isAdmin });
+            
             setAuthState(prev => ({
               ...prev,
               user: session.user,
               session,
-              loading: roleLoading, // Will be false when role query completes
+              userRole,
+              isAdmin,
+              loading: false, // No need to wait for separate role query
               error: null,
             }));
+
+            // Redirect immediately after setting state
+            setTimeout(() => {
+              redirectByRole(userRole, isAdmin);
+            }, 100);
           }
           
         } else if (event === 'SIGNED_OUT') {
@@ -235,10 +231,16 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
             // Update cached session
             sessionCache.set('current', session);
             
+            // Maintain role from user_metadata on token refresh
+            const userRole = session.user.user_metadata?.role || null;
+            const isAdmin = userRole === 'admin';
+            
             setAuthState(prev => ({
               ...prev,
               session,
               user: session.user,
+              userRole,
+              isAdmin,
             }));
           }
         }
@@ -254,29 +256,8 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     };
   }, [roleLoading, sessionCache, invalidateCache, navigate, authState.session]);
 
-  // Redirect when role data is available - With debounce to prevent multiple redirects
-  const redirectTimeoutRef = useRef<NodeJS.Timeout>();
-  
-  useEffect(() => {
-    if (roleData && authState.user && !roleLoading) {
-      // Clear any existing timeout
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-      
-      // Debounce redirect to prevent multiple calls
-      redirectTimeoutRef.current = setTimeout(() => {
-        redirectByRole(roleData.role, roleData.isAdmin);
-      }, 100);
-    }
-    
-    // Cleanup timeout on unmount
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, [roleData, authState.user, roleLoading, redirectByRole]);
+  // NOTE: Role-based redirects are now handled directly in SIGNED_IN event
+  // No need for separate redirect effect since roles come from user_metadata
 
   // Initial session check with cache - Run only once on mount
   const hasInitializedRef = useRef(false);
@@ -445,7 +426,24 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
     console.info('🔄 OptimizedAuth: Refreshing user data...');
     
     try {
-      await refetchRole();
+      // Get fresh session and extract role from user_metadata
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) throw error;
+      
+      if (session?.user) {
+        const userRole = session.user.user_metadata?.role || null;
+        const isAdmin = userRole === 'admin';
+        
+        setAuthState(prev => ({
+          ...prev,
+          user: session.user,
+          session,
+          userRole,
+          isAdmin,
+        }));
+      }
+      
       console.info('✅ OptimizedAuth: User data refreshed successfully', {
         duration: `${(performance.now() - startTime).toFixed(2)}ms`
       });

@@ -8,29 +8,26 @@ export interface UserRoleData {
 }
 
 /**
- * Optimized single query to get user role and admin status
- * Combines both role fetching and admin checking in one query
+ * Optimized single query to get user role and admin status from user_metadata
+ * Uses Supabase auth.getUser() to access metadata directly
  */
 export async function getUserRoleAndAdmin(userId: string): Promise<UserRoleData> {
   try {
-    console.info('🔍 AuthQuery: Single query for role and admin status:', userId);
+    console.info('🔍 AuthQuery: Getting role from user_metadata:', userId);
     
-    // Single query to get role information
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Get user data including metadata from auth
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error('❌ AuthQuery: Error fetching user role:', error);
+    if (error || !user || user.id !== userId) {
+      console.error('❌ AuthQuery: Error fetching user metadata:', error);
       return { role: null, isAdmin: false, userId };
     }
 
-    const role = data?.role || null;
+    // Extract role from user_metadata
+    const role = user.user_metadata?.role || null;
     const isAdmin = role === 'admin';
     
-    console.info('✅ AuthQuery: Single query result:', { role, isAdmin, userId });
+    console.info('✅ AuthQuery: Role from metadata:', { role, isAdmin, userId, metadata: user.user_metadata });
     return { role, isAdmin, userId };
   } catch (error) {
     console.error('❌ AuthQuery: Error in getUserRoleAndAdmin:', error);

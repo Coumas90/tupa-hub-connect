@@ -59,17 +59,17 @@ export function initializeAuthListeners() {
       if (event === 'TOKEN_REFRESHED' && !session) {
         handleTokenRefreshFailure(session);
       }
+
+      // Handle auth errors in the session (consolidated)
+      if (session && (session as any).error) {
+        const error = (session as any).error;
+        handleAuthError(error, event, session);
+      }
     }
   );
 
-  // Set up error event listener specifically for auth errors
-  supabase.auth.onAuthStateChange((event, session) => {
-    // Check for auth errors in the session
-    if (session && (session as any).error) {
-      const error = (session as any).error;
-      handleAuthError(error, event, session);
-    }
-  });
+// Handle auth errors within the main listener (consolidated)
+  // Error handling is now integrated in the main listener above
 
   authListenersInitialized = true;
 
