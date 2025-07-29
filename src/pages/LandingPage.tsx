@@ -83,9 +83,15 @@ export default function LandingPage() {
             <Button 
               variant="ghost" 
               onClick={() => {
+                console.log('🔄 LandingPage: Dashboard button clicked', { user: !!user, canNavigate });
                 if (user && canNavigate) {
+                  console.log('🔄 LandingPage: Navigating to overview...');
                   navigateToRole('overview');
+                } else if (user && !canNavigate) {
+                  console.log('⚠️ LandingPage: User logged but cannot navigate, redirecting to /app');
+                  navigate('/app');
                 } else {
+                  console.log('🔄 LandingPage: No user, redirecting to auth');
                   navigate('/auth');
                 }
               }}
