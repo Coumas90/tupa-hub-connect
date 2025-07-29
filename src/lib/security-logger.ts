@@ -1,24 +1,23 @@
-import { logger } from '@/lib/browser-logger';
 import { supabase } from '@/integrations/supabase/client';
-import { sentryUtils } from '@/lib/sentry';
+import { sentryUtils } from './sentry';
 
-export interface SecurityEvent {
-  event_type: 'role_change' | 'admin_action' | 'login_failure' | 'suspicious_activity' | 'token_rotation';
+interface SecurityEvent {
+  event_type: string;
   user_id?: string;
   ip_address?: string;
   user_agent?: string;
-  details: Record<string, any>;
+  details?: Record<string, any>;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
-/**
- * Logs security events for monitoring and audit purposes
- */
-export class SecurityLogger {
+class SecurityLogger {
   private static instance: SecurityLogger;
-  
-  private constructor() {}
-  
+  private sessionId: string;
+
+  private constructor() {
+    this.sessionId = this.generateSessionId();
+  }
+
   static getInstance(): SecurityLogger {
     if (!SecurityLogger.instance) {
       SecurityLogger.instance = new SecurityLogger();
@@ -26,176 +25,161 @@ export class SecurityLogger {
     return SecurityLogger.instance;
   }
 
-  /**
-   * Log a security event
-   */
+  private generateSessionId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
   async logEvent(event: SecurityEvent): Promise<void> {
     try {
-      // Get client information
-      const clientInfo = this.getClientInfo();
-      
-      const securityLog = {
+      // Enrich event with client info
+      const enrichedEvent = {
         ...event,
-        ip_address: event.ip_address || clientInfo.ip_address,
-        user_agent: event.user_agent || clientInfo.user_agent,
-        timestamp: new Date().toISOString(),
-        session_id: this.getSessionId()
+        user_agent: this.getClientInfo().user_agent,
+        session_id: this.sessionId,
       };
 
-      // Store in database for persistent audit trail
-      await supabase.rpc('log_security_event', {
-        p_event_type: event.event_type,
-        p_user_id: event.user_id || null,
-        p_ip_address: clientInfo.ip_address || null,
-        p_user_agent: clientInfo.user_agent || null,
-        p_details: event.details || null,
-        p_severity: event.severity,
-        p_session_id: this.getSessionId()
+      // Log to database
+      const { error } = await supabase.rpc('log_security_event', {
+        p_event_type: enrichedEvent.event_type,
+        p_user_id: enrichedEvent.user_id || null,
+        p_ip_address: enrichedEvent.ip_address || null,
+        p_user_agent: enrichedEvent.user_agent || null,
+        p_details: enrichedEvent.details || null,
+        p_severity: enrichedEvent.severity,
+        p_session_id: enrichedEvent.session_id,
       });
 
-      // Log to Sentry for high/critical severity events
+      if (error) {
+        console.error('Failed to log security event:', error);
+      }
+
+      // Log to Sentry for high/critical events
       if (event.severity === 'high' || event.severity === 'critical') {
         sentryUtils.captureMessage(
           `Security Event: ${event.event_type}`,
-          event.severity === 'critical' ? 'fatal' : 'warning',
+          event.severity === 'critical' ? 'error' : 'warning',
           {
-            securityEvent: securityLog
+            event_type: event.event_type,
+            severity: event.severity,
+            details: event.details,
+            session_id: this.sessionId,
           }
         );
       }
 
       // Console log for development
-      if (import.meta.env.DEV) {
-        console.log(`🛡️ Security Event [${event.severity.toUpperCase()}]:`, securityLog);
-      }
-
-    } catch (error) {
-      console.error('Failed to log security event:', error);
-      // Still try to send to Sentry if local logging fails
-      sentryUtils.captureError(error as Error, { 
-        context: 'security-logging',
-        originalEvent: event 
+      console.log(`[SECURITY] ${event.event_type}:`, {
+        severity: event.severity,
+        details: event.details,
+        session_id: this.sessionId,
       });
+    } catch (error) {
+      console.error('Security logging failed:', error);
     }
   }
 
-  /**
-   * Log admin role changes
-   */
-  async logRoleChange(targetUserId: string, role: string, action: 'granted' | 'revoked', adminUserId?: string): Promise<void> {
+  async logRoleChange(
+    targetUserId: string,
+    role: string,
+    action: 'granted' | 'revoked',
+    adminUserId?: string
+  ): Promise<void> {
     await this.logEvent({
       event_type: 'role_change',
       user_id: adminUserId,
+      severity: 'high',
       details: {
         target_user_id: targetUserId,
         role,
-        action
+        action,
+        timestamp: new Date().toISOString(),
       },
-      severity: role === 'admin' ? 'high' : 'medium'
     });
   }
 
-  /**
-   * Log admin actions
-   */
-  async logAdminAction(action: string, adminUserId: string, details: Record<string, any>): Promise<void> {
+  async logAdminAction(
+    action: string,
+    adminUserId: string,
+    details: Record<string, any>
+  ): Promise<void> {
     await this.logEvent({
       event_type: 'admin_action',
       user_id: adminUserId,
+      severity: 'medium',
       details: {
         action,
-        ...details
+        ...details,
+        timestamp: new Date().toISOString(),
       },
-      severity: 'medium'
     });
   }
 
-  /**
-   * Log login failures
-   */
   async logLoginFailure(email: string, reason: string): Promise<void> {
     await this.logEvent({
       event_type: 'login_failure',
+      severity: 'medium',
       details: {
         email,
-        reason
+        reason,
+        timestamp: new Date().toISOString(),
       },
-      severity: 'medium'
     });
   }
 
-  /**
-   * Log suspicious activities
-   */
-  async logSuspiciousActivity(description: string, userId?: string, details?: Record<string, any>): Promise<void> {
+  async logSuspiciousActivity(
+    description: string,
+    userId?: string,
+    details?: Record<string, any>
+  ): Promise<void> {
     await this.logEvent({
       event_type: 'suspicious_activity',
       user_id: userId,
+      severity: 'high',
       details: {
         description,
-        ...details
+        ...details,
+        timestamp: new Date().toISOString(),
       },
-      severity: 'high'
     });
   }
 
-  /**
-   * Log token rotation events
-   */
-  async logTokenRotation(userId: string, success: boolean, reason?: string): Promise<void> {
+  async logTokenRotation(
+    userId: string,
+    success: boolean,
+    reason?: string
+  ): Promise<void> {
     await this.logEvent({
       event_type: 'token_rotation',
       user_id: userId,
+      severity: success ? 'low' : 'medium',
       details: {
         success,
-        reason
+        reason,
+        timestamp: new Date().toISOString(),
       },
-      severity: success ? 'low' : 'medium'
     });
   }
 
-  /**
-   * Get client information for logging
-   */
   private getClientInfo(): { ip_address?: string; user_agent?: string } {
     return {
       user_agent: navigator.userAgent,
-      // Note: IP address would need to be obtained from server-side
-      ip_address: undefined
+      // IP address will be captured server-side
     };
   }
 
-  /**
-   * Get session ID for correlation
-   */
   private getSessionId(): string {
-    // Generate or retrieve session ID for correlation
-    let sessionId = sessionStorage.getItem('security_session_id');
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      sessionStorage.setItem('security_session_id', sessionId);
-    }
-    return sessionId;
+    return this.sessionId;
   }
 }
 
 // Export singleton instance
 export const securityLogger = SecurityLogger.getInstance();
 
-// Helper functions for common security events
+// Export convenience functions
 export const logSecurityEvent = {
-  roleChange: (targetUserId: string, role: string, action: 'granted' | 'revoked', adminUserId?: string) =>
-    securityLogger.logRoleChange(targetUserId, role, action, adminUserId),
-    
-  adminAction: (action: string, adminUserId: string, details: Record<string, any>) =>
-    securityLogger.logAdminAction(action, adminUserId, details),
-    
-  loginFailure: (email: string, reason: string) =>
-    securityLogger.logLoginFailure(email, reason),
-    
-  suspiciousActivity: (description: string, userId?: string, details?: Record<string, any>) =>
-    securityLogger.logSuspiciousActivity(description, userId, details),
-    
-  tokenRotation: (userId: string, success: boolean, reason?: string) =>
-    securityLogger.logTokenRotation(userId, success, reason)
+  roleChange: securityLogger.logRoleChange.bind(securityLogger),
+  adminAction: securityLogger.logAdminAction.bind(securityLogger),
+  loginFailure: securityLogger.logLoginFailure.bind(securityLogger),
+  suspiciousActivity: securityLogger.logSuspiciousActivity.bind(securityLogger),
+  tokenRotation: securityLogger.logTokenRotation.bind(securityLogger),
 };

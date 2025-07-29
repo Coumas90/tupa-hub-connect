@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { logSecurityEvent } from '@/lib/security-logger';
+import { securityLogger } from '@/lib/security-logger';
 
 interface DeviceInfo {
   user_agent?: string;
@@ -72,9 +72,18 @@ class RefreshTokenManager {
         return false;
       }
 
+      // Log successful token registration
+      if (data.success) {
+        await securityLogger.logTokenRotation(userId, true, 'Token registered');
+      }
+      
       return data.success;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error registering refresh token:', error);
+      
+      // Log failed token registration
+      await securityLogger.logTokenRotation(userId, false, error.message);
+      
       return false;
     }
   }
@@ -121,9 +130,22 @@ class RefreshTokenManager {
         return null;
       }
 
-      return data as RefreshTokenResponse;
-    } catch (error) {
+      // Log successful token rotation
+      const response = data as RefreshTokenResponse;
+      if (response.user?.id) {
+        await securityLogger.logTokenRotation(response.user.id, true, 'Token rotated');
+      }
+      
+      return response;
+    } catch (error: any) {
       console.error('Error during token rotation:', error);
+      
+      // Log failed token rotation
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await securityLogger.logTokenRotation(user.id, false, error.message);
+      }
+      
       return null;
     }
   }

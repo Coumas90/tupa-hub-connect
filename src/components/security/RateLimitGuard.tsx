@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Clock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface RateLimitGuardProps {
   children: React.ReactNode;
@@ -12,14 +12,14 @@ interface RateLimitGuardProps {
   onRateLimited?: () => void;
 }
 
-const RateLimitGuard: React.FC<RateLimitGuardProps> = ({
+export function RateLimitGuard({
   children,
   action,
   identifier,
   limit = 5,
   windowMinutes = 60,
-  onRateLimited
-}) => {
+  onRateLimited,
+}: RateLimitGuardProps) {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -31,30 +31,33 @@ const RateLimitGuard: React.FC<RateLimitGuardProps> = ({
     try {
       setIsChecking(true);
       
-      // Use IP address or user ID as identifier
-      const currentIdentifier = identifier || 
-        (await supabase.auth.getUser()).data.user?.id || 
-        'anonymous';
+      // Determine identifier (user ID, IP, or anonymous)
+      const { data: { user } } = await supabase.auth.getUser();
+      const effectiveIdentifier = identifier || user?.id || 'anonymous';
 
-      const { data, error } = await supabase.rpc('check_rate_limit', {
-        p_identifier: currentIdentifier,
+      const { data: allowed, error } = await supabase.rpc('check_rate_limit', {
+        p_identifier: effectiveIdentifier,
         p_action: action,
         p_limit: limit,
-        p_window_minutes: windowMinutes
+        p_window_minutes: windowMinutes,
       });
 
       if (error) {
         console.error('Rate limit check failed:', error);
-        // Allow through on error to avoid blocking users
+        // Allow by default if check fails
         setIsRateLimited(false);
-      } else {
-        setIsRateLimited(!data);
-        if (!data && onRateLimited) {
-          onRateLimited();
-        }
+        return;
+      }
+
+      const rateLimited = !allowed;
+      setIsRateLimited(rateLimited);
+      
+      if (rateLimited && onRateLimited) {
+        onRateLimited();
       }
     } catch (error) {
       console.error('Rate limit guard error:', error);
+      // Allow by default if check fails
       setIsRateLimited(false);
     } finally {
       setIsChecking(false);
@@ -64,24 +67,22 @@ const RateLimitGuard: React.FC<RateLimitGuardProps> = ({
   if (isChecking) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="ml-2 text-sm text-muted-foreground">Verificando límites...</span>
       </div>
     );
   }
 
   if (isRateLimited) {
     return (
-      <Alert variant="destructive" className="m-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          Rate limit exceeded for {action}. Please try again later.
+      <Alert variant="destructive">
+        <AlertDescription>
+          Has excedido el límite de intentos para esta acción. 
+          Intenta nuevamente en {windowMinutes} minutos.
         </AlertDescription>
       </Alert>
     );
   }
 
   return <>{children}</>;
-};
-
-export default RateLimitGuard;
+}

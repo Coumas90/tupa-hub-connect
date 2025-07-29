@@ -22,22 +22,68 @@ if (sentryDsn) {
     replaysSessionSampleRate: import.meta.env.MODE === 'production' ? 0.01 : 0.1,
     replaysOnErrorSampleRate: 1.0,
     
-    // Security-focused error filtering
+    // Enhanced security filtering
     beforeSend(event, hint) {
-      // Don't send events containing sensitive data
-      if (event.message?.includes('password') || 
-          event.message?.includes('token') ||
-          event.message?.includes('secret')) {
+      // Enhanced security filtering
+      const sensitivePatterns = [
+        /password/i, /token/i, /secret/i, /key/i, 
+        /auth/i, /credential/i, /session/i
+      ];
+      
+      // Filter out events with sensitive content
+      if (event.message && sensitivePatterns.some(pattern => pattern.test(event.message))) {
         return null;
       }
       
+      if (event.exception) {
+        const error = event.exception.values?.[0];
+        if (sensitivePatterns.some(pattern => 
+          pattern.test(error?.value || '') || 
+          pattern.test(error?.type || '')
+        )) {
+          return null;
+        }
+      }
+
+      // Remove sensitive data from breadcrumbs
+      if (event.breadcrumbs) {
+        event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
+          if (breadcrumb.data) {
+            const cleanData = { ...breadcrumb.data };
+            Object.keys(cleanData).forEach(key => {
+              if (sensitivePatterns.some(pattern => pattern.test(key))) {
+                cleanData[key] = '[REDACTED]';
+              }
+            });
+            breadcrumb.data = cleanData;
+          }
+          return breadcrumb;
+        });
+      }
+
       // Remove sensitive data from context
       if (event.extra) {
-        delete event.extra.password;
-        delete event.extra.token;
-        delete event.extra.secret;
+        Object.keys(event.extra).forEach(key => {
+          if (sensitivePatterns.some(pattern => pattern.test(key))) {
+            delete event.extra[key];
+          }
+        });
       }
       
+      return event;
+    },
+
+    beforeSendTransaction(event) {
+      // Remove sensitive transaction data
+      if (event.contexts?.trace?.data) {
+        const data = event.contexts.trace.data;
+        const sensitivePatterns = [/password|token|secret|key|auth/i];
+        Object.keys(data).forEach(key => {
+          if (sensitivePatterns.some(pattern => pattern.test(key))) {
+            data[key] = '[REDACTED]';
+          }
+        });
+      }
       return event;
     }
   });
