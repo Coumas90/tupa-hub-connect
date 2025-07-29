@@ -4,6 +4,7 @@ import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { ROUTE_PERMISSIONS, UserRole } from '@/constants/routes';
 import { ContextualLoading } from '@/components/ui/loading-states';
 import { ErrorState, RoleBasedError } from '@/components/ui/error-states';
+import { TestingMode } from '@/lib/config';
 
 interface RoleGuardProps {
   roles: UserRole[];
@@ -61,8 +62,8 @@ export function RoleGuard({
     );
   }
 
-  // Check admin requirement first
-  if (requireAdmin && !isAdmin) {
+  // Check admin requirement first (with testing mode bypass)
+  if (requireAdmin && !isAdmin && !TestingMode.enabled) {
     return fallback || (
       <ErrorState
         type="admin"
@@ -72,16 +73,27 @@ export function RoleGuard({
     );
   }
 
-  // For admin users, allow access to all routes
-  if (isAdmin) {
-    return <>{children}</>;
+  // For admin users or testing mode, allow access to all routes
+  if (isAdmin || TestingMode.enabled) {
+    return (
+      <>
+        {TestingMode.enabled && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-black px-4 py-2 text-center text-sm font-medium">
+            🔓 TESTING MODE ACTIVO - Permisos de admin bypassed
+          </div>
+        )}
+        <div className={TestingMode.enabled ? "pt-10" : ""}>
+          {children}
+        </div>
+      </>
+    );
   }
 
-  // Enhanced role checking with better UX
+  // Enhanced role checking with better UX (with testing mode bypass)
   const roleStrings = roles.map(role => role.toLowerCase());
   
-  // Check if user has any of the required roles
-  const hasAccess = hasAnyRole(roleStrings) || 
+  // Check if user has any of the required roles (or testing mode is enabled)
+  const hasAccess = TestingMode.enabled || hasAnyRole(roleStrings) || 
     // Allow 'user' role for basic access to authenticated routes
     (roleStrings.includes('user') && ['client', 'barista', 'manager', 'owner'].includes(userRole?.toLowerCase() || ''));
 
@@ -109,7 +121,18 @@ export function RoleGuard({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {TestingMode.enabled && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-black px-4 py-2 text-center text-sm font-medium">
+          🔓 TESTING MODE ACTIVO - Permisos bypassed
+        </div>
+      )}
+      <div className={TestingMode.enabled ? "pt-10" : ""}>
+        {children}
+      </div>
+    </>
+  );
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { TestingMode } from '@/lib/config';
 
 export interface EnhancedAuthState {
   // Auth state
@@ -97,7 +98,7 @@ export function useEnhancedAuth(): EnhancedAuthState {
   }, [isAuthenticated, hasLocationAccess, isAdmin]);
 
   const canAccessAdminFeatures = useMemo(() => {
-    return isAuthenticated && isAdmin;
+    return isAuthenticated && (isAdmin || TestingMode.enabled);
   }, [isAuthenticated, isAdmin]);
 
   return {
