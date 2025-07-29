@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Set the auth header for the client
+    // Extract token and create authenticated client
     const token = authHeader.replace('Bearer ', '')
     if (!token) {
       console.error('Empty token after Bearer removal')
@@ -46,11 +46,18 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-    
-    supabase.auth.setAuth(token)
+
+    // Create authenticated client with token
+    const authenticatedSupabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: authHeader
+        }
+      }
+    })
 
     // Get user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await authenticatedSupabase.auth.getUser()
     if (userError || !user) {
       console.error('Invalid user token:', userError)
       return new Response(
