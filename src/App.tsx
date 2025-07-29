@@ -38,6 +38,7 @@ import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
 import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
+import { ProfilePage } from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ const App = () => {
                   <Route path="advisory" element={<AdvisoryAdmin />} />
                   <Route path="integrations/logs/:clientId" element={<ClientLogs />} />
                   <Route path="integrations/:clientId" element={<ClientConfiguration />} />
+                  <Route path="profile" element={<ProfilePage />} />
                   
                   {/* Legacy redirects */}
                   <Route path="integrations" element={<Navigate to="/admin/operations/pos" replace />} />
@@ -120,6 +122,7 @@ const App = () => {
                   <Route path="reposicion" element={<Reposicion />} />
                   <Route path="barista-pool" element={<BaristaPool />} />
                   <Route path="faq" element={<FAQ />} />
+                  <Route path="profile" element={<ProfilePage />} />
                 </Route>
                 
                 {/* Public Feedback Route - Migrated */}
