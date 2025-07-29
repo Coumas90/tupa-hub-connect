@@ -35,14 +35,18 @@ export function UserMenu() {
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
 
   const handleLogout = async () => {
+    console.log('🔄 UserMenu: Starting logout process...');
     setIsLoggingOut(true);
     setShowLogoutDialog(false); // Cerrar dialog inmediatamente
     
     try {
+      console.log('🔄 UserMenu: Calling signOut...');
       await signOut();
+      console.log('✅ UserMenu: SignOut completed successfully');
       // No navigation here - OptimizedAuthProvider handles it automatically
+      // No need to manually reset isLoggingOut - component will unmount when user logs out
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('❌ UserMenu: Error during logout:', error);
       setIsLoggingOut(false);
       setShowLogoutDialog(true); // Reabrir dialog solo en caso de error
     }
