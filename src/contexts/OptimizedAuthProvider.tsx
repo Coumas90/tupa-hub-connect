@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRoleQuery, useInvalidateUserRole } from '@/utils/authQueries';
 import { useAuthCache } from '@/hooks/useAuthCache';
-import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
 
 interface AuthState {
   user: User | null;
@@ -400,54 +399,19 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     try {
-      console.info('🔄 OptimizedAuth: Starting complete session cleanup...');
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // 1. Clear Supabase session
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
       
-      // 2. Clear all caches and storage
-      console.info('🧹 OptimizedAuth: Clearing caches and localStorage...');
-      
-      // Clear React Query cache
-      invalidateCache();
-      
-      // Clear localStorage
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.removeItem('sb-hmmaubkxfewzlypywqff-auth-token');
-      localStorage.removeItem('auth_user_cache');
-      localStorage.removeItem('session_cache');
-      
-      // Clear sessionStorage 
-      sessionStorage.clear();
-      
-      // Clear any other auth-related storage
-      const authKeys = Object.keys(localStorage).filter(key => 
-        key.includes('auth') || key.includes('supabase') || key.includes('session')
-      );
-      authKeys.forEach(key => localStorage.removeItem(key));
-      
-      console.info('✅ OptimizedAuth: Session cleanup completed successfully');
-      
     } catch (error: any) {
-      console.error('❌ OptimizedAuth: Sign out error:', error);
+      console.error('Sign out error:', error);
       setAuthState(prev => ({ 
         ...prev, 
         loading: false, 
         error: error.message || 'Error al cerrar sesión' 
       }));
-      
-      // Even if signOut fails, clear local state and redirect
-      console.warn('⚠️ OptimizedAuth: Forcing local cleanup despite error');
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Force redirect to login
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 1000);
     }
   };
 
@@ -507,9 +471,7 @@ export function OptimizedAuthProvider({ children }: AuthProviderProps) {
 
   return (
     <OptimizedAuthContext.Provider value={contextValue}>
-      <AuthErrorBoundary>
-        {children}
-      </AuthErrorBoundary>
+      {children}
     </OptimizedAuthContext.Provider>
   );
 }

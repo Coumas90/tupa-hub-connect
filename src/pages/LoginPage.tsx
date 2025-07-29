@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { sanitizeEmail, sanitizePassword } from '@/utils/sanitize';
 import { isValidEmailFormat, validateEmailWithMessage } from '@/utils/emailValidation';
 import { useFormRateLimit } from '@/hooks/useFormRateLimit';
-import { useAdvancedRateLimit } from '@/hooks/useAdvancedRateLimit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,19 +32,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useOptimizedAuth();
   const navigate = useNavigate();
   
-  
-  // Advanced Rate limiting with progressive backoff
-  const advancedRateLimit = useAdvancedRateLimit('login_form', {
-    maxAttempts: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    blockDurationMs: 5 * 60 * 1000, // 5 minutes initial block
-    progressiveBackoff: true,
-  });
-
-  // Basic Rate limiting hook (keeping for compatibility)
+  // Rate limiting hook
   const { 
     isSubmitting, 
-    canSubmit: basicCanSubmit, 
+    canSubmit, 
     attempts, 
     timeUntilReset, 
     attemptSubmission, 
@@ -55,9 +45,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     maxAttempts: 3,
     cooldownMs: 10000 // 10 seconds cooldown
   });
-
-  // Combined rate limiting logic
-  const canSubmit = basicCanSubmit && advancedRateLimit.canSubmit && !advancedRateLimit.isBlocked;
 
   // Cleanup rate limit timers on unmount
   useEffect(() => {
@@ -155,17 +142,12 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return;
     }
 
-    // Record attempt for advanced rate limiting
-    advancedRateLimit.recordAttempt();
-
     // Use rate-limited submission with enhanced error handling
     const result = await attemptSubmission(async () => {
       return await signInWithEmail(email, password);
     });
 
     if (result.success) {
-      // Record success for rate limiting
-      advancedRateLimit.recordSuccess();
       toast({
         title: "Login exitoso",
         description: "Bienvenido a TUPÁ Hub",
@@ -541,26 +523,12 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     )}
                   </div>
 
-                  {/* Advanced Rate limiting warning */}
-                  {advancedRateLimit.isBlocked && (
-                    <Alert variant="destructive" className="border-red-200 bg-red-50/80 backdrop-blur-sm">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        <strong>Cuenta temporalmente bloqueada.</strong><br />
-                        Demasiados intentos fallidos. Tiempo restante: {Math.ceil(advancedRateLimit.timeRemaining / 1000 / 60)} minutos.
-                        <div className="mt-2 text-xs">
-                          Intentos: {advancedRateLimit.attempts}/5
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Basic Rate limiting warning */}
-                  {!advancedRateLimit.isBlocked && !basicCanSubmit && timeUntilReset > 0 && (
+                  {/* Rate limiting warning */}
+                  {!canSubmit && timeUntilReset > 0 && (
                     <Alert className="border-orange-200 bg-orange-50/80 backdrop-blur-sm">
                       <AlertTriangle className="h-4 w-4 text-orange-600" />
                       <AlertDescription className="text-orange-700">
-                        Demasiados intentos rápidos. Espera {Math.ceil(timeUntilReset / 1000)} segundos.
+                        Demasiados intentos. Espera {Math.ceil(timeUntilReset / 1000)} segundos antes de intentar nuevamente.
                       </AlertDescription>
                     </Alert>
                   )}
