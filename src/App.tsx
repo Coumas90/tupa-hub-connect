@@ -28,7 +28,7 @@ import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import ActivateAccount from "./pages/ActivateAccount";
-import LoginPage from "./pages/LoginPage";
+import FriendlyLoginPage from "./pages/FriendlyLoginPage";
 import PasswordResetPage from "./pages/PasswordResetPage";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
 import AdminOperationsPage from "@/pages/admin/AdminOperationsPage";
@@ -38,7 +38,7 @@ import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
-import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
+import { FriendlyAuthProvider } from "./contexts/FriendlyAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -85,7 +85,7 @@ const App = () => {
               theme="light"
             />
           <BrowserRouter>
-            <OptimizedAuthProvider>
+            <FriendlyAuthProvider>
               {/* Initialize enhanced features */}
               <AppInitializer />
               
@@ -96,7 +96,7 @@ const App = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<LoginPage />} />
+                <Route path="/auth" element={<FriendlyLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
                 
@@ -153,7 +153,7 @@ const App = () => {
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </OptimizedAuthProvider>
+            </FriendlyAuthProvider>
           </BrowserRouter>
         </LocationProvider>
         </TooltipProvider>
