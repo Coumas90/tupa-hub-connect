@@ -1,220 +1,160 @@
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
-  Smartphone, 
-  Monitor, 
-  AlertTriangle, 
-  X, 
-  RefreshCw,
-  Eye
+  Clock, 
+  RefreshCw, 
+  CheckCircle, 
+  AlertTriangle,
+  Database,
+  Zap
 } from 'lucide-react';
-import { useRefreshTokenRotation } from '@/hooks/useRefreshTokenRotation';
-import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useToast } from '@/hooks/use-toast';
 
-interface SessionInfo {
-  id: string;
-  device_info: {
-    user_agent?: string;
-    device_id?: string;
-  };
-  last_used_at: string;
-  created_at: string;
-  expires_at: string;
-}
+export function SessionManager() {
+  const { sessionHealth, cacheStats, refreshSession, user } = useAuth();
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-export default function SessionManager() {
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [revoking, setRevoking] = useState(false);
-  const { getActiveSessions, revokeAllSessions, refreshSession } = useRefreshTokenRotation();
-  const toastNotifications = useToastNotifications();
-
-  const loadSessions = async () => {
-    setLoading(true);
-    try {
-      const activeSessions = await getActiveSessions();
-      setSessions(activeSessions);
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
-      toastNotifications.showError('Failed to load active sessions');
-    } finally {
-      setLoading(false);
+  const formatTimeRemaining = (milliseconds: number): string => {
+    if (milliseconds <= 0) return 'Expired';
+    
+    const minutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
     }
-  };
-
-  const handleRevokeAllSessions = async () => {
-    setRevoking(true);
-    try {
-      const success = await revokeAllSessions();
-      if (success) {
-        setSessions([]);
-      }
-    } finally {
-      setRevoking(false);
-    }
+    return `${minutes}m`;
   };
 
   const handleRefreshSession = async () => {
+    setIsRefreshing(true);
+    
     try {
       const success = await refreshSession();
+      
       if (success) {
-        toastNotifications.showSuccess('Session refreshed successfully');
-        await loadSessions();
+        toast({
+          title: "Session refreshed",
+          description: "Your session has been successfully renewed.",
+        });
       } else {
-        toastNotifications.showError('Failed to refresh session');
+        toast({
+          title: "Refresh failed",
+          description: "Unable to refresh session. Please sign in again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toastNotifications.showError('Session refresh failed');
+      toast({
+        title: "Refresh error",
+        description: "An error occurred while refreshing your session.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
     }
-  };
-
-  const getDeviceIcon = (userAgent?: string) => {
-    if (!userAgent) return <Monitor className="h-4 w-4" />;
-    
-    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
-      return <Smartphone className="h-4 w-4" />;
-    }
-    
-    return <Monitor className="h-4 w-4" />;
-  };
-
-  const getDeviceName = (userAgent?: string) => {
-    if (!userAgent) return 'Unknown Device';
-    
-    if (userAgent.includes('Chrome')) return 'Chrome Browser';
-    if (userAgent.includes('Firefox')) return 'Firefox Browser';
-    if (userAgent.includes('Safari')) return 'Safari Browser';
-    if (userAgent.includes('Edge')) return 'Edge Browser';
-    if (userAgent.includes('Mobile')) return 'Mobile Device';
-    
-    return 'Unknown Browser';
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const isCurrentSession = (session: SessionInfo) => {
-    // Simple heuristic: most recently used session is likely current
-    return sessions.length > 0 && session.id === sessions[0]?.id;
   };
 
   useEffect(() => {
-    loadSessions();
-  }, []);
+    // Auto-refresh when needed
+    if (sessionHealth.needsRefresh && sessionHealth.isHealthy) {
+      handleRefreshSession();
+    }
+  }, [sessionHealth.needsRefresh]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Session Security Manager
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <Card className="w-full max-w-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Session Status</CardTitle>
+        <Shield className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Session Health */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {sessionHealth.isHealthy ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            )}
+            <span className="text-sm">Session</span>
+          </div>
+          <Badge variant={sessionHealth.isHealthy ? "default" : "destructive"}>
+            {sessionHealth.isHealthy ? "Active" : "Expired"}
+          </Badge>
+        </div>
+
+        {/* Time Remaining */}
+        {sessionHealth.isHealthy && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Expires in</span>
+            </div>
+            <span className="text-sm font-mono">
+              {formatTimeRemaining(sessionHealth.expiresIn)}
+            </span>
+          </div>
+        )}
+
+        {/* Cache Status */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Database className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Cache Status</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Badge variant={cacheStats.userCached ? "default" : "secondary"} className="text-xs">
+              User
+            </Badge>
+            <Badge variant={cacheStats.sessionCached ? "default" : "secondary"} className="text-xs">
+              Session
+            </Badge>
+            <Badge variant={cacheStats.permissionsCached ? "default" : "secondary"} className="text-xs">
+              Perms
+            </Badge>
+          </div>
+        </div>
+
+        {/* Auto-refresh Warning */}
+        {sessionHealth.needsRefresh && (
           <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              This app uses advanced refresh token rotation for security. 
-              You can have up to 5 active sessions. Suspicious activity will automatically revoke all sessions.
+            <Zap className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Session will auto-refresh soon to maintain your login.
             </AlertDescription>
           </Alert>
+        )}
 
-          <div className="flex gap-2">
-            <Button 
-              onClick={loadSessions} 
-              variant="outline" 
-              size="sm"
-              disabled={loading}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              {loading ? 'Loading...' : 'Refresh List'}
-            </Button>
-            
-            <Button 
-              onClick={handleRefreshSession} 
-              variant="outline" 
-              size="sm"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Session
-            </Button>
-            
-            <Button 
-              onClick={handleRevokeAllSessions} 
-              variant="destructive" 
-              size="sm"
-              disabled={revoking}
-            >
-              <X className="h-4 w-4 mr-2" />
-              {revoking ? 'Revoking...' : 'Revoke All Sessions'}
-            </Button>
+        {/* Manual Refresh Button */}
+        <Button 
+          onClick={handleRefreshSession}
+          disabled={isRefreshing || !sessionHealth.isHealthy}
+          size="sm"
+          variant="outline"
+          className="w-full"
+        >
+          <RefreshCw className={`h-3 w-3 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh Session'}
+        </Button>
+
+        {/* Last Refresh Time */}
+        {sessionHealth.refreshedAt && (
+          <div className="text-xs text-muted-foreground text-center">
+            Last refreshed: {new Date(sessionHealth.refreshedAt).toLocaleTimeString()}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Sessions ({sessions.length}/5)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-4">Loading sessions...</div>
-          ) : sessions.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No active sessions found
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {sessions.map((session) => (
-                <div 
-                  key={session.id} 
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getDeviceIcon(session.device_info.user_agent)}
-                      <span className="font-medium">
-                        {getDeviceName(session.device_info.user_agent)}
-                      </span>
-                      {isCurrentSession(session) && (
-                        <Badge variant="default">Current Session</Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <div>
-                      <strong>Device ID:</strong> {session.device_info.device_id?.slice(0, 8)}...
-                    </div>
-                    <div>
-                      <strong>Last Used:</strong> {formatDate(session.last_used_at)}
-                    </div>
-                    <div>
-                      <strong>Created:</strong> {formatDate(session.created_at)}
-                    </div>
-                    <div>
-                      <strong>Expires:</strong> {formatDate(session.expires_at)}
-                    </div>
-                  </div>
-                  
-                  {session.device_info.user_agent && (
-                    <details className="text-xs text-muted-foreground">
-                      <summary className="cursor-pointer">User Agent</summary>
-                      <div className="mt-1 break-all">{session.device_info.user_agent}</div>
-                    </details>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

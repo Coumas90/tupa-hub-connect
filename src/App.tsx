@@ -38,7 +38,7 @@ import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
 import CafeDashboard from "./pages/CafeDashboard";
-import { FriendlyAuthProvider } from "./contexts/FriendlyAuthProvider";
+import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -85,7 +85,7 @@ const App = () => {
               theme="light"
             />
           <BrowserRouter>
-            <FriendlyAuthProvider>
+            <OptimizedAuthProvider>
               {/* Initialize enhanced features */}
               <AppInitializer />
               
@@ -153,7 +153,7 @@ const App = () => {
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </FriendlyAuthProvider>
+            </OptimizedAuthProvider>
           </BrowserRouter>
         </LocationProvider>
         </TooltipProvider>

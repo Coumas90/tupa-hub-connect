@@ -1,189 +1,222 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
-import type { Session } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuthCache } from './useAuthCache';
+import { useSessionMonitor } from './useSessionMonitor';
 
-interface UseOptimizedAuthGuardReturn {
-  loading: boolean;
+interface OptimizedAuthState {
+  user: User | null;
   session: Session | null;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  userRole: string | null;
+  loading: boolean;
   error: string | null;
-  // Performance utilities
-  sessionTimeLeft: number;
-  isSessionExpired: boolean;
-  refreshUserData: () => Promise<void>;
+  isInitialized: boolean;
 }
 
-interface UseOptimizedAuthGuardOptions {
-  redirectTo?: string;
-  requireAuth?: boolean;
-  requireAdmin?: boolean;
-  publicRoutes?: string[];
-}
+export function useOptimizedAuth() {
+  const [state, setState] = useState<OptimizedAuthState>({
+    user: null,
+    session: null,
+    loading: true,
+    error: null,
+    isInitialized: false
+  });
 
-/**
- * Optimized auth guard hook that consolidates authentication, role checking, and session management
- * Uses React Query for caching and deduplication
- */
-export function useOptimizedAuthGuard(options: UseOptimizedAuthGuardOptions = {}): UseOptimizedAuthGuardReturn {
-  const {
-    redirectTo = '/auth',
-    requireAuth = true,
-    requireAdmin = false,
-    publicRoutes = ['/auth', '/', '/faq']
-  } = options;
+  const cache = useAuthCache();
+  const sessionMonitor = useSessionMonitor();
+  const initializationRef = useRef(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  const {
-    user,
-    session,
-    userRole,
-    isAdmin,
-    loading,
-    error,
-    getSessionTimeLeft,
-    isSessionExpired,
-    refreshUserData
-  } = useOptimizedAuth();
+  const updateAuthState = useCallback((session: Session | null, user: User | null = null) => {
+    const finalUser = user || session?.user || null;
+    
+    setState(prev => ({
+      ...prev,
+      session,
+      user: finalUser,
+      loading: false,
+      error: null
+    }));
 
-  const [guardLoading, setGuardLoading] = useState(true);
-  const [guardError, setGuardError] = useState<string | null>(null);
+    // Update cache
+    if (session) {
+      cache.setSessionCache(session);
+      sessionMonitor.startMonitoring(session);
+    }
+    if (finalUser) {
+      cache.setUserCache(finalUser);
+      cache.preloadUserData(finalUser.id);
+    }
+  }, [cache, sessionMonitor]);
 
-  const sessionTimeLeft = getSessionTimeLeft();
-  const sessionExpired = isSessionExpired();
+  const initializeAuth = useCallback(async () => {
+    if (initializationRef.current) return;
+    initializationRef.current = true;
 
-  // Check if current route is public
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+    try {
+      // Try cache first for faster initial load
+      const cachedSession = cache.getCachedSession();
+      const cachedUser = cache.getCachedUser();
 
-  // Handle auth validation and redirects
+      if (cachedSession && cachedUser) {
+        setState(prev => ({
+          ...prev,
+          session: cachedSession,
+          user: cachedUser,
+          loading: false,
+          isInitialized: true
+        }));
+        sessionMonitor.startMonitoring(cachedSession);
+      }
+
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('Auth event:', event, session?.user?.email);
+          
+          if (event === 'SIGNED_OUT') {
+            cache.clearCache();
+            sessionMonitor.stopMonitoring();
+            setState(prev => ({
+              ...prev,
+              user: null,
+              session: null,
+              loading: false,
+              error: null
+            }));
+          } else if (session) {
+            updateAuthState(session);
+          }
+        }
+      );
+
+      unsubscribeRef.current = subscription.unsubscribe;
+
+      // Get current session if not cached
+      if (!cachedSession) {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          setState(prev => ({
+            ...prev,
+            error: error.message,
+            loading: false,
+            isInitialized: true
+          }));
+        } else {
+          updateAuthState(session);
+          setState(prev => ({ ...prev, isInitialized: true }));
+        }
+      } else {
+        setState(prev => ({ ...prev, isInitialized: true }));
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Authentication error',
+        loading: false,
+        isInitialized: true
+      }));
+    }
+  }, [cache, sessionMonitor, updateAuthState]);
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, loading: false }));
+        return { error };
+      }
+
+      updateAuthState(data.session, data.user);
+      return { error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Sign in failed';
+      setState(prev => ({ ...prev, error: message, loading: false }));
+      return { error: new Error(message) };
+    }
+  }, [updateAuthState]);
+
+  const signInWithGoogle = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/admin/dashboard`
+        }
+      });
+
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, loading: false }));
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google sign in failed';
+      setState(prev => ({ ...prev, error: message, loading: false }));
+      return { error: new Error(message) };
+    }
+  }, []);
+
+  const signOut = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, loading: false }));
+      } else {
+        cache.clearCache();
+        sessionMonitor.stopMonitoring();
+        setState({
+          user: null,
+          session: null,
+          loading: false,
+          error: null,
+          isInitialized: true
+        });
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Sign out failed',
+        loading: false
+      }));
+    }
+  }, [cache, sessionMonitor]);
+
+  const refreshSession = useCallback(async () => {
+    return await sessionMonitor.refreshSession();
+  }, [sessionMonitor]);
+
   useEffect(() => {
-    // Don't validate if auth is still loading
-    if (loading) {
-      setGuardLoading(true);
-      return;
-    }
-
-    // Reset guard error
-    setGuardError(null);
-
-    // Skip validation for public routes when auth is not required
-    if (!requireAuth && isPublicRoute) {
-      console.info('📖 OptimizedAuthGuard: Public route accessed, skipping validation');
-      setGuardLoading(false);
-      return;
-    }
-
-    // Validate authentication requirement
-    if (requireAuth && !session?.user) {
-      console.warn('❌ OptimizedAuthGuard: Authentication required but no session found');
-      
-      // Store return path for redirect after login
-      const returnTo = location.pathname !== redirectTo ? location.pathname : '/';
-      
-      navigate(redirectTo, { 
-        replace: true,
-        state: { returnTo }
-      });
-      
-      setGuardLoading(false);
-      return;
-    }
-
-    // Validate admin requirement
-    if (requireAdmin && !isAdmin) {
-      console.warn('❌ OptimizedAuthGuard: Admin access required but user is not admin');
-      setGuardError('Se requieren permisos de administrador');
-      
-      // Redirect to appropriate dashboard based on role
-      const fallbackRoute = userRole === 'client' ? '/app' : 
-                           userRole === 'barista' ? '/recipes' : 
-                           '/app';
-      
-      navigate(fallbackRoute, { replace: true });
-      setGuardLoading(false);
-      return;
-    }
-
-    // Validate session expiry
-    if (session && sessionExpired) {
-      console.warn('⏰ OptimizedAuthGuard: Session expired, redirecting to login');
-      setGuardError('Sesión expirada');
-      navigate(redirectTo, { replace: true });
-      setGuardLoading(false);
-      return;
-    }
-
-    // All validations passed
-    if (session?.user) {
-      console.info('✅ OptimizedAuthGuard: User authenticated and authorized', {
-        userId: session.user.id,
-        role: userRole,
-        isAdmin,
-        timeLeft: `${Math.floor(sessionTimeLeft / 1000 / 60)}min`
-      });
-    }
-
-    setGuardLoading(false);
-  }, [
-    loading,
-    session,
-    userRole, 
-    isAdmin,
-    requireAuth,
-    requireAdmin,
-    isPublicRoute,
-    sessionExpired,
-    sessionTimeLeft,
-    location.pathname,
-    navigate,
-    redirectTo
-  ]);
+    initializeAuth();
+    
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+      sessionMonitor.stopMonitoring();
+    };
+  }, [initializeAuth, sessionMonitor]);
 
   return {
-    loading: loading || guardLoading,
-    session,
-    isAuthenticated: !!session?.user,
-    isAdmin,
-    userRole,
-    error: error || guardError,
-    sessionTimeLeft,
-    isSessionExpired: sessionExpired,
-    refreshUserData,
+    ...state,
+    signInWithEmail,
+    signInWithGoogle,
+    signOut,
+    refreshSession,
+    sessionHealth: sessionMonitor.sessionHealth,
+    cacheStats: cache.cacheStats,
+    clearError: () => setState(prev => ({ ...prev, error: null }))
   };
 }
-
-/**
- * Simplified hook for pages that require authentication
- */
-export function useRequireAuth(redirectTo?: string): UseOptimizedAuthGuardReturn {
-  return useOptimizedAuthGuard({
-    requireAuth: true,
-    redirectTo
-  });
-}
-
-/**
- * Hook for pages that require admin access
- */
-export function useRequireAdmin(redirectTo?: string): UseOptimizedAuthGuardReturn {
-  return useOptimizedAuthGuard({
-    requireAuth: true,
-    requireAdmin: true,
-    redirectTo
-  });
-}
-
-/**
- * Hook for pages that don't require authentication but benefit from auth state
- */
-export function useOptionalAuth(): UseOptimizedAuthGuardReturn {
-  return useOptimizedAuthGuard({
-    requireAuth: false
-  });
-}
-
-// Session monitor moved to separate hook file for better organization

@@ -1,92 +1,126 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-interface SessionMonitorOptions {
-  warningThresholdMinutes?: number;
-  showToastWarning?: boolean;
-  autoExtend?: boolean;
+interface SessionHealth {
+  isHealthy: boolean;
+  expiresIn: number;
+  refreshedAt: number | null;
+  warningThreshold: number;
+  needsRefresh: boolean;
 }
 
-/**
- * Hook for monitoring session health and providing UX warnings
- * Provides proactive session management with user notifications
- */
-export function useSessionMonitor(options: SessionMonitorOptions = {}) {
-  const {
-    warningThresholdMinutes = 5,
-    showToastWarning = true,
-    autoExtend = false
-  } = options;
+export function useSessionMonitor() {
+  const [sessionHealth, setSessionHealth] = useState<SessionHealth>({
+    isHealthy: false,
+    expiresIn: 0,
+    refreshedAt: null,
+    warningThreshold: 5 * 60 * 1000, // 5 minutes
+    needsRefresh: false
+  });
 
-  const { getSessionTimeLeft, isSessionExpired, refreshUserData } = useOptimizedAuth();
-  const [showWarning, setShowWarning] = useState(false);
-  const [hasShownWarning, setHasShownWarning] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout>();
+  const lastRefreshRef = useRef<number>(0);
 
-  const sessionTimeLeft = getSessionTimeLeft();
-  const warningThresholdMs = warningThresholdMinutes * 60 * 1000;
-
-  useEffect(() => {
-    const sessionExpired = isSessionExpired();
-    
-    if (sessionExpired) {
-      setShowWarning(false);
-      setHasShownWarning(false);
+  const checkSessionHealth = useCallback((session: Session | null) => {
+    if (!session) {
+      setSessionHealth(prev => ({
+        ...prev,
+        isHealthy: false,
+        expiresIn: 0,
+        needsRefresh: false
+      }));
       return;
     }
 
-    // Show warning when session is about to expire
-    if (sessionTimeLeft <= warningThresholdMs && sessionTimeLeft > 0) {
-      setShowWarning(true);
-      
-      // Show toast warning only once per session
-      if (showToastWarning && !hasShownWarning) {
-        const minutesLeft = Math.floor(sessionTimeLeft / 1000 / 60);
-        
-        toast({
-          title: "Sesión por expirar",
-          description: `Tu sesión expirará en ${minutesLeft} minuto${minutesLeft !== 1 ? 's' : ''}. ¿Deseas extenderla?`,
-        });
-        
-        setHasShownWarning(true);
-        
-        // Auto-extend if enabled
-        if (autoExtend) {
-          extendSession();
-        }
-      }
-    } else {
-      setShowWarning(false);
-    }
-  }, [sessionTimeLeft, warningThresholdMs, isSessionExpired, showToastWarning, hasShownWarning, autoExtend]);
+    const now = Date.now();
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    const expiresIn = expiresAt - now;
+    const warningThreshold = 5 * 60 * 1000; // 5 minutes
 
-  const extendSession = useCallback(async () => {
+    setSessionHealth(prev => ({
+      ...prev,
+      isHealthy: expiresIn > 0,
+      expiresIn,
+      needsRefresh: expiresIn < warningThreshold && expiresIn > 0,
+      warningThreshold
+    }));
+  }, []);
+
+  const refreshSession = useCallback(async (): Promise<boolean> => {
     try {
-      console.info('🔄 SessionMonitor: Extending session...');
-      await refreshUserData();
-      setShowWarning(false);
-      setHasShownWarning(false);
+      const now = Date.now();
       
-      toast({
-        title: "Sesión extendida",
-        description: "Tu sesión ha sido renovada exitosamente",
-      });
+      // Prevent too frequent refreshes
+      if (now - lastRefreshRef.current < 30000) { // 30 seconds
+        return false;
+      }
+
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Session refresh failed:', error);
+        return false;
+      }
+
+      lastRefreshRef.current = now;
+      setSessionHealth(prev => ({
+        ...prev,
+        refreshedAt: now,
+        needsRefresh: false
+      }));
+
+      return true;
     } catch (error) {
-      console.error('Failed to extend session:', error);
-      toast({
-        title: "Error al extender sesión",
-        description: "No se pudo renovar la sesión. Por favor, inicia sesión nuevamente.",
-        variant: "destructive",
-      });
+      console.error('Session refresh error:', error);
+      return false;
     }
-  }, [refreshUserData]);
+  }, []);
+
+  const startMonitoring = useCallback((session: Session | null) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    if (!session) return;
+
+    // Check immediately
+    checkSessionHealth(session);
+
+    // Check every minute
+    intervalRef.current = setInterval(() => {
+      checkSessionHealth(session);
+    }, 60000);
+  }, [checkSessionHealth]);
+
+  const stopMonitoring = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = undefined;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => stopMonitoring();
+  }, [stopMonitoring]);
+
+  const formatTimeRemaining = useCallback((milliseconds: number): string => {
+    if (milliseconds <= 0) return 'Expired';
+    
+    const minutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    }
+    return `${minutes}m`;
+  }, []);
 
   return {
-    showWarning,
-    timeLeftMinutes: Math.floor(sessionTimeLeft / 1000 / 60),
-    timeLeftSeconds: Math.floor((sessionTimeLeft % (60 * 1000)) / 1000),
-    extendSession,
-    isExpired: isSessionExpired(),
-    progress: Math.max(0, sessionTimeLeft / (60 * 60 * 1000)), // 0-1 for 1 hour session
+    sessionHealth,
+    refreshSession,
+    startMonitoring,
+    stopMonitoring,
+    formatTimeRemaining
   };
 }
