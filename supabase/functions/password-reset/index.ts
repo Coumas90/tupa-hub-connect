@@ -90,8 +90,11 @@ const handler = async (req: Request): Promise<Response> => {
       // Send email with reset link
       const resetLink = `${resetUrl}?token=${token}`;
       
+      console.log(`📧 Sending password reset email to: ${email}`);
+      console.log(`🔗 Reset link: ${resetLink}`);
+
       const emailResponse = await resend.emails.send({
-        from: "TUPÁ Hub <onboarding@resend.dev>",
+        from: "TUPÁ Hub <noreply@resend.dev>",
         to: [email],
         subject: "Recupera tu contraseña - TUPÁ Hub",
         html: `
@@ -206,7 +209,12 @@ const handler = async (req: Request): Promise<Response> => {
         `,
       });
 
-      console.log("Password reset email sent successfully:", emailResponse);
+      if (emailResponse.error) {
+        console.error('💥 Resend API error:', emailResponse.error);
+        throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+      }
+
+      console.log("✅ Password reset email sent successfully:", emailResponse.data?.id);
 
       return new Response(
         JSON.stringify({ 

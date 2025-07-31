@@ -41,15 +41,30 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending test email to: ${testEmail}`);
 
-    // Send simple test email
+    // Send test email
     const emailResponse = await resend.emails.send({
-      from: "Test <onboarding@resend.dev>",
+      from: "TUPÁ Hub <noreply@resend.dev>",
       to: [testEmail],
-      subject: "Test Email - TUPÁ Hub",
+      subject: "✅ Configuración de Email Confirmada - TUPÁ Hub",
       html: `
-        <h1>Test Email</h1>
-        <p>Si recibes este email, Resend está funcionando correctamente.</p>
-        <p>Timestamp: ${new Date().toISOString()}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #8B5A3C;">¡Email configurado correctamente!</h1>
+          <p>Este es un email de prueba para confirmar que la configuración de Resend está funcionando correctamente en TUPÁ Hub.</p>
+          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+            <h3>✅ Funcionalidades verificadas:</h3>
+            <ul>
+              <li>API Key de Resend válida</li>
+              <li>Envío de emails funcionando</li>
+              <li>Sistema de recuperación de contraseñas listo</li>
+            </ul>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">
+            Si recibes este email, tu sistema está listo para enviar emails de recuperación de contraseñas.
+          </p>
+          <p style="color: #6b7280; font-size: 14px;">
+            Timestamp: ${new Date().toISOString()}
+          </p>
+        </div>
       `,
     });
 
