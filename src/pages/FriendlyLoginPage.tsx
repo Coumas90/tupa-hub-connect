@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Coffee, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { FriendlyErrorHandler } from '@/components/auth/FriendlyErrorHandler';
 import { useAuth } from '@/contexts/OptimizedAuthProvider';
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 import { cn } from '@/lib/utils';
 
 export default function FriendlyLoginPage() {
@@ -16,6 +18,7 @@ export default function FriendlyLoginPage() {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -236,7 +239,7 @@ export default function FriendlyLoginPage() {
               <button
                 type="button"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => navigate('/password-reset')}
+                onClick={() => setShowForgotPassword(true)}
                 disabled={loading || isReady}
               >
                 ¿Olvidaste tu contraseña?
@@ -269,6 +272,12 @@ export default function FriendlyLoginPage() {
           </div>
         )}
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        open={showForgotPassword}
+        onOpenChange={setShowForgotPassword}
+      />
     </div>
   );
 }
