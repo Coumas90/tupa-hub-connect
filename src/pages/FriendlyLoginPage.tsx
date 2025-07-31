@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Coffee, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { FriendlyErrorHandler } from '@/components/auth/FriendlyErrorHandler';
-import { useFriendlyAuth } from '@/contexts/FriendlyAuthProvider';
+import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { cn } from '@/lib/utils';
 
 export default function FriendlyLoginPage() {
@@ -23,12 +23,15 @@ export default function FriendlyLoginPage() {
     signInWithGoogle,
     loading,
     error,
-    authProgress,
-    statusMessage,
-    isReady,
     user,
-    clearError
-  } = useFriendlyAuth();
+    clearError,
+    isAuthenticated
+  } = useAuth();
+
+  // Create simple loading states for compatibility
+  const authProgress = loading ? 75 : 0;
+  const statusMessage = loading ? "Validando credenciales..." : "";
+  const isReady = isAuthenticated;
 
   // Auto-redirect when ready
   useEffect(() => {
@@ -44,21 +47,13 @@ export default function FriendlyLoginPage() {
     e.preventDefault();
     if (!formData.email || !formData.password || loading) return;
 
-    try {
-      await signInWithEmail(formData.email, formData.password);
-    } catch (error) {
-      // Error is handled by the context
-    }
+    await signInWithEmail(formData.email, formData.password);
   };
 
   const handleGoogleSignIn = async () => {
     if (loading) return;
     
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      // Error is handled by the context
-    }
+    await signInWithGoogle();
   };
 
   const handleRetry = () => {
