@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { useOptimizedAuth } from '@/hooks/useOptimizedAuth';
+import { useOptimizedAuth as useOptimizedAuthHook } from '@/hooks/useOptimizedAuth';
 
 interface SessionHealth {
   isHealthy: boolean;
@@ -29,6 +29,13 @@ interface OptimizedAuthContextType {
   sessionHealth: SessionHealth;
   cacheStats: CacheStats;
   clearError: () => void;
+  // Backward compatibility properties
+  userRole: string | null;
+  isAdmin: boolean;
+  isAuthenticated: boolean;
+  getSessionTimeLeft: () => number;
+  isSessionExpired: () => boolean;
+  refreshUserData: () => Promise<void>;
 }
 
 const OptimizedAuthContext = createContext<OptimizedAuthContextType | undefined>(undefined);
@@ -41,12 +48,15 @@ export function useAuth() {
   return context;
 }
 
+// Export for backward compatibility
+export const useOptimizedAuth = useAuth;
+
 interface OptimizedAuthProviderProps {
   children: React.ReactNode;
 }
 
 export function OptimizedAuthProvider({ children }: OptimizedAuthProviderProps) {
-  const auth = useOptimizedAuth();
+  const auth = useOptimizedAuthHook();
 
   return (
     <OptimizedAuthContext.Provider value={auth}>

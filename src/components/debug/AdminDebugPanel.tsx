@@ -75,9 +75,9 @@ export function AdminDebugPanel() {
             <h3 className="font-semibold mb-2">Admin Guard State</h3>
             <div className="space-y-1 text-sm">
               <div>Is Admin: <Badge variant={adminGuard.isAdmin ? 'default' : 'secondary'}>{adminGuard.isAdmin ? 'Yes' : 'No'}</Badge></div>
-              <div>Is Authenticated: <Badge variant={adminGuard.isAuthenticated ? 'default' : 'secondary'}>{adminGuard.isAuthenticated ? 'Yes' : 'No'}</Badge></div>
+              <div>Is Authenticated: <Badge variant={!!adminGuard.user ? 'default' : 'secondary'}>{!!adminGuard.user ? 'Yes' : 'No'}</Badge></div>
               <div>Loading: <Badge variant="outline">{adminGuard.loading ? 'Yes' : 'No'}</Badge></div>
-              <div>Error: <Badge variant={adminGuard.error ? 'destructive' : 'outline'}>{adminGuard.error || 'None'}</Badge></div>
+              <div>Error: <Badge variant={authContext.error ? 'destructive' : 'outline'}>{authContext.error || 'None'}</Badge></div>
             </div>
           </div>
         </div>

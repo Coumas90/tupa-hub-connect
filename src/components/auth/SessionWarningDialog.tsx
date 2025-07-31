@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
-import { useSessionMonitor } from '@/hooks/useSessionMonitor';
+import { useAuth } from '@/contexts/OptimizedAuthProvider';
 
 interface SessionWarningDialogProps {
   open: boolean;
@@ -22,21 +22,23 @@ interface SessionWarningDialogProps {
  * Provides clear UX for session expiration warnings
  */
 export function SessionWarningDialog({ open, onOpenChange }: SessionWarningDialogProps) {
-  const { timeLeftMinutes, timeLeftSeconds, extendSession, progress } = useSessionMonitor({
-    showToastWarning: false // Disable toast since we're showing dialog
-  });
+  const { sessionHealth, refreshSession } = useAuth();
 
   const handleExtend = async () => {
-    await extendSession();
+    await refreshSession();
     onOpenChange(false);
   };
+  
+  const minutes = Math.floor(sessionHealth.expiresIn / 60000);
+  const seconds = Math.floor((sessionHealth.expiresIn % 60000) / 1000);
+  const progressPercentage = Math.max(0, (sessionHealth.expiresIn / sessionHealth.warningThreshold) * 100);
 
   const handleSignOut = () => {
     // This will be handled by the auth context
     onOpenChange(false);
   };
 
-  const progressPercentage = progress * 100;
+  
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -46,12 +48,12 @@ export function SessionWarningDialog({ open, onOpenChange }: SessionWarningDialo
             ⏰ Sesión por expirar
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-4">
-            <div>
-              Tu sesión expirará en{' '}
-              <span className="font-semibold text-primary">
-                {timeLeftMinutes}:{timeLeftSeconds.toString().padStart(2, '0')}
-              </span>
-            </div>
+             <div>
+               Tu sesión expirará en{' '}
+               <span className="font-semibold text-primary">
+                 {minutes}:{seconds.toString().padStart(2, '0')}
+               </span>
+             </div>
             
             <div className="space-y-2">
               <div className="flex justify-between text-sm">

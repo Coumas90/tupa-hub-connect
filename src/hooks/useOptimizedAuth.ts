@@ -209,6 +209,11 @@ export function useOptimizedAuth() {
     };
   }, [initializeAuth, sessionMonitor]);
 
+  // Computed properties for backward compatibility
+  const userRole = state.user?.user_metadata?.role || state.user?.app_metadata?.role || null;
+  const isAdmin = userRole === 'admin';
+  const isAuthenticated = !!state.user;
+
   return {
     ...state,
     signInWithEmail,
@@ -217,6 +222,21 @@ export function useOptimizedAuth() {
     refreshSession,
     sessionHealth: sessionMonitor.sessionHealth,
     cacheStats: cache.cacheStats,
-    clearError: () => setState(prev => ({ ...prev, error: null }))
+    clearError: () => setState(prev => ({ ...prev, error: null })),
+    // Backward compatibility properties
+    userRole,
+    isAdmin,
+    isAuthenticated,
+    getSessionTimeLeft: () => sessionMonitor.sessionHealth.expiresIn,
+    isSessionExpired: () => !sessionMonitor.sessionHealth.isHealthy,
+    refreshUserData: async () => {
+      if (state.user) {
+        await cache.preloadUserData(state.user.id);
+      }
+    }
   };
 }
+
+// Re-export the required hooks
+export { useRequireAdmin } from './useRequireAdmin';
+export { useRequireAuth } from './useRequireAuth';

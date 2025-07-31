@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Shield, AlertTriangle, CheckCircle2, XCircle, Activity } from 'lucide-react';
-import SessionManager from './SessionManager';
+import { SessionManager } from './SessionManager';
 
 interface SecurityEvent {
   id: string;
