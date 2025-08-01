@@ -41,7 +41,7 @@ export default function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswo
     setLoading(true);
 
     try {
-      const resetUrl = `${window.location.origin}/auth/reset`;
+      const resetUrl = `${window.location.origin}/password-reset`;
       
       const { data, error } = await supabase.functions.invoke('password-reset', {
         body: { 

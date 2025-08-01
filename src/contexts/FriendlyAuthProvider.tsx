@@ -91,7 +91,7 @@ export function FriendlyAuthProvider({ children }: AuthProviderProps) {
     const currentPath = location.pathname;
     
     // Skip redirects for auth pages
-    if (currentPath === '/auth' || currentPath === '/auth/reset') {
+    if (currentPath === '/auth' || currentPath === '/password-reset') {
       return;
     }
 

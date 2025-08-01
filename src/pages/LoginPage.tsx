@@ -14,7 +14,6 @@ import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useToast } from '@/hooks/use-toast';
 import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { useNavigate } from 'react-router-dom';
-import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 
 interface LoginPageProps {
   onLoginSuccess?: () => void;
@@ -26,7 +25,8 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const toastNotifications = useToastNotifications();
   const { toast } = useToast();
   const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useOptimizedAuth();
@@ -63,11 +63,11 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return false;
     }
     
-    if (!password.trim()) {
+    if (!showForgotPassword && !password.trim()) {
       setError('Contraseña requerida');
       return false;
     }
-    if (password.length < 6) {
+    if (!showForgotPassword && password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       return false;
     }
@@ -92,9 +92,48 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email.trim()) {
+      setError('Email requerido para recuperar contraseña');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call our password reset edge function
+      const { data, error } = await supabase.functions.invoke('password-reset', {
+        body: { 
+          email: email.trim(),
+          resetUrl: `${window.location.origin}/auth/reset`
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Error enviando email de recuperación');
+      }
+
+      setResetSent(true);
+      toastNotifications.showSuccess('Email de recuperación enviado. Revisa tu bandeja de entrada.');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      setError('Error al enviar email de recuperación. Intenta nuevamente.');
+      toastNotifications.showLoginError('Error al enviar email de recuperación');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (showForgotPassword) {
+      handleForgotPassword(e);
+      return;
+    }
 
     setError('');
     clearError();
@@ -397,16 +436,42 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             </div>
             
             <h1 className="text-4xl font-bold mb-3 font-display bg-gradient-to-r from-warm-primary to-warm-earth bg-clip-text text-transparent">
-              Bienvenido
+              {showForgotPassword ? 'Recuperar Contraseña' : 'Bienvenido'}
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Tu plataforma de gestión cafetera te espera
+              {showForgotPassword 
+                ? 'Ingresa tu email para recibir un enlace de recuperación' 
+                : 'Tu plataforma de gestión cafetera te espera'}
             </p>
           </div>
 
           {/* Premium Form */}
           <Card className="border-0 shadow-2xl bg-white/50 backdrop-blur-sm">
             <CardContent className="p-10">
+              {resetSent ? (
+                <div className="text-center space-y-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-warm-primary">Email enviado</h3>
+                  <p className="text-muted-foreground">
+                    Hemos enviado un enlace de recuperación a <strong>{email}</strong>. 
+                    Revisa tu bandeja de entrada y sigue las instrucciones.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetSent(false);
+                      setEmail('');
+                      setError('');
+                    }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Volver al inicio de sesión
+                  </Button>
+                </div>
+              ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
                   {error && (
                     <Alert variant="destructive" className="border-red-200 bg-red-50/80 backdrop-blur-sm">
@@ -439,6 +504,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                       </div>
                     </div>
 
+                    {!showForgotPassword && (
                       <div className="space-y-3">
                         <Label htmlFor="password" className="text-base font-semibold text-warm-primary">Contraseña</Label>
                         <div className="relative group">
@@ -454,6 +520,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                            />
                         </div>
                       </div>
+                    )}
                   </div>
 
                   {/* Rate limiting warning */}
@@ -474,17 +541,17 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                      {loading || isSubmitting ? (
                        <>
                          <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                         Verificando credenciales...
+                         {showForgotPassword ? 'Enviando email...' : 'Verificando credenciales...'}
                        </>
                      ) : (
                       <>
-                        Acceder a mi Hub
+                        {showForgotPassword ? 'Enviar enlace de recuperación' : 'Acceder a mi Hub'}
                         <Coffee className="ml-3 h-5 w-5" />
-                     </>
-                      )}
+                      </>
+                    )}
                   </Button>
 
-                  
+                  {!showForgotPassword && (
                     <>
                       <div className="relative">
                         <div className="absolute inset-0 flex items-center">
@@ -519,17 +586,24 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                           </>
                         )}
                       </Button>
-                      </>
+                    </>
+                  )}
 
                   <div className="text-center pt-4">
                     <Button
                       type="button"
                       variant="link"
-                      onClick={() => setShowForgotPasswordModal(true)}
+                      onClick={() => {
+                        setShowForgotPassword(!showForgotPassword);
+                        setError('');
+                        setPassword('');
+                      }}
                       disabled={loading}
                       className="text-base text-warm-earth hover:text-warm-primary transition-colors"
                     >
-                      ¿Olvidaste tu contraseña?
+                      {showForgotPassword 
+                        ? 'Volver al inicio de sesión' 
+                        : '¿Olvidaste tu contraseña?'}
                     </Button>
                   </div>
 
@@ -557,6 +631,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     </Button>
                   </div>
                 </form>
+              )}
             </CardContent>
           </Card>
 
@@ -579,12 +654,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           </div>
         </div>
       </div>
-
-      {/* Forgot Password Modal */}
-      <ForgotPasswordModal 
-        open={showForgotPasswordModal} 
-        onOpenChange={setShowForgotPasswordModal} 
-      />
     </div>
   );
 }

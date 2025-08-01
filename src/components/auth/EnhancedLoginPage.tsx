@@ -224,7 +224,7 @@ export default function EnhancedLoginPage() {
                 <button
                   type="button"
                   className="text-xs text-muted-foreground hover:text-primary transition-colors block mx-auto"
-                  onClick={() => navigate('/auth/reset')}
+                  onClick={() => navigate('/password-reset')}
                   disabled={isLoading}
                 >
                   ¿Olvidaste tu contraseña?
