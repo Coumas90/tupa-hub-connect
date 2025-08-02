@@ -103,8 +103,8 @@ export function FriendlyAuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    // Simple role-based routing
-    if (isAdmin) {
+    // Prioritize client routes - only admin role goes to admin dashboard
+    if (isAdmin && role === 'admin') {
       navigate('/admin/dashboard', { replace: true });
     } else {
       navigate('/app', { replace: true });

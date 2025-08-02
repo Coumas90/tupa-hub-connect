@@ -163,20 +163,25 @@ export function useSmartNavigation() {
 
   // Smart navigation that considers user role and context
   const navigateToOptimalRoute = useCallback(() => {
-    if (isAdmin) {
-      navigate('/admin/dashboard');
-      return;
-    }
-
+    // Prioritize client/manager/owner routes over admin
     if (activeLocation?.slug) {
       navigateToRole('overview');
       return;
     }
 
-    // Fallback based on role when no location context
+    // Only go to admin dashboard if explicitly admin role
+    if (isAdmin && userRole?.toLowerCase() === 'admin') {
+      navigate('/admin/dashboard');
+      return;
+    }
+
+    // Default fallback prioritizes client routes
     switch (userRole?.toLowerCase()) {
       case 'barista':
         navigate('/recipes');
+        break;
+      case 'admin':
+        navigate('/admin/dashboard');
         break;
       case 'client':
       case 'manager':
