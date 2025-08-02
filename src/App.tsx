@@ -31,6 +31,7 @@ import ActivateAccount from "./pages/ActivateAccount";
 import FriendlyLoginPage from "./pages/FriendlyLoginPage";
 import PasswordResetPage from "./pages/PasswordResetPage";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
+import { AdminLoginPage } from "./pages/AdminLoginPage";
 import AdminOperationsPage from "@/pages/admin/AdminOperationsPage";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminCourses from "./pages/AdminCourses";
@@ -97,6 +98,7 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<FriendlyLoginPage />} />
+                <Route path="/admin/auth" element={<AdminLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
                 

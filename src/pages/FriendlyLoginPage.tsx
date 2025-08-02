@@ -271,6 +271,16 @@ export default function FriendlyLoginPage() {
             </p>
           </div>
         )}
+        
+        {/* Admin Login Link */}
+        <div className="mt-6 text-center">
+          <a 
+            href="/admin/auth" 
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ¿Eres administrador? Ingresa aquí
+          </a>
+        </div>
       </div>
 
       {/* Forgot Password Modal */}
