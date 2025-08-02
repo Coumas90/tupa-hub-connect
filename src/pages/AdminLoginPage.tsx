@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useFriendlyAuth } from '@/contexts/FriendlyAuthProvider';
+import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import EnhancedLoginPage from '@/components/auth/EnhancedLoginPage';
 
 export function AdminLoginPage() {
-  const { user, userRole } = useFriendlyAuth();
+  const { user, userRole } = useAuth();
 
   // Redirect if already authenticated as admin
   if (user && userRole === 'admin') {
