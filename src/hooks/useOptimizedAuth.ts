@@ -3,6 +3,10 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthCache } from './useAuthCache';
 import { useSessionMonitor } from './useSessionMonitor';
+import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '@/utils/authRoleUtils';
+import { validateAndRedirectUser } from '@/utils/authMiddleware';
+import { toast } from '@/hooks/use-toast';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface OptimizedAuthState {
   user: User | null;
@@ -10,6 +14,15 @@ interface OptimizedAuthState {
   loading: boolean;
   error: string | null;
   isInitialized: boolean;
+  
+  // Enhanced state from FriendlyAuthProvider
+  userRole: UserRole;
+  roleSource: 'user_roles_table' | 'user_metadata' | 'app_metadata' | 'none';
+  isAdmin: boolean;
+  locationContext: any;
+  authProgress: number;
+  statusMessage: string;
+  isReady: boolean;
 }
 
 export function useOptimizedAuth() {
@@ -18,24 +31,97 @@ export function useOptimizedAuth() {
     session: null,
     loading: true,
     error: null,
-    isInitialized: false
+    isInitialized: false,
+    userRole: null,
+    roleSource: 'none',
+    isAdmin: false,
+    locationContext: null,
+    authProgress: 0,
+    statusMessage: 'Inicializando...',
+    isReady: false
   });
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const progressIntervalRef = useRef<NodeJS.Timeout>();
 
   const cache = useAuthCache();
   const sessionMonitor = useSessionMonitor();
   const initializationRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const updateAuthState = useCallback((session: Session | null, user: User | null = null) => {
+  // Progress animation helper
+  const animateProgress = useCallback((target: number, message: string, duration: number = 1500) => {
+    setState(prev => ({ ...prev, statusMessage: message }));
+    
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    const startProgress = state.authProgress;
+    const step = (target - startProgress) / (duration / 50);
+
+    progressIntervalRef.current = setInterval(() => {
+      setState(prev => {
+        const newProgress = Math.min(prev.authProgress + step, target);
+        if (newProgress >= target) {
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+          }
+        }
+        return { ...prev, authProgress: newProgress };
+      });
+    }, 50);
+  }, [state.authProgress]);
+
+  const updateAuthState = useCallback(async (session: Session | null, user: User | null = null) => {
     const finalUser = user || session?.user || null;
     
-    setState(prev => ({
-      ...prev,
-      session,
-      user: finalUser,
-      loading: false,
-      error: null
-    }));
+    if (finalUser) {
+      // Get comprehensive role information
+      const roleResult = await getUserRole(finalUser);
+      const locationContext = await getUserLocationContext(finalUser.id);
+      
+      setState(prev => ({
+        ...prev,
+        session,
+        user: finalUser,
+        userRole: roleResult.role,
+        roleSource: roleResult.source,
+        isAdmin: roleResult.isAdmin,
+        locationContext,
+        loading: false,
+        error: null,
+        isReady: true
+      }));
+
+      // Smart redirection
+      setTimeout(async () => {
+        const validation = await validateAndRedirectUser(
+          finalUser, 
+          session, 
+          location.pathname
+        );
+        
+        if (validation.redirectTo && validation.redirectTo !== location.pathname) {
+          navigate(validation.redirectTo, { replace: true });
+        }
+      }, 200);
+    } else {
+      setState(prev => ({
+        ...prev,
+        session: null,
+        user: null,
+        userRole: null,
+        roleSource: 'none',
+        isAdmin: false,
+        locationContext: null,
+        loading: false,
+        authProgress: 0,
+        statusMessage: 'Sin sesión',
+        isReady: false
+      }));
+    }
 
     // Update cache
     if (session) {
@@ -46,7 +132,7 @@ export function useOptimizedAuth() {
       cache.setUserCache(finalUser);
       cache.preloadUserData(finalUser.id);
     }
-  }, [cache, sessionMonitor]);
+  }, [cache, sessionMonitor, location.pathname, navigate]);
 
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
@@ -80,9 +166,17 @@ export function useOptimizedAuth() {
               ...prev,
               user: null,
               session: null,
+              userRole: null,
+              roleSource: 'none',
+              isAdmin: false,
+              locationContext: null,
               loading: false,
-              error: null
+              error: null,
+              authProgress: 0,
+              statusMessage: 'Desconectado',
+              isReady: false
             }));
+            navigate('/', { replace: true });
           } else if (session) {
             updateAuthState(session);
           }
@@ -182,7 +276,14 @@ export function useOptimizedAuth() {
           session: null,
           loading: false,
           error: null,
-          isInitialized: true
+          isInitialized: true,
+          userRole: null,
+          roleSource: 'none',
+          isAdmin: false,
+          locationContext: null,
+          authProgress: 0,
+          statusMessage: 'Desconectado',
+          isReady: false
         });
       }
     } catch (error) {
@@ -209,10 +310,26 @@ export function useOptimizedAuth() {
     };
   }, [initializeAuth, sessionMonitor]);
 
-  // Computed properties for backward compatibility
-  const userRole = state.user?.user_metadata?.role || state.user?.app_metadata?.role || null;
-  const isAdmin = userRole === 'admin';
+  // Session utilities for backward compatibility
   const isAuthenticated = !!state.user;
+  const isSessionExpired = useCallback(() => {
+    if (!state.session?.expires_at) return true;
+    return (state.session.expires_at * 1000) <= (Date.now() + 60000);
+  }, [state.session?.expires_at]);
+
+  const getSessionTimeLeft = useCallback(() => {
+    if (!state.session?.expires_at) return 0;
+    return Math.max(0, (state.session.expires_at * 1000) - Date.now());
+  }, [state.session?.expires_at]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
   return {
     ...state,
@@ -224,11 +341,9 @@ export function useOptimizedAuth() {
     cacheStats: cache.cacheStats,
     clearError: () => setState(prev => ({ ...prev, error: null })),
     // Backward compatibility properties
-    userRole,
-    isAdmin,
     isAuthenticated,
-    getSessionTimeLeft: () => sessionMonitor.sessionHealth.expiresIn,
-    isSessionExpired: () => !sessionMonitor.sessionHealth.isHealthy,
+    getSessionTimeLeft,
+    isSessionExpired,
     refreshUserData: async () => {
       if (state.user) {
         await cache.preloadUserData(state.user.id);

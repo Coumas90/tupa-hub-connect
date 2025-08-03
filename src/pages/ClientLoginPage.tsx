@@ -1,34 +1,29 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useClientAuth } from '@/hooks/useClientAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Lock, Shield, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Coffee, AlertCircle } from 'lucide-react';
 import { ContextualLoading } from '@/components/ui/loading-states';
 import { useState } from 'react';
 
-export function AdminLoginPage() {
-  const auth = useAdminAuth();
+export function ClientLoginPage() {
+  const auth = useClientAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Show loading state
   if (auth.loading || !auth.isReady) {
-    return <ContextualLoading type="admin" message={auth.statusMessage} />;
+    return <ContextualLoading type="auth" message={auth.statusMessage} />;
   }
 
-  // Redirect if already authenticated as admin
-  if (auth.isAuthenticated && auth.isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
-  // Redirect if authenticated as non-admin
-  if (auth.isAuthenticated && !auth.isAdmin) {
+  // Redirect if already authenticated
+  if (auth.isAuthenticated) {
     return <Navigate to="/app" replace />;
   }
 
@@ -40,10 +35,10 @@ export function AdminLoginPage() {
     try {
       const { error } = await auth.signInWithEmail(email, password);
       if (error) {
-        console.error('Admin login error:', error);
+        console.error('Login error:', error);
       }
     } catch (error) {
-      console.error('Admin login failed:', error);
+      console.error('Login failed:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -54,34 +49,34 @@ export function AdminLoginPage() {
     try {
       const { error } = await auth.signInWithGoogle();
       if (error) {
-        console.error('Admin Google login error:', error);
+        console.error('Google login error:', error);
       }
     } catch (error) {
-      console.error('Admin Google login failed:', error);
+      console.error('Google login failed:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center space-x-2">
-            <Shield className="h-8 w-8 text-orange-600" />
-            <h1 className="text-3xl font-bold text-foreground">Admin Portal</h1>
+            <Coffee className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">TUPÁ Hub</h1>
           </div>
           <p className="text-muted-foreground">
-            Acceso exclusivo para administradores
+            Plataforma para cafeterías
           </p>
         </div>
 
-        <Card className="border-orange-200 dark:border-orange-800">
+        <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Acceso Administrativo</CardTitle>
+            <CardTitle className="text-2xl text-center">Iniciar Sesión</CardTitle>
             <CardDescription className="text-center">
-              Ingrese sus credenciales de administrador
+              Accede a tu espacio de trabajo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -96,13 +91,13 @@ export function AdminLoginPage() {
             {/* Email/Password Form */}
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="admin-email">Email de Administrador</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="admin-email"
+                    id="email"
                     type="email"
-                    placeholder="admin@tupahub.com"
+                    placeholder="tu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -113,11 +108,11 @@ export function AdminLoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="admin-password">Contraseña</Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="admin-password"
+                    id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
@@ -131,10 +126,10 @@ export function AdminLoginPage() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-orange-600 hover:bg-orange-700" 
+                className="w-full" 
                 disabled={isSubmitting || !email || !password}
               >
-                {isSubmitting ? 'Verificando acceso...' : 'Acceder como Admin'}
+                {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
 
@@ -152,7 +147,7 @@ export function AdminLoginPage() {
             {/* Google Login */}
             <Button
               variant="outline"
-              className="w-full border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950/10"
+              className="w-full"
               onClick={handleGoogleLogin}
               disabled={isSubmitting}
             >
@@ -162,16 +157,22 @@ export function AdminLoginPage() {
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Acceso Admin con Google
+              Continuar con Google
             </Button>
 
             {/* Links */}
             <div className="text-center space-y-2">
+              <a 
+                href="/auth/reset" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
               <div className="text-sm text-muted-foreground">
-                ¿Eres propietario de cafetería?{' '}
+                ¿Eres administrador?{' '}
                 <a 
-                  href="/auth" 
-                  className="text-orange-600 hover:underline"
+                  href="/admin/login" 
+                  className="text-primary hover:underline"
                 >
                   Accede aquí
                 </a>
@@ -182,7 +183,7 @@ export function AdminLoginPage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground">
-          <p>© 2024 TUPÁ Hub. Panel de administración.</p>
+          <p>© 2024 TUPÁ Hub. Plataforma integral para cafeterías.</p>
         </div>
       </div>
     </div>
