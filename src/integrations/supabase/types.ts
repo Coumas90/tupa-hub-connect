@@ -1635,6 +1635,7 @@ export type Database = {
           group_id: string | null
           id: string
           location_id: string | null
+          org_id: string | null
           updated_at: string | null
           updated_by: string | null
         }
@@ -1644,6 +1645,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           location_id?: string | null
+          org_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -1653,6 +1655,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           location_id?: string | null
+          org_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -1709,6 +1712,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      current_user_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       enforce_session_limit: {
         Args: { target_user_id: string; max_sessions?: number }
         Returns: undefined
@@ -1750,6 +1757,19 @@ export type Database = {
       get_user_cafe_id: {
         Args: { _user_id: string }
         Returns: string
+      }
+      get_user_full_context: {
+        Args: { _user_id?: string }
+        Returns: {
+          user_id: string
+          email: string
+          role: string
+          org_id: string
+          location_id: string
+          group_name: string
+          location_name: string
+          is_admin: boolean
+        }[]
       }
       get_user_location_context: {
         Args: { _user_id?: string }

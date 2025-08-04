@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { validateAndRedirectUser } from '@/utils/authMiddleware';
+import { AuthMiddleware } from '@/middleware/authMiddleware';
 
 export interface AdminAuthResult {
   user: any;
@@ -42,11 +42,11 @@ export function useAdminAuth(): AdminAuthResult {
 
       if (auth.user && auth.isAdmin) {
         // Admin users - validate and redirect
-        validateAndRedirectUser(
+        AuthMiddleware.validateRouteAccess(
           auth.user,
           auth.session,
           location.pathname,
-          { forceAdmin: true }
+          { requireAuth: true, adminOnly: true }
         ).then(validation => {
           if (validation.redirectTo && validation.redirectTo !== location.pathname) {
             navigate(validation.redirectTo, { replace: true });

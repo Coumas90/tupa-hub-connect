@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthCache } from './useAuthCache';
 import { useSessionMonitor } from './useSessionMonitor';
 import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '@/utils/authRoleUtils';
-import { validateAndRedirectUser } from '@/utils/authMiddleware';
+import { AuthMiddleware } from '@/middleware/authMiddleware';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -95,12 +95,13 @@ export function useOptimizedAuth() {
         isReady: true
       }));
 
-      // Smart redirection
+      // Smart redirection using new middleware
       setTimeout(async () => {
-        const validation = await validateAndRedirectUser(
+        const validation = await AuthMiddleware.validateRouteAccess(
           finalUser, 
           session, 
-          location.pathname
+          location.pathname,
+          { requireAuth: true }
         );
         
         if (validation.redirectTo && validation.redirectTo !== location.pathname) {

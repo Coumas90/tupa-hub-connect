@@ -16,6 +16,10 @@ import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
 import { AdminGuard } from "./utils/routing/guards";
+import { MultiTenantRouter, AdminRouter } from './components/routing/MultiTenantRouter';
+import { SmartRedirectRouter, UnauthorizedAccess } from './components/routing/SmartRedirectRouter';
+import { AdminRouteGuard } from './components/guards/AdminRouteGuard';
+import { ClientRouteGuard } from './components/guards/ClientRouteGuard';
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
@@ -102,29 +106,17 @@ const App = () => {
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
                 
-                {/* New Tenant Routes */}
-                <Route path="/tenants/*" element={<TenantRoutes />} />
+                {/* Smart Auto-Redirect */}
+                <Route path="/dashboard" element={<SmartRedirectRouter />} />
+                
+                {/* New Multi-Tenant Routes */}
+                <Route path="/org/*" element={<MultiTenantRouter />} />
                 
                 {/* Admin Routes - Protected */}
-                <Route path="/admin" element={
-                  <AdminGuard>
-                    <Layout />
-                  </AdminGuard>
-                }>
-                  <Route index element={<AdminDashboardPage />} />
-                  <Route path="dashboard" element={<AdminDashboardPage />} />
-                  <Route path="operations/:section?" element={<AdminOperationsPage />} />
-                  <Route path="academy/courses" element={<AdminCourses />} />
-                  <Route path="advisory" element={<AdvisoryAdmin />} />
-                  <Route path="integrations/logs/:clientId" element={<ClientLogs />} />
-                  <Route path="integrations/:clientId" element={<ClientConfiguration />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  
-                  {/* Legacy redirects */}
-                  <Route path="integrations" element={<Navigate to="/admin/operations/pos" replace />} />
-                  <Route path="courses" element={<Navigate to="/admin/academy/courses" replace />} />
-                </Route>
+                <Route path="/admin/*" element={<AdminRouter />} />
+                
+                {/* Unauthorized Access */}
+                <Route path="/unauthorized" element={<UnauthorizedAccess />} />
                 
                 {/* Legacy Routes (will be redirected) */}
                 <Route path="/recipes" element={<Layout />}>
