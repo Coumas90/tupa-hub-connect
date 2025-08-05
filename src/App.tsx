@@ -17,7 +17,10 @@ import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
 import { AdminGuard } from "./utils/routing/guards";
 import { MultiTenantRouter, AdminRouter } from './components/routing/MultiTenantRouter';
-import { SmartRedirectRouter, UnauthorizedAccess } from './components/routing/SmartRedirectRouter';
+import { SmartRedirectRouter } from './components/routing/SmartRedirectRouter';
+import { UnauthorizedAccess } from './components/auth/UnauthorizedAccess';
+import { OnboardingPage } from './pages/OnboardingPage';
+import { OnboardingLocationPage } from './pages/OnboardingLocationPage';
 import { AdminRouteGuard } from './components/guards/AdminRouteGuard';
 import { ClientRouteGuard } from './components/guards/ClientRouteGuard';
 import LandingPage from "./pages/LandingPage";
@@ -105,6 +108,10 @@ const App = () => {
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
+                
+                {/* Onboarding routes */}
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/onboarding/location" element={<OnboardingLocationPage />} />
                 
                 {/* Smart Auto-Redirect */}
                 <Route path="/dashboard" element={<SmartRedirectRouter />} />

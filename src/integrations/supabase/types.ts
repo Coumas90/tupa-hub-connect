@@ -1822,6 +1822,10 @@ export type Database = {
         Args: { p_setting_key: string; p_setting_value: string }
         Returns: boolean
       }
+      validate_org_slug_access: {
+        Args: { p_org_slug: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
