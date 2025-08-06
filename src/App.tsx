@@ -105,6 +105,7 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<ClientLoginPage />} />
+                <Route path="/login" element={<ClientLoginPage />} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
