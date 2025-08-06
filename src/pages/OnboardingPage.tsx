@@ -1,131 +1,100 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserWithRole } from '@/hooks/useUserWithRole';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { Coffee, Shield, Users, TrendingUp } from 'lucide-react';
 import { ContextualLoading } from '@/components/ui/loading-states';
 
-interface Organization {
-  id: string;
-  name: string;
-}
-
 export function OnboardingPage() {
-  const { user, orgId, isLoading } = useUserWithRole();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [orgLoading, setOrgLoading] = useState(true);
-  const { toast } = useToast();
+  const { user, orgId, isLoading, isAdmin } = useUserWithRole();
 
-  // If user already has org, redirect to location onboarding
-  if (!isLoading && orgId) {
-    return <Navigate to="/onboarding/location" replace />;
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-16 h-16 bg-warm-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <Coffee className="h-8 w-8 text-warm-primary animate-pulse" />
+            </div>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-warm-primary mb-2">
+              Configurando tu espacio de trabajo
+            </h2>
+            <p className="text-muted-foreground">
+              Estamos preparando todo para ti...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Load organizations on mount
-  React.useEffect(() => {
-    async function loadOrganizations() {
-      try {
-        const { data, error } = await supabase
-          .from('groups')
-          .select('id, name')
-          .order('name');
-
-        if (error) throw error;
-        setOrganizations(data || []);
-      } catch (error) {
-        console.error('Error loading organizations:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las organizaciones",
-          variant: "destructive",
-        });
-      } finally {
-        setOrgLoading(false);
-      }
-    }
-
-    if (user) {
-      loadOrganizations();
-    }
-  }, [user, toast]);
-
-  const handleAssignOrg = async () => {
-    if (!selectedOrgId || !user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ org_id: selectedOrgId })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Éxito",
-        description: "Organización asignada correctamente",
-      });
-
-      // Redirect to location onboarding
-      window.location.href = '/onboarding/location';
-    } catch (error) {
-      console.error('Error assigning organization:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo asignar la organización",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (isLoading || orgLoading) {
-    return <ContextualLoading type="general" message="Cargando configuración..." />;
-  }
-
+  // Redirect if not authenticated
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
+  // Admin users go directly to admin dashboard
+  if (isAdmin) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  // If user has org, continue to location onboarding
+  if (orgId) {
+    return <Navigate to="/onboarding/location" replace />;
+  }
+
+  // If no org assigned, show waiting message (this should rarely happen in B2B)
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>Bienvenido a TUPÁ Hub</CardTitle>
-          <CardDescription>
-            Necesitamos asignar tu organización para continuar
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-cream/5 to-warm-gold/5 p-4">
+      <Card className="w-full max-w-lg shadow-xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-warm-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Coffee className="h-8 w-8 text-warm-primary" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-warm-primary">
+            Acceso Pendiente
+          </CardTitle>
+          <CardDescription className="text-lg">
+            Tu cuenta está siendo configurada por nuestro equipo
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Seleccionar Organización</label>
-            <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Elige tu organización" />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        
+        <CardContent className="space-y-6">
+          <div className="bg-warm-cream/10 rounded-lg p-6 text-center">
+            <Shield className="h-12 w-12 text-warm-earth mx-auto mb-4" />
+            <h3 className="font-semibold text-warm-primary mb-2">
+              ¡Ya casi estás listo!
+            </h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Hemos recibido tu registro y nuestro equipo está configurando tu organización. 
+              Recibirás un email de confirmación en las próximas horas.
+            </p>
           </div>
 
-          <Button 
-            onClick={handleAssignOrg}
-            disabled={!selectedOrgId || loading}
-            className="w-full"
-          >
-            {loading ? "Asignando..." : "Continuar"}
-          </Button>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 bg-white/50 rounded-lg">
+              <Users className="h-8 w-8 text-warm-primary mx-auto mb-2" />
+              <p className="text-sm font-medium text-warm-primary">Gestión de Equipo</p>
+            </div>
+            <div className="text-center p-4 bg-white/50 rounded-lg">
+              <TrendingUp className="h-8 w-8 text-warm-primary mx-auto mb-2" />
+              <p className="text-sm font-medium text-warm-primary">Analytics Avanzados</p>
+            </div>
+          </div>
+
+          <div className="text-center text-sm text-muted-foreground">
+            <p>¿Necesitas ayuda inmediata?</p>
+            <a 
+              href="mailto:soporte@tupa.ar" 
+              className="text-warm-primary hover:text-warm-earth font-medium transition-colors"
+            >
+              soporte@tupa.ar
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
