@@ -28,17 +28,17 @@ export function useAutoOrgAssignment(userId?: string) {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
       try {
-        // Verificar si el usuario ya tiene org_id
+        // Verificar si el usuario ya tiene group_id (org_id is now group_id in users table)
         const { data: user, error: userError } = await supabase
           .from('users')
-          .select('org_id, email')
+          .select('group_id')
           .eq('id', userId)
           .single();
 
         if (userError) throw userError;
 
         // Si ya tiene organización, no hacer nada
-        if (user.org_id) {
+        if (user.group_id) {
           setState({ loading: false, error: null, orgAssigned: true });
           return;
         }
@@ -68,7 +68,7 @@ export function useAutoOrgAssignment(userId?: string) {
           // Asignar automáticamente a la primera organización
           const { error: assignError } = await supabase
             .from('users')
-            .update({ org_id: orgs[0].id })
+            .update({ group_id: orgs[0].id })
             .eq('id', userId);
 
           if (assignError) throw assignError;

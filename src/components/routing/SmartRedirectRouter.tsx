@@ -39,7 +39,7 @@ export function SmartRedirectRouter() {
       return <Navigate to={`/org/${orgSlug}/manager/dashboard`} replace />;
     case 'barista':
       return <Navigate to={`/org/${orgSlug}/staff/dashboard`} replace />;
-    case 'client':
+    case 'user':
     default:
       return <Navigate to={`/org/${orgSlug}/dashboard`} replace />;
   }
