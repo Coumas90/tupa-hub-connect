@@ -86,18 +86,15 @@ export function MultiTenantRouter() {
  */
 export function AdminRouter() {
   return (
-    <Routes>
-      <Route path="/admin/*" element={
-        <AdminRouteGuard>
-          <Layout />
-        </AdminRouteGuard>
-      }>
+    <AdminRouteGuard>
+      <Layout />
+      <Routes>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="operations" element={<AdminOperations />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </AdminRouteGuard>
   );
 }
