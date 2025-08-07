@@ -1,35 +1,81 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Lock, Shield, AlertCircle } from 'lucide-react';
-import { ContextualLoading } from '@/components/ui/loading-states';
-import { useState } from 'react';
+import { Mail, Lock, Shield, AlertCircle, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export function AdminLoginPage() {
-  const auth = useAdminAuth();
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifyingRole, setIsVerifyingRole] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if already authenticated and verify admin role
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user && !isVerifyingRole) {
+      verifyAdminRole();
+    }
+  }, [auth.isAuthenticated, auth.user]);
+
+  const verifyAdminRole = async () => {
+    if (!auth.user) return;
+    
+    setIsVerifyingRole(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', auth.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (error || !data) {
+        setError('Acceso denegado: Solo los administradores pueden acceder a este portal.');
+        toast({
+          title: "Acceso denegado",
+          description: "Tu cuenta no tiene permisos de administrador.",
+          variant: "destructive"
+        });
+      } else {
+        navigate('/admin/dashboard', { replace: true });
+      }
+    } catch (err) {
+      console.error('Error verifying admin role:', err);
+      setError('Error al verificar permisos de administrador.');
+    } finally {
+      setIsVerifyingRole(false);
+    }
+  };
 
   // Show loading state
-  if (auth.loading || !auth.isReady) {
-    return <ContextualLoading type="admin" message={auth.statusMessage} />;
-  }
-
-  // Redirect if already authenticated as admin
-  if (auth.isAuthenticated && auth.isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
-  // Redirect if authenticated as non-admin
-  if (auth.isAuthenticated && !auth.isAdmin) {
-    return <Navigate to="/app" replace />;
+  if (auth.loading || isVerifyingRole) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Shield className="h-12 w-12 text-orange-600 mx-auto animate-pulse" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold">
+              {isVerifyingRole ? 'Verificando permisos...' : 'Cargando...'}
+            </h2>
+            <p className="text-muted-foreground">
+              {isVerifyingRole ? 'Validando acceso de administrador' : 'Iniciando sesión'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -37,13 +83,22 @@ export function AdminLoginPage() {
     if (!email || !password) return;
 
     setIsSubmitting(true);
+    setError(null);
+    
     try {
       const { error } = await auth.signInWithEmail(email, password);
       if (error) {
-        console.error('Admin login error:', error);
+        setError('Credenciales incorrectas o problema de conexión.');
+        toast({
+          title: "Error de autenticación",
+          description: error.message,
+          variant: "destructive"
+        });
       }
+      // Role verification will happen in useEffect after successful login
     } catch (error) {
       console.error('Admin login failed:', error);
+      setError('Error inesperado durante el login.');
     } finally {
       setIsSubmitting(false);
     }
@@ -51,15 +106,31 @@ export function AdminLoginPage() {
 
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
+    setError(null);
+    
     try {
       const { error } = await auth.signInWithGoogle();
       if (error) {
-        console.error('Admin Google login error:', error);
+        setError('Error con el login de Google.');
+        toast({
+          title: "Error de Google",
+          description: error.message,
+          variant: "destructive"
+        });
       }
+      // Role verification will happen in useEffect after successful login
     } catch (error) {
       console.error('Admin Google login failed:', error);
+      setError('Error inesperado con Google.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    if (auth.user) {
+      verifyAdminRole();
     }
   };
 
@@ -86,10 +157,42 @@ export function AdminLoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Error Alert */}
-            {auth.error && (
+            {(error || auth.error) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{auth.error}</AlertDescription>
+                <AlertDescription>
+                  {error || auth.error}
+                  {error && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="ml-2 h-6 px-2"
+                      onClick={handleRetry}
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Reintentar
+                    </Button>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Access Denied Message */}
+            {auth.isAuthenticated && !isVerifyingRole && error && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p>Si necesitas acceso como administrador, contacta al equipo técnico.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/auth')}
+                    >
+                      Ir al login principal
+                    </Button>
+                  </div>
+                </AlertDescription>
               </Alert>
             )}
 
