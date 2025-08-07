@@ -75,8 +75,10 @@ export function useUserWithRole(): UserWithRole {
 
   // Memoized computed values
   const computedValues = useMemo(() => {
+    // Quick admin check from metadata while DB loads
+    const metadataAdmin = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
     const role = userContext?.role as UserWithRole['role'] || null;
-    const isAdmin = userContext?.is_admin || role === 'admin';
+    const isAdmin = userContext?.is_admin || role === 'admin' || metadataAdmin;
     const orgId = userContext?.org_id || null;
     const locationId = userContext?.location_id || null;
     
@@ -108,9 +110,9 @@ export function useUserWithRole(): UserWithRole {
       canAccessAdmin: isAdmin,
       canAccessTenant: !!orgId && !isAdmin,
       orgSlug,
-      isLoading: authLoading || loading
+      isLoading: authLoading || (loading && !metadataAdmin)
     };
-  }, [userContext, authLoading, loading]);
+  }, [userContext, authLoading, loading, user]);
 
   return {
     user,

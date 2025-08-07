@@ -9,6 +9,14 @@ import { ContextualLoading } from '@/components/ui/loading-states';
 export function OnboardingPage() {
   const { user, orgId, isLoading, isAdmin } = useUserWithRole();
 
+  // Loading state - but check for admin from metadata first
+  const quickAdminCheck = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
+  
+  // If we can quickly determine it's an admin, redirect immediately
+  if (quickAdminCheck && !isLoading) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -47,7 +55,12 @@ export function OnboardingPage() {
     return <Navigate to="/onboarding/location" replace />;
   }
 
-  // If no org assigned, show waiting message (this should rarely happen in B2B)
+  // If no org assigned and not admin, show waiting message (this should rarely happen in B2B)
+  // But don't show this if we're still determining admin status
+  if (quickAdminCheck) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-cream/5 to-warm-gold/5 p-4">
       <Card className="w-full max-w-lg shadow-xl">

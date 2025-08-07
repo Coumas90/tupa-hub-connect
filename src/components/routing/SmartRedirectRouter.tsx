@@ -11,19 +11,22 @@ import { ContextualLoading } from '@/components/ui/loading-states';
 export function SmartRedirectRouter() {
   const { user, isAdmin, orgSlug, role, isLoading } = useUserWithRole();
 
-  // Loading state
-  if (isLoading) {
-    return <ContextualLoading type="auth" message="Verificando acceso..." />;
-  }
+  // Quick admin check from metadata to avoid waiting for DB
+  const quickAdminCheck = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
 
   // No authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Admin users go to admin panel
-  if (isAdmin) {
+  // Admin users go to admin panel (either confirmed from DB or quick metadata check)
+  if (isAdmin || quickAdminCheck) {
     return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  // Loading state for non-admin users
+  if (isLoading) {
+    return <ContextualLoading type="auth" message="Verificando acceso..." />;
   }
 
   // Users without organization context need onboarding
