@@ -34,7 +34,7 @@ export function TenantRouteGuard({
 
   // Admin users should go to admin panel
   if (isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // User doesn't belong to this organization

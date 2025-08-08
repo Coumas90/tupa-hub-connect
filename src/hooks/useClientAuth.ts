@@ -36,7 +36,7 @@ export function useClientAuth(): ClientAuthResult {
     if (!auth.loading && auth.isInitialized && auth.user) {
       // Only allow non-admin users in client flow
       if (auth.isAdmin) {
-        navigate('/admin/dashboard', { replace: true });
+        navigate('/dashboard', { replace: true });
         return;
       }
 

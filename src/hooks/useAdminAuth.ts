@@ -52,12 +52,12 @@ export function useAdminAuth(): AdminAuthResult {
         ).then(validation => {
           if (validation.redirectTo && validation.redirectTo !== location.pathname) {
             if (validation.redirectTo.startsWith('/onboarding')) {
-              navigate('/admin/dashboard', { replace: true });
+              navigate('/dashboard', { replace: true });
             } else {
               navigate(validation.redirectTo, { replace: true });
             }
           } else if (location.pathname.startsWith('/admin/login')) {
-            navigate('/admin/dashboard', { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         });
       }

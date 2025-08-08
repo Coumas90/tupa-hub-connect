@@ -41,7 +41,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
         description: 'Familiarízate con las métricas y controles principales',
         icon: BarChart3,
         action: 'Ver Dashboard',
-        href: '/admin/dashboard'
+        href: '/dashboard'
       },
       {
         id: 'manage-users',

@@ -21,7 +21,7 @@ export function SmartRedirectRouter() {
 
   // Admin users go to admin panel (either confirmed from DB or quick metadata check)
   if (isAdmin || quickAdminCheck) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Loading state for non-admin users
@@ -55,7 +55,7 @@ export function UnauthorizedAccess() {
   const { isAdmin, orgSlug, role } = useUserWithRole();
 
   const getHomePath = () => {
-    if (isAdmin) return "/admin/dashboard";
+    if (isAdmin) return "/dashboard";
     if (orgSlug) {
       switch (role) {
         case 'owner': return `/org/${orgSlug}/owner/dashboard`;

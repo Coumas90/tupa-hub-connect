@@ -168,7 +168,10 @@ export function useOptimizedAuth() {
             }));
             navigate('/login', { replace: true });
           } else if (session) {
-            updateAuthState(session);
+            // Defer async fetches to avoid deadlocks in callback
+            setTimeout(() => {
+              updateAuthState(session);
+            }, 0);
           }
         }
       );

@@ -32,7 +32,7 @@ export function ClientRouteGuard({
 
   // Admin users should not access client routes through this guard
   if (auth.user?.user_metadata?.role === 'admin' || auth.user?.app_metadata?.role === 'admin') {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Role-specific check if required

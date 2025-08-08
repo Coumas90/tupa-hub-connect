@@ -14,7 +14,7 @@ export function OnboardingPage() {
   
   // If we can quickly determine it's an admin, redirect immediately
   if (quickAdminCheck && !isLoading) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Loading state
@@ -47,7 +47,7 @@ export function OnboardingPage() {
 
   // Admin users go directly to admin dashboard
   if (isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If user has org, continue to location onboarding
@@ -58,7 +58,7 @@ export function OnboardingPage() {
   // If no org assigned and not admin, show waiting message (this should rarely happen in B2B)
   // But don't show this if we're still determining admin status
   if (quickAdminCheck) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
