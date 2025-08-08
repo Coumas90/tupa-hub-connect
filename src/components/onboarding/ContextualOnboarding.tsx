@@ -77,7 +77,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
       description: 'Descubre todas las herramientas disponibles',
       icon: Coffee,
       action: 'Ver Funciones',
-      href: '/app'
+      href: '/dashboard'
     },
     {
       id: 'first-task',
@@ -85,7 +85,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
       description: 'Comienza a usar la plataforma con una tarea simple',
       icon: Target,
       action: 'Empezar',
-      href: '/app'
+      href: '/dashboard'
     }
   ];
 };

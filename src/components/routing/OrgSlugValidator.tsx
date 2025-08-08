@@ -58,7 +58,7 @@ export function OrgSlugValidator({ children }: OrgSlugValidatorProps) {
     return (
       <UnauthorizedAccess 
         reason="Esta página pertenece a otra organización" 
-        redirectTo="/app"
+        redirectTo="/dashboard"
       />
     );
   }

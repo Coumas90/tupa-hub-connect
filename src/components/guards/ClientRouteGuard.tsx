@@ -37,7 +37,7 @@ export function ClientRouteGuard({
 
   // Role-specific check if required
   if (requireRole && auth.userRole !== requireRole) {
-    return fallback || <Navigate to="/app" replace />;
+    return fallback || <Navigate to="/dashboard" replace />;
   }
 
   // User doesn't have location access and it's required

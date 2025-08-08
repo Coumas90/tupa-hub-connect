@@ -47,7 +47,7 @@ export async function validateAndRedirectUser(
   if (options.forceAdmin && !userRole.isAdmin) {
     return {
       isValid: false,
-      redirectTo: '/app',
+      redirectTo: '/dashboard',
       reason: 'insufficient_privileges',
       userRole
     };
@@ -62,7 +62,7 @@ export async function validateAndRedirectUser(
     if (!hasRequiredRole) {
       return {
         isValid: false,
-        redirectTo: options.fallbackRoute || '/app',
+        redirectTo: options.fallbackRoute || '/dashboard',
         reason: 'role_mismatch',
         userRole
       };
@@ -128,7 +128,7 @@ function determineOptimalRoute(
   }
 
   // Default fallback
-  return '/app';
+  return '/dashboard';
 }
 
 /**
@@ -148,7 +148,7 @@ export function validateRouteAccess(
   // Admin routes
   if (routePath.startsWith('/admin')) {
     if (!userRole.isAdmin) {
-      return { allowed: false, redirectTo: '/app' };
+      return { allowed: false, redirectTo: '/dashboard' };
     }
     return { allowed: true };
   }

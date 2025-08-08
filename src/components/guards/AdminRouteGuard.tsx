@@ -30,7 +30,7 @@ export function AdminRouteGuard({
 
   // Non-admin users should not access admin routes
   if (!auth.isAdmin) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

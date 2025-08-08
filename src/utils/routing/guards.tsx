@@ -111,7 +111,7 @@ export function RoleGuard({
             case 'client':
             case 'manager':
             case 'owner':
-              navigate('/app');
+              navigate('/dashboard');
               break;
             default:
               navigate('/');
@@ -268,7 +268,7 @@ export function SmartGuard({
         title="Ubicación No Configurada"
         message="Necesitas tener acceso a una ubicación para usar esta funcionalidad."
         actionLabel="Ir al Dashboard"
-        onAction={() => navigate('/app')}
+        onAction={() => navigate('/dashboard')}
         userRole={userRole || 'unknown'}
       />
     );

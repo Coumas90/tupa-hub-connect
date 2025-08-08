@@ -29,7 +29,7 @@ export function OnboardingLocationPage() {
 
   // If user already has location, redirect to appropriate dashboard
   if (!isLoading && locationId) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Load locations for user's organization
@@ -81,7 +81,7 @@ export function OnboardingLocationPage() {
       });
 
       // Redirect to app
-      window.location.href = '/app';
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error assigning location:', error);
       toast({

@@ -38,7 +38,7 @@ export function useAdminAuth(): AdminAuthResult {
 
       if (auth.user && !auth.isAdmin && !quickAdminCheck) {
         // Non-admin users should go to client app
-        navigate('/app', { replace: true });
+        navigate('/dashboard', { replace: true });
         return;
       }
 
