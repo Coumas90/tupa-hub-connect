@@ -130,9 +130,9 @@ function handleTokenRefreshFailure(session: Session | null) {
 
   // Optional: Redirect to login after a short delay
   setTimeout(() => {
-    if (window.location.pathname !== '/auth' && window.location.pathname !== '/') {
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
       console.info('🔄 Redirecting to login due to token refresh failure');
-      window.location.href = '/auth';
+      window.location.href = '/login';
     }
   }, 3000);
 }

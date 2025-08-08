@@ -57,7 +57,7 @@ export function RoleGuard({
     return fallback || (
       <ErrorState
         type="auth"
-        onAction={() => navigate('/auth')}
+        onAction={() => navigate('/login')}
       />
     );
   }
@@ -256,7 +256,7 @@ export function SmartGuard({
     return (
       <ErrorState
         type="auth"
-        onAction={() => navigate('/auth')}
+        onAction={() => navigate('/login')}
       />
     );
   }

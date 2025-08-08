@@ -187,7 +187,7 @@ export function AdminLoginPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => navigate('/auth')}
+                      onClick={() => navigate('/login')}
                     >
                       Ir al login principal
                     </Button>
@@ -273,7 +273,7 @@ export function AdminLoginPage() {
               <div className="text-sm text-muted-foreground">
                 ¿Eres propietario de cafetería?{' '}
                 <a 
-                  href="/auth" 
+                  href="/login" 
                   className="text-orange-600 hover:underline"
                 >
                   Accede aquí

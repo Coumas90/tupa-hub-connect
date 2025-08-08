@@ -29,7 +29,7 @@ export function TenantRouteGuard({
 
   // Not authenticated
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Admin users should go to admin panel

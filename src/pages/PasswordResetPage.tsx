@@ -13,13 +13,13 @@ export default function PasswordResetPage() {
       setModalOpen(true);
     } else {
       // No token, redirect to login
-      navigate('/auth');
+      navigate('/login');
     }
   }, [token, navigate]);
 
   const handleModalClose = () => {
     setModalOpen(false);
-    navigate('/auth');
+    navigate('/login');
   };
 
   if (!token) {

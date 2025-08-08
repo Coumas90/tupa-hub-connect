@@ -100,7 +100,7 @@ function determineLoginRoute(currentPath: string, options: RedirectOptions): str
   }
   
   // Default client login
-  return '/auth';
+  return '/login';
 }
 
 /**
@@ -112,7 +112,7 @@ function determineOptimalRoute(
   currentPath: string
 ): string {
   // Skip redirects for certain paths
-  const skipRedirectPaths = ['/auth', '/admin/login', '/password-reset', '/onboarding'];
+  const skipRedirectPaths = ['/login', '/auth', '/admin/login', '/password-reset', '/onboarding'];
   if (skipRedirectPaths.some(path => currentPath.startsWith(path))) {
     return currentPath;
   }
@@ -141,7 +141,7 @@ export function validateRouteAccess(
   if (!userRole) {
     return { 
       allowed: false, 
-      redirectTo: routePath.startsWith('/admin') ? '/admin/login' : '/auth' 
+      redirectTo: routePath.startsWith('/admin') ? '/admin/login' : '/login' 
     };
   }
 
@@ -156,7 +156,7 @@ export function validateRouteAccess(
   // Client routes - most roles allowed
   if (routePath.startsWith('/app')) {
     if (!userRole.role) {
-      return { allowed: false, redirectTo: '/auth' };
+      return { allowed: false, redirectTo: '/login' };
     }
     return { allowed: true };
   }

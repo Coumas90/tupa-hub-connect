@@ -10,6 +10,9 @@ export const config = {
   security: {
     productionMode: import.meta.env.PROD,
     blockDangerousOps: import.meta.env.PROD
+  },
+  features: {
+    autoAssignOrgEnabled: false
   }
 } as const;
 

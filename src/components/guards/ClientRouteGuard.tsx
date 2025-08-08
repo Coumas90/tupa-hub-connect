@@ -27,7 +27,7 @@ export function ClientRouteGuard({
 
   // Not authenticated - redirect to login
   if (!auth.isAuthenticated) {
-    return <Navigate to="/auth" state={{ returnTo: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ returnTo: location.pathname }} replace />;
   }
 
   // Admin users should not access client routes through this guard

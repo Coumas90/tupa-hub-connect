@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { config } from '@/lib/config';
 
 interface AutoOrgAssignmentResult {
   loading: boolean;
@@ -22,7 +23,7 @@ export function useAutoOrgAssignment(userId?: string) {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !config.features?.autoAssignOrgEnabled) return;
 
     const attemptAutoAssignment = async () => {
       setState(prev => ({ ...prev, loading: true, error: null }));

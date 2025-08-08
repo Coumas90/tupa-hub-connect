@@ -104,7 +104,7 @@ export const routeUtils = {
    * Checks if current route is public (no auth required)
    */
   isPublicRoute: (pathname: string): boolean => {
-    const publicPaths = ['/', '/auth', '/auth/reset', '/activate-account', '/public/'];
+    const publicPaths = ['/', '/login', '/auth', '/auth/reset', '/activate-account', '/public/'];
     return publicPaths.some(path => pathname === path || pathname.startsWith(path));
   },
 

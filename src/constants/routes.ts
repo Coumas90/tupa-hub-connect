@@ -7,7 +7,7 @@
 export const PUBLIC_ROUTES = {
   HOME: '/',
   AUTH: {
-    LOGIN: '/auth',
+    LOGIN: '/login',
     RESET: '/auth/reset',
     ACTIVATE: '/activate-account',
   },

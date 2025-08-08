@@ -22,7 +22,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   fallback,
-  redirectTo = '/auth',
+  redirectTo = '/login',
   requireAdmin = false,
   showLoadingFallback = true
 }: ProtectedRouteProps) {

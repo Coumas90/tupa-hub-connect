@@ -42,7 +42,7 @@ export function OnboardingPage() {
 
   // Redirect if not authenticated
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Admin users go directly to admin dashboard

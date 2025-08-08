@@ -57,7 +57,7 @@ export function useClientAuth(): ClientAuthResult {
   // Client-specific sign out
   const clientSignOut = useCallback(async () => {
     await auth.signOut();
-    navigate('/auth', { replace: true });
+    navigate('/login', { replace: true });
   }, [auth.signOut, navigate]);
 
   return {

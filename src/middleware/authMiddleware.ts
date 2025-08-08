@@ -45,7 +45,7 @@ export class AuthMiddleware {
     if (!user || !session) {
       return {
         isValid: false,
-        redirectTo: routePath.startsWith('/admin') ? '/admin/login' : '/auth',
+        redirectTo: routePath.startsWith('/admin') ? '/admin/login' : '/login',
         reason: 'not_authenticated'
       };
     }
