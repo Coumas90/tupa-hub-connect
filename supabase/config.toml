@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.create-barista]
 verify_jwt = false
+
+[functions.send-owner-invitation]
+verify_jwt = false
+
+[functions.create-client-and-owner]
+verify_jwt = true

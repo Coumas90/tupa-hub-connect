@@ -705,6 +705,7 @@ export type Database = {
       }
       groups: {
         Row: {
+          client_id: string | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -713,6 +714,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          client_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -721,6 +723,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          client_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string

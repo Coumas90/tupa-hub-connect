@@ -15,7 +15,7 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminOperations } from '@/components/admin/AdminOperations';
-
+import AdminClientsPage from '@/pages/admin/AdminClientsPage';
 /**
  * Router para rutas multitenant /org/:orgSlug/*
  */
@@ -91,6 +91,7 @@ export function AdminRouter() {
       <Routes>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="clients" element={<AdminClientsPage />} />
         <Route path="operations" element={<AdminOperations />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />

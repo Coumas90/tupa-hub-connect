@@ -51,6 +51,19 @@ export const ADMIN_NAVIGATION: Record<string, AdminNavGroup> = {
     ]
   },
 
+  CLIENTS: {
+    title: 'Clientes',
+    description: 'Gestión de clientes y propietarios',
+    items: [
+      {
+        title: 'Clientes',
+        path: '/admin/clients',
+        icon: Users,
+        description: 'Listado y alta de clientes'
+      }
+    ]
+  },
+
   TENANTS: {
     title: 'Tenants & Locations',
     description: 'Gestión de ubicaciones y tenants',
