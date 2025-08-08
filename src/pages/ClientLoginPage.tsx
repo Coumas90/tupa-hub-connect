@@ -30,7 +30,7 @@ export function ClientLoginPage() {
     if (auth.isAuthenticated && auth.user) {
       // Admin users go to admin panel
       if (auth.isAdmin) {
-        navigate('/admin/dashboard', { replace: true });
+        navigate('/dashboard', { replace: true });
         return;
       }
 
@@ -49,13 +49,13 @@ export function ClientLoginPage() {
           description: "Redirigiendo a tu panel de control...",
         });
         setTimeout(() => {
-          navigate('/app', { replace: true });
+          navigate('/dashboard', { replace: true });
         }, 1000);
       } else if (autoAssignment.error) {
         // Even if org assignment fails, allow user to continue
         setLoginStep('complete');
         setTimeout(() => {
-          navigate('/app', { replace: true });
+          navigate('/dashboard', { replace: true });
         }, 1000);
       }
     }
@@ -76,7 +76,7 @@ export function ClientLoginPage() {
 
   // Redirect if already authenticated and assignment is complete
   if (auth.isAuthenticated) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleEmailLogin = async (e: React.FormEvent) => {

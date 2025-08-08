@@ -10,15 +10,9 @@ export function useSimplifiedAuth() {
   const auth = useAuth();
   const navigate = useNavigate();
 
-  const getRedirectPath = useCallback((user: any, userRole: string | null) => {
-    // Admin users
-    if (userRole === 'admin' || auth.isAdmin) {
-      return '/admin/dashboard';
-    }
-
-    // Regular authenticated users go to main app
-    return '/app';
-  }, [auth.isAdmin]);
+  const getRedirectPath = useCallback((_user: any, _userRole: string | null) => {
+    return '/dashboard';
+  }, []);
 
   const signInAndRedirect = useCallback(async (
     email: string, 

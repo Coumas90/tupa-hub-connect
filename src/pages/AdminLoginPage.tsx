@@ -49,7 +49,7 @@ export function AdminLoginPage() {
           variant: "destructive"
         });
       } else {
-        navigate('/admin/dashboard', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
       console.error('Error verifying admin role:', err);

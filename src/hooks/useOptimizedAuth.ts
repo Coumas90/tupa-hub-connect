@@ -95,19 +95,8 @@ export function useOptimizedAuth() {
         isReady: true
       }));
 
-      // Smart redirection using new middleware
-      setTimeout(async () => {
-        const validation = await AuthMiddleware.validateRouteAccess(
-          finalUser, 
-          session, 
-          location.pathname,
-          { requireAuth: true }
-        );
-        
-        if (validation.redirectTo && validation.redirectTo !== location.pathname) {
-          navigate(validation.redirectTo, { replace: true });
-        }
-      }, 200);
+      // Redirection handled outside via SmartRedirectRouter
+
     } else {
       setState(prev => ({
         ...prev,
@@ -157,7 +146,7 @@ export function useOptimizedAuth() {
 
       // Set up auth state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
+        (event, session) => {
           console.log('Auth event:', event, session?.user?.email);
           
           if (event === 'SIGNED_OUT') {
@@ -177,7 +166,7 @@ export function useOptimizedAuth() {
               statusMessage: 'Desconectado',
               isReady: false
             }));
-            navigate('/', { replace: true });
+            navigate('/login', { replace: true });
           } else if (session) {
             updateAuthState(session);
           }
@@ -244,7 +233,7 @@ export function useOptimizedAuth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: `${window.location.origin}/dashboard`
         }
       });
 
