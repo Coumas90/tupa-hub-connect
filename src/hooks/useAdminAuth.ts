@@ -34,13 +34,15 @@ export function useAdminAuth(): AdminAuthResult {
   // Admin-specific validation
   useEffect(() => {
     if (!auth.loading && auth.isInitialized) {
-      if (auth.user && !auth.isAdmin) {
+      const quickAdminCheck = auth.user?.user_metadata?.role === 'admin' || auth.user?.app_metadata?.role === 'admin';
+
+      if (auth.user && !auth.isAdmin && !quickAdminCheck) {
         // Non-admin users should go to client app
         navigate('/app', { replace: true });
         return;
       }
 
-      if (auth.user && auth.isAdmin) {
+      if (auth.user && (auth.isAdmin || quickAdminCheck)) {
         // Admin users - validate and redirect
         AuthMiddleware.validateRouteAccess(
           auth.user,
@@ -49,7 +51,13 @@ export function useAdminAuth(): AdminAuthResult {
           { requireAuth: true, adminOnly: true }
         ).then(validation => {
           if (validation.redirectTo && validation.redirectTo !== location.pathname) {
-            navigate(validation.redirectTo, { replace: true });
+            if (validation.redirectTo.startsWith('/onboarding')) {
+              navigate('/admin/dashboard', { replace: true });
+            } else {
+              navigate(validation.redirectTo, { replace: true });
+            }
+          } else if (location.pathname.startsWith('/admin/login')) {
+            navigate('/admin/dashboard', { replace: true });
           }
         });
       }

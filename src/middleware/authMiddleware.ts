@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserRole } from '@/utils/authRoleUtils';
 
 export interface AuthValidationResult {
   isValid: boolean;
@@ -49,12 +50,31 @@ export class AuthMiddleware {
       };
     }
 
-    // Get user context
+    // Determine admin route and role early
+    const isAdminRoute = routePath.startsWith('/admin') || !!protection.adminOnly;
+    const roleResult = await (async () => {
+      try {
+        return await getUserRole(user);
+      } catch {
+        return { isAdmin: false, role: null } as any;
+      }
+    })();
+
+    // If accessing admin routes and user is admin, bypass org/location checks
+    if (isAdminRoute && roleResult?.isAdmin) {
+      if (routePath.startsWith('/admin/login')) {
+        return { isValid: true, redirectTo: '/admin/dashboard', userRole: 'admin' };
+      }
+      return { isValid: true, userRole: 'admin' };
+    }
+
+    // For non-admins or non-admin routes, fetch user context
     const userContext = await this.getUserContext(user.id);
     if (!userContext) {
+      // Never send admins to onboarding; non-admins only
       return {
         isValid: false,
-        redirectTo: '/onboarding',
+        redirectTo: isAdminRoute ? '/admin/login' : '/onboarding',
         reason: 'no_user_context'
       };
     }
