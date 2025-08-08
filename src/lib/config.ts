@@ -57,8 +57,11 @@ class TestingMode {
   }
 }
 
-// Expose to window for console access
-if (config.development.enableTestingMode) {
+// Expose to window for console access (localhost only)
+if (
+  config.development.enableTestingMode &&
+  ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+) {
   (window as any).enableTestingMode = () => TestingMode.enable();
   (window as any).disableTestingMode = () => TestingMode.disable();
   (window as any).toggleTestingMode = () => TestingMode.toggle();

@@ -7,7 +7,7 @@ import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '
 import { AuthMiddleware } from '@/middleware/authMiddleware';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import { sentryUtils } from '@/lib/sentry';
 interface OptimizedAuthState {
   user: User | null;
   session: Session | null;
@@ -95,6 +95,10 @@ export function useOptimizedAuth() {
         isReady: true
       }));
 
+      sentryUtils.setUser({ id: finalUser.id, email: finalUser.email || undefined });
+      sentryUtils.setTag('user.role', roleResult.role || 'unknown');
+      sentryUtils.addBreadcrumb('Auth state updated','auth',{ role: roleResult.role, source: roleResult.source });
+
       // Redirection handled outside via SmartRedirectRouter
 
     } else {
@@ -148,7 +152,7 @@ export function useOptimizedAuth() {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, session) => {
           console.log('Auth event:', event, session?.user?.email);
-          
+          sentryUtils.addBreadcrumb(`Auth event: ${event}`,'auth',{ email: session?.user?.email });
           if (event === 'SIGNED_OUT') {
             cache.clearCache();
             sessionMonitor.stopMonitoring();
@@ -210,6 +214,7 @@ export function useOptimizedAuth() {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
+      sentryUtils.addBreadcrumb('Sign in attempt','auth',{ email });
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -217,6 +222,7 @@ export function useOptimizedAuth() {
 
       if (error) {
         setState(prev => ({ ...prev, error: error.message, loading: false }));
+        sentryUtils.captureMessage(`Sign in failed: ${error.message}`,'error',{ email });
         return { error };
       }
 
