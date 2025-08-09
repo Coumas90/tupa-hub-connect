@@ -94,8 +94,8 @@ export const ADMIN_ROUTES = {
 export const LEGACY_ROUTES = {
   APP: '/app',
   RECIPES: '/recipes',
-  CAFE_DASHBOARD: '/cafe/dashboard/:cafeId',
-  FEEDBACK_LEGACY: '/feedback/:cafeId',
+  LOCATION_DASHBOARD: '/location/dashboard/:locationId',
+  FEEDBACK_LEGACY: '/feedback/:locationId',
 } as const;
 
 // ===== ROLE DEFINITIONS =====
