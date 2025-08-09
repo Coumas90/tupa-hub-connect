@@ -19,9 +19,9 @@ El proyecto utiliza Supabase para el manejo de secrets, **no requiere archivo `.
 
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
-| `SUPABASE_URL` | URL del proyecto Supabase | `https://xxxxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | Clave pública de Supabase para autenticación | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio para operaciones administrativas | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| `SUPABASE_URL` | URL del proyecto Supabase | `<SUPABASE_URL>` |
+| `SUPABASE_ANON_KEY` | Clave pública de Supabase para autenticación | `<SUPABASE_KEY>` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio para operaciones administrativas | `<SUPABASE_KEY>` |
 | `SUPABASE_DB_URL` | URL directa de la base de datos PostgreSQL | `postgresql://postgres:password@db.xxx.supabase.co:5432/postgres` |
 | `OPENAI_API_KEY` | API key para funcionalidades de IA | `sk-proj-xxxxx` |
 | `RESEND_API_KEY` | API key para envío de emails | `re_xxxxx` |
@@ -45,8 +45,8 @@ npm install
 > Instala todas las dependencias del proyecto incluyendo React, TypeScript, Tailwind CSS y las librerías de UI.
 
 ### 3. Configurar Supabase (requerido)
-- El proyecto está conectado al proyecto Supabase: `hmmaubkxfewzlypywqff`
-- Las credenciales están configuradas en `src/lib/config.ts`
+- Define `SUPABASE_URL` y `SUPABASE_ANON_KEY` como variables de entorno
+  o en `src/lib/config.ts` (sin incluir valores reales en el repositorio).
 - No se requiere configuración adicional para desarrollo
 
 ### 4. Ejecutar migraciones de base de datos (si es necesario)
