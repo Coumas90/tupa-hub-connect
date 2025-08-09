@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { getAuthSession, clearAuthSession, setAuthSession } from '@/utils/authCookies';
 import { useAuthCache } from './useAuthCache';
 import { useSessionMonitor } from './useSessionMonitor';
 import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '@/utils/authRoleUtils';
@@ -76,7 +77,7 @@ export function useOptimizedAuth() {
 
   const updateAuthState = useCallback(async (session: Session | null, user: User | null = null) => {
     const finalUser = user || session?.user || null;
-    
+
     if (finalUser) {
       // Get comprehensive role information
       const roleResult = await getUserRole(finalUser);
@@ -94,6 +95,9 @@ export function useOptimizedAuth() {
         error: null,
         isReady: true
       }));
+      if (session) {
+        setAuthSession(session);
+      }
 
       sentryUtils.setUser({ id: finalUser.id, email: finalUser.email || undefined });
       sentryUtils.setTag('user.role', roleResult.role || 'unknown');
@@ -115,6 +119,7 @@ export function useOptimizedAuth() {
         statusMessage: 'Sin sesión',
         isReady: false
       }));
+      clearAuthSession();
     }
 
     // Update cache
@@ -133,19 +138,18 @@ export function useOptimizedAuth() {
     initializationRef.current = true;
 
     try {
-      // Try cache first for faster initial load
+      // Try cache or cookie for faster initial load
       const cachedSession = cache.getCachedSession();
       const cachedUser = cache.getCachedUser();
+      const cookieSession = getAuthSession();
 
-      if (cachedSession && cachedUser) {
-        setState(prev => ({
-          ...prev,
-          session: cachedSession,
-          user: cachedUser,
-          loading: false,
-          isInitialized: true
-        }));
-        sessionMonitor.startMonitoring(cachedSession);
+      const initialSession = cachedSession || cookieSession;
+      const initialUser = cachedUser || cookieSession?.user || null;
+
+      if (initialSession && initialUser) {
+        await updateAuthState(initialSession, initialUser);
+        sessionMonitor.startMonitoring(initialSession);
+        setState(prev => ({ ...prev, isInitialized: true }));
       }
 
       // Set up auth state listener
@@ -182,8 +186,8 @@ export function useOptimizedAuth() {
 
       unsubscribeRef.current = subscription.unsubscribe;
 
-      // Get current session if not cached
-      if (!cachedSession) {
+      // Get current session if not cached or in cookies
+      if (!initialSession) {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -270,6 +274,7 @@ export function useOptimizedAuth() {
       } else {
         cache.clearCache();
         sessionMonitor.stopMonitoring();
+        clearAuthSession();
         setState({
           user: null,
           session: null,

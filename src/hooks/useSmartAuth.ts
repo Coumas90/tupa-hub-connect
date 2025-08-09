@@ -3,6 +3,7 @@ import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { checkAndRefreshSession } from '@/utils/authGuard';
 import { toast } from '@/hooks/use-toast';
+import { getAuthSession } from '@/utils/authCookies';
 
 interface SmartAuthState {
   // Enhanced loading states
@@ -34,18 +35,12 @@ export function useSmartAuth(options: SmartAuthOptions = {}) {
     enableProgressTracking = true
   } = options;
 
-  const {
-    user,
-    session,
-    userRole,
-    isAdmin,
-    loading: authLoading,
-    error,
-    signInWithEmail,
-    signInWithGoogle,
-    signOut,
-    clearError
-  } = useOptimizedAuth();
+  const optimizedAuth = useOptimizedAuth();
+  const cookieSession = getAuthSession();
+
+  const user = optimizedAuth.user ?? cookieSession?.user ?? null;
+  const session = optimizedAuth.session ?? cookieSession ?? null;
+  const { userRole, isAdmin, loading: authLoading, error, signInWithEmail, signInWithGoogle, signOut, clearError } = optimizedAuth;
 
   const navigate = useNavigate();
   const location = useLocation();
