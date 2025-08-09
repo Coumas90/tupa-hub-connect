@@ -15,7 +15,7 @@ TUPÁ Hub is deployed using Lovable's hosting platform with Supabase as the back
 
 ### ⚠️ Important: No VITE_ Variables
 
-**This project does NOT use VITE_ environment variables** due to Lovable limitations. Configuration is centralized in `src/lib/config.ts`.
+**This project does NOT use VITE_ environment variables** due to Lovable limitations. Configuration is centralized in `src/lib/config/`.
 
 ### Supabase Configuration
 
@@ -52,6 +52,14 @@ VALUES ('client-123', 'fudo', 'v1', 15, false);
 - Fudo POS: API URL + API Key
 - Bistrosoft: API URL + Authentication credentials
 - Odoo: Server URL + Database + Username + Password
+
+### Adding New Environments
+
+To introduce a new deployment environment:
+
+1. Create `src/lib/config/config.<env>.ts` with the Supabase parameters and feature flags for that environment.
+2. Update `src/lib/config/index.ts` to include the new entry in `CONFIG_MAP`.
+3. Build or preview using the mode flag: `vite build --mode <env>` or `vite preview --mode <env>`.
 
 ## 🏗️ Deployment Process
 
@@ -229,7 +237,7 @@ SELECT * FROM supabase_migrations.schema_migrations ORDER BY version DESC;
 3. Test with different browsers/incognito mode
 
 **API connection errors:**
-1. Verify Supabase URL and keys in `src/lib/config.ts`
+1. Verify Supabase URL and keys in the corresponding `src/lib/config/config.<env>.ts`
 2. Check CORS configuration in Supabase
 3. Verify RLS policies allow intended access
 

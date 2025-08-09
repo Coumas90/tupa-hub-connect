@@ -9,9 +9,9 @@ This guide will help new developers get up to speed with the TUPÁ Hub platform.
 ## ⚙️ Gestión de Configuración
 
 ### Variables Públicas
-Editar en `src/lib/config.ts`:
+Editar en `src/lib/config/config.<env>.ts`:
 ```typescript
-export const config = {
+export default {
   supabase: {
     url: "https://your-project.supabase.co",
     anonKey: "eyJ0eXAi...public_key"

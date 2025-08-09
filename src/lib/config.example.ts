@@ -3,7 +3,7 @@
 // DO NOT COMMIT REAL VALUES - Use for reference only
 
 export const CONFIG_EXAMPLE = {
-  // ===== PUBLIC CONFIGURATION (stored in config.ts) =====
+  // ===== PUBLIC CONFIGURATION (stored in config/config.<env>.ts) =====
   // These values are safe to include in the frontend bundle
   supabase: {
     url: "https://[YOUR-PROJECT-ID].supabase.co",
@@ -12,7 +12,7 @@ export const CONFIG_EXAMPLE = {
 
   // ===== PRIVATE SECRETS (stored in Supabase Secrets) =====
   // These MUST be configured in Supabase Dashboard → Settings → Functions → Secrets
-  // NEVER include real values in config.ts or any frontend file
+  // NEVER include real values in config files or any frontend file
 
   // Database access (Edge Functions only)
   SUPABASE_SERVICE_ROLE_KEY: "<SUPABASE_SECRET>",
@@ -33,7 +33,7 @@ export const CONFIG_EXAMPLE = {
 
 // ===== SECURITY NOTES =====
 /*
-1. PUBLIC values go in src/lib/config.ts - safe for frontend
+1. PUBLIC values go in src/lib/config/config.<env>.ts - safe for frontend
 2. PRIVATE secrets go in Supabase Secrets - accessible only in Edge Functions
 3. Never use VITE_ variables - not supported in Lovable
 4. All secrets are managed through Supabase Dashboard
