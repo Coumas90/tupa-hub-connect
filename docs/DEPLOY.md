@@ -21,17 +21,17 @@ TUPÁ Hub is deployed using Lovable's hosting platform with Supabase as the back
 
 **Required in Supabase Dashboard > Settings > API:**
 ```
-Project URL: https://your-project-id.supabase.co
-Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Service Role Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (backend only)
+Project URL: <SUPABASE_URL>
+Anon Key: <SUPABASE_KEY>
+Service Role Key: <SUPABASE_KEY> (backend only)
 ```
 
 **Required Supabase Secrets** (for Edge Functions):
 ```bash
 # Core Supabase
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_URL=<SUPABASE_URL>
+SUPABASE_ANON_KEY=<SUPABASE_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_KEY>
 SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@db.your-project-id.supabase.co:5432/postgres
 
 # External Services
