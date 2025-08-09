@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { buildTenantRoute, buildPublicRoute } from './helpers';
+import { Roles } from '@/constants/roles';
 
 /**
  * Legacy Route Redirector
@@ -101,21 +102,21 @@ export function useSmartNavigation() {
     navigate(targetPath);
   }, [activeLocation?.slug, userRole, navigate]);
 
-  const navigateToRole = useCallback((role: 'owner' | 'manager' | 'barista' | 'overview' = 'overview') => {
+  const navigateToRole = useCallback((role: Roles | 'overview' = 'overview') => {
     if (!activeLocation?.slug) {
       console.warn('No active location for role navigation, using fallback');
       
       // Intelligent fallback based on user role
       switch (userRole?.toLowerCase()) {
-        case 'admin':
+        case Roles.ADMIN:
           navigate('/admin/dashboard');
           return;
-        case 'barista':
+        case Roles.BARISTA:
           navigate('/recipes');
           return;
         case 'client':
-        case 'manager':
-        case 'owner':
+        case Roles.MANAGER:
+        case Roles.OWNER:
         default:
           navigate('/app');
           return;
@@ -124,10 +125,10 @@ export function useSmartNavigation() {
     
     const routes = {
       overview: buildTenantRoute.dashboard.overview,
-      owner: buildTenantRoute.dashboard.owner,
-      manager: buildTenantRoute.dashboard.manager,
-      barista: buildTenantRoute.dashboard.barista,
-    };
+      [Roles.OWNER]: buildTenantRoute.dashboard.owner,
+      [Roles.MANAGER]: buildTenantRoute.dashboard.manager,
+      [Roles.BARISTA]: buildTenantRoute.dashboard.barista,
+    } as const;
     
     const targetPath = routes[role]({ locationSlug: activeLocation.slug });
     console.info('🔄 SmartNavigation: Role-based navigation', { 
@@ -170,22 +171,22 @@ export function useSmartNavigation() {
     }
 
     // Only go to admin dashboard if explicitly admin role
-    if (isAdmin && userRole?.toLowerCase() === 'admin') {
+    if (isAdmin && userRole?.toLowerCase() === Roles.ADMIN) {
       navigate('/admin/dashboard');
       return;
     }
 
     // Default fallback prioritizes client routes
     switch (userRole?.toLowerCase()) {
-      case 'barista':
+      case Roles.BARISTA:
         navigate('/recipes');
         break;
-      case 'admin':
+      case Roles.ADMIN:
         navigate('/admin/dashboard');
         break;
       case 'client':
-      case 'manager':
-      case 'owner':
+      case Roles.MANAGER:
+      case Roles.OWNER:
       default:
         navigate('/app');
         break;

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useSmartNavigation } from '@/utils/routing/redirects';
+import { Roles } from '@/constants/roles';
 
 interface DashboardWidget {
   id: string;
@@ -102,7 +103,7 @@ export function RoleDashboard({ userRole, isAdmin, activeLocation, activeCafe }:
     }
 
     switch (userRole?.toLowerCase()) {
-      case 'owner':
+      case Roles.OWNER:
         return [
           {
             id: 'revenue',
@@ -180,7 +181,7 @@ export function RoleDashboard({ userRole, isAdmin, activeLocation, activeCafe }:
           }
         ];
 
-      case 'manager':
+      case Roles.MANAGER:
         return [
           {
             id: 'operations',
@@ -253,7 +254,7 @@ export function RoleDashboard({ userRole, isAdmin, activeLocation, activeCafe }:
           }
         ];
 
-      case 'barista':
+      case Roles.BARISTA:
         return [
           {
             id: 'daily-tasks',

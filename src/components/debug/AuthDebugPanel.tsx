@@ -3,6 +3,7 @@ import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ShieldCheck, User, Settings } from 'lucide-react';
+import { Roles } from '@/constants/roles';
 
 const AuthDebugPanel: React.FC = () => {
   const { user, session, userRole, loading } = useOptimizedAuth();
@@ -56,9 +57,9 @@ const AuthDebugPanel: React.FC = () => {
           <Badge 
             variant={userRole ? "default" : "secondary"}
             className={
-              userRole === 'admin' ? 'bg-red-600' :
+              userRole === Roles.ADMIN ? 'bg-red-600' :
               userRole === 'client' ? 'bg-blue-600' :
-              userRole === 'barista' ? 'bg-green-600' : ''
+              userRole === Roles.BARISTA ? 'bg-green-600' : ''
             }
           >
             {userRole || "Sin rol"}
@@ -72,9 +73,9 @@ const AuthDebugPanel: React.FC = () => {
               <span className="text-sm font-medium">Redirección esperada:</span>
             </div>
             <div className="text-sm text-muted-foreground pl-6">
-              {userRole === 'admin' && <span>→ /admin</span>}
+              {userRole === Roles.ADMIN && <span>→ /admin</span>}
               {userRole === 'client' && <span>→ /app</span>}
-              {userRole === 'barista' && <span>→ /recipes</span>}
+              {userRole === Roles.BARISTA && <span>→ /recipes</span>}
             </div>
           </div>
         )}

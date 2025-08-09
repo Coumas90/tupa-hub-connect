@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useSmartNavigation } from '@/utils/routing/redirects';
+import { Roles } from '@/constants/roles';
 
 interface OnboardingStep {
   id: string;
@@ -68,7 +69,7 @@ export function OnboardingTour({ userRole, isAdmin, onComplete, onDismiss }: Onb
     }
 
     switch (userRole?.toLowerCase()) {
-      case 'owner':
+      case Roles.OWNER:
         return [
           {
             id: 'owner-welcome',
@@ -118,7 +119,7 @@ export function OnboardingTour({ userRole, isAdmin, onComplete, onDismiss }: Onb
           }
         ];
 
-      case 'manager':
+      case Roles.MANAGER:
         return [
           {
             id: 'manager-welcome',
@@ -168,7 +169,7 @@ export function OnboardingTour({ userRole, isAdmin, onComplete, onDismiss }: Onb
           }
         ];
 
-      case 'barista':
+      case Roles.BARISTA:
         return [
           {
             id: 'barista-welcome',

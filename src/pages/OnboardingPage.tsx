@@ -4,13 +4,14 @@ import { Navigate } from 'react-router-dom';
 import { useUserWithRole } from '@/hooks/useUserWithRole';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Coffee, Shield, Users, TrendingUp } from 'lucide-react';
+import { Roles } from '@/constants/roles';
 import { ContextualLoading } from '@/components/ui/loading-states';
 
 export function OnboardingPage() {
   const { user, orgId, isLoading, isAdmin } = useUserWithRole();
 
   // Loading state - but check for admin from metadata first
-  const quickAdminCheck = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
+  const quickAdminCheck = user?.user_metadata?.role === Roles.ADMIN || user?.app_metadata?.role === Roles.ADMIN;
   
   // If we can quickly determine it's an admin, redirect immediately
   if (quickAdminCheck && !isLoading) {

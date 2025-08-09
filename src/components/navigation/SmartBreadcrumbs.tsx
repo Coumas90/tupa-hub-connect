@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { Roles } from '@/constants/roles';
 
 interface BreadcrumbItem {
   label: string;
@@ -168,21 +169,21 @@ export function SmartBreadcrumbs() {
     }
 
     switch (userRole?.toLowerCase()) {
-      case 'owner':
+      case Roles.OWNER:
         return (
           <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
             <Crown className="h-3 w-3 mr-1" />
             Propietario
           </Badge>
         );
-      case 'manager':
+      case Roles.MANAGER:
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-700">
             <Users className="h-3 w-3 mr-1" />
             Encargado
           </Badge>
         );
-      case 'barista':
+      case Roles.BARISTA:
         return (
           <Badge variant="secondary" className="bg-orange-100 text-orange-700">
             <Coffee className="h-3 w-3 mr-1" />

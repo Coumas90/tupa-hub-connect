@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Roles } from '@/constants/roles';
 
 interface AuthFlowTestResult {
   test: string;
@@ -110,7 +111,7 @@ export function useAuthFlowValidator() {
         };
       }
 
-      const validRoles = ['admin', 'client', 'barista'];
+      const validRoles = [Roles.ADMIN, 'client', Roles.BARISTA];
       if (!validRoles.includes(userRole.toLowerCase())) {
         return {
           test: 'Role Assignment',

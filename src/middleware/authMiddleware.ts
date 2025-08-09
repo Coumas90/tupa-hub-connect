@@ -2,18 +2,19 @@ import React from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserRole } from '@/utils/authRoleUtils';
+import { Roles, Role } from '@/constants/roles';
 
 export interface AuthValidationResult {
   isValid: boolean;
   redirectTo?: string;
   reason?: string;
-  userRole?: string;
+  userRole?: Role | null;
   orgId?: string;
 }
 
 export interface RouteProtection {
   requireAuth?: boolean;
-  allowedRoles?: string[];
+  allowedRoles?: Role[];
   requireOrgAccess?: boolean;
   adminOnly?: boolean;
   tenantOnly?: boolean;
@@ -63,9 +64,9 @@ export class AuthMiddleware {
     // If accessing admin routes and user is admin, bypass org/location checks
     if (isAdminRoute && roleResult?.isAdmin) {
       if (routePath.startsWith('/admin/login')) {
-        return { isValid: true, redirectTo: '/admin/dashboard', userRole: 'admin' };
+        return { isValid: true, redirectTo: '/admin/dashboard', userRole: Roles.ADMIN };
       }
-      return { isValid: true, userRole: 'admin' };
+      return { isValid: true, userRole: Roles.ADMIN };
     }
 
     // For non-admins or non-admin routes, fetch user context
@@ -183,7 +184,7 @@ export class AuthMiddleware {
    * Obtiene la ruta por defecto según el rol del usuario
    */
   private static getDefaultRouteForRole(role: string, orgId: string, userContext: any): string {
-    if (role === 'admin') {
+    if (role === Roles.ADMIN) {
       return '/admin/dashboard';
     }
 
@@ -194,10 +195,10 @@ export class AuthMiddleware {
     const orgSlug = this.getOrgSlug(userContext);
 
     switch (role) {
-      case 'owner':
+      case Roles.OWNER:
         return `/org/${orgSlug}/owner/dashboard`;
-      case 'manager':
-      case 'barista':
+      case Roles.MANAGER:
+      case Roles.BARISTA:
         return `/org/${orgSlug}/staff/dashboard`;
       default:
         return `/org/${orgSlug}/dashboard`;

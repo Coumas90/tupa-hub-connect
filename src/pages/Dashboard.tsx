@@ -13,6 +13,7 @@ import { Coffee, TrendingUp, Users, BookOpen, MapPin, Building, GraduationCap, P
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useSmartNavigation } from "@/utils/routing/redirects";
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { Roles } from '@/constants/roles';
 
 export default function Dashboard() {
   const location = useLocation();
@@ -88,14 +89,14 @@ export default function Dashboard() {
         {isInTenantContext && dashboardRole !== 'overview' && (
           <div className="bg-muted/50 rounded-lg p-4">
             <h2 className="font-semibold text-sm mb-2">
-              {dashboardRole === 'owner' && 'Vista de Propietario'}
-              {dashboardRole === 'manager' && 'Vista de Encargado'}
-              {dashboardRole === 'barista' && 'Vista de Barista'}
+              {dashboardRole === Roles.OWNER && 'Vista de Propietario'}
+              {dashboardRole === Roles.MANAGER && 'Vista de Encargado'}
+              {dashboardRole === Roles.BARISTA && 'Vista de Barista'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {dashboardRole === 'owner' && 'Acceso completo a todas las funciones y reportes del negocio.'}
-              {dashboardRole === 'manager' && 'Gestión operativa, personal y reportes de rendimiento.'}
-              {dashboardRole === 'barista' && 'Herramientas para el día a día: recetas, academia y recursos.'}
+              {dashboardRole === Roles.OWNER && 'Acceso completo a todas las funciones y reportes del negocio.'}
+              {dashboardRole === Roles.MANAGER && 'Gestión operativa, personal y reportes de rendimiento.'}
+              {dashboardRole === Roles.BARISTA && 'Herramientas para el día a día: recetas, academia y recursos.'}
             </p>
           </div>
         )}

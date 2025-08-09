@@ -3,6 +3,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserWithRole } from '@/hooks/useUserWithRole';
 import { ContextualLoading } from '@/components/ui/loading-states';
+import { Roles } from '@/constants/roles';
 
 /**
  * Router inteligente que redirige automáticamente al panel correcto
@@ -11,8 +12,7 @@ import { ContextualLoading } from '@/components/ui/loading-states';
 export function SmartRedirectRouter() {
   const { user, isAdmin, orgSlug, role, isLoading } = useUserWithRole();
 
-  // Quick admin check from metadata to avoid waiting for DB
-  const quickAdminCheck = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
+  const quickAdminCheck = user?.user_metadata?.role === Roles.ADMIN || user?.app_metadata?.role === Roles.ADMIN;
 
   // No authenticated
   if (!user) {
@@ -36,13 +36,13 @@ export function SmartRedirectRouter() {
 
   // Tenant users go to their specific panel based on role
   switch (role) {
-    case 'owner':
+    case Roles.OWNER:
       return <Navigate to={`/org/${orgSlug}/owner/dashboard`} replace />;
-    case 'manager':
+    case Roles.MANAGER:
       return <Navigate to={`/org/${orgSlug}/manager/dashboard`} replace />;
-    case 'barista':
+    case Roles.BARISTA:
       return <Navigate to={`/org/${orgSlug}/staff/dashboard`} replace />;
-    case 'user':
+    case Roles.USER:
     default:
       return <Navigate to={`/org/${orgSlug}/dashboard`} replace />;
   }
@@ -58,9 +58,9 @@ export function UnauthorizedAccess() {
     if (isAdmin) return "/dashboard";
     if (orgSlug) {
       switch (role) {
-        case 'owner': return `/org/${orgSlug}/owner/dashboard`;
-        case 'manager': return `/org/${orgSlug}/manager/dashboard`;
-        case 'barista': return `/org/${orgSlug}/staff/dashboard`;
+        case Roles.OWNER: return `/org/${orgSlug}/owner/dashboard`;
+        case Roles.MANAGER: return `/org/${orgSlug}/manager/dashboard`;
+        case Roles.BARISTA: return `/org/${orgSlug}/staff/dashboard`;
         default: return `/org/${orgSlug}/dashboard`;
       }
     }

@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/OptimizedAuthProvider';
+import { Roles, Role, isRole } from '@/constants/roles';
 
 export interface UserWithRole {
   user: User | null;
-  role: 'admin' | 'owner' | 'manager' | 'barista' | 'user' | null;
+  role: Role | null;
   orgId: string | null;
   locationId: string | null;
   groupName: string | null;
@@ -76,9 +77,9 @@ export function useUserWithRole(): UserWithRole {
   // Memoized computed values
   const computedValues = useMemo(() => {
     // Quick admin check from metadata while DB loads
-    const metadataAdmin = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
-    const role = userContext?.role as UserWithRole['role'] || null;
-    const isAdmin = userContext?.is_admin || role === 'admin' || metadataAdmin;
+    const metadataAdmin = user?.user_metadata?.role === Roles.ADMIN || user?.app_metadata?.role === Roles.ADMIN;
+    const role = userContext && isRole(userContext.role) ? userContext.role as Role : null;
+    const isAdmin = userContext?.is_admin || role === Roles.ADMIN || metadataAdmin;
     const orgId = userContext?.org_id || null;
     const locationId = userContext?.location_id || null;
     
@@ -91,11 +92,11 @@ export function useUserWithRole(): UserWithRole {
     const permissions: string[] = [];
     if (isAdmin) {
       permissions.push('admin:all', 'tenant:all', 'user:all');
-    } else if (role === 'owner') {
+    } else if (role === Roles.OWNER) {
       permissions.push('tenant:manage', 'user:manage', 'data:read');
-    } else if (role === 'manager') {
+    } else if (role === Roles.MANAGER) {
       permissions.push('tenant:read', 'user:read', 'data:read');
-    } else if (role === 'barista') {
+    } else if (role === Roles.BARISTA) {
       permissions.push('recipes:read', 'consumption:create');
     }
 
@@ -108,7 +109,7 @@ export function useUserWithRole(): UserWithRole {
       isAdmin,
       permissions,
       canAccessAdmin: isAdmin,
-      canAccessTenant: !!orgId && !isAdmin,
+    canAccessTenant: !!orgId && !isAdmin,
       orgSlug,
       isLoading: authLoading || (loading && !metadataAdmin)
     };
@@ -151,11 +152,11 @@ export function useUserRedirectUrl(): string | null {
     }
     
     switch (role) {
-      case 'owner':
+      case Roles.OWNER:
         return `/org/${orgSlug}/owner/dashboard`;
-      case 'manager':
+      case Roles.MANAGER:
         return `/org/${orgSlug}/staff/dashboard`;
-      case 'barista':
+      case Roles.BARISTA:
         return `/org/${orgSlug}/staff/dashboard`;
       default:
         return `/org/${orgSlug}/dashboard`;

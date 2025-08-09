@@ -1,7 +1,8 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Roles, Role, isRole } from '@/constants/roles';
 
-export type UserRole = 'admin' | 'owner' | 'manager' | 'barista' | 'user' | null;
+export type UserRole = Role | null;
 
 export interface RoleCheckResult {
   role: UserRole;
@@ -37,33 +38,34 @@ export async function getUserRole(user: User | null): Promise<RoleCheckResult> {
       .limit(1);
 
     if (!error && userRoles && userRoles.length > 0) {
-      const role = userRoles[0].role as UserRole;
+      const role = userRoles[0].role;
+      const validRole = isRole(role) ? role : null;
       return {
-        role,
+        role: validRole,
         source: 'user_roles_table',
-        isAdmin: role === 'admin',
-        hasLocationAccess: role !== null
+        isAdmin: validRole === Roles.ADMIN,
+        hasLocationAccess: validRole !== null
       };
     }
 
     // Priority 2: Check user_metadata
-    if (user.user_metadata?.role) {
-      const role = user.user_metadata.role as UserRole;
+    if (user.user_metadata?.role && isRole(user.user_metadata.role)) {
+      const role = user.user_metadata.role as Role;
       return {
         role,
         source: 'user_metadata',
-        isAdmin: role === 'admin',
+        isAdmin: role === Roles.ADMIN,
         hasLocationAccess: role !== null
       };
     }
 
     // Priority 3: Check app_metadata
-    if (user.app_metadata?.role) {
-      const role = user.app_metadata.role as UserRole;
+    if (user.app_metadata?.role && isRole(user.app_metadata.role)) {
+      const role = user.app_metadata.role as Role;
       return {
         role,
         source: 'app_metadata',
-        isAdmin: role === 'admin',
+        isAdmin: role === Roles.ADMIN,
         hasLocationAccess: role !== null
       };
     }
@@ -81,11 +83,12 @@ export async function getUserRole(user: User | null): Promise<RoleCheckResult> {
     
     // Fallback to metadata if DB query fails
     const metadataRole = user.user_metadata?.role || user.app_metadata?.role || null;
+    const validRole = metadataRole && isRole(metadataRole) ? metadataRole : null;
     return {
-      role: metadataRole as UserRole,
-      source: metadataRole ? 'user_metadata' : 'none',
-      isAdmin: metadataRole === 'admin',
-      hasLocationAccess: metadataRole !== null
+      role: validRole,
+      source: validRole ? 'user_metadata' : 'none',
+      isAdmin: validRole === Roles.ADMIN,
+      hasLocationAccess: validRole !== null
     };
   }
 }
@@ -117,12 +120,12 @@ export function hasRole(roleResult: RoleCheckResult, requiredRole: UserRole): bo
   if (!roleResult.role || !requiredRole) return false;
   
   const roleHierarchy = {
-    'admin': 5,
-    'owner': 4,
-    'manager': 3,
-    'barista': 2,
-    'user': 1
-  };
+    [Roles.ADMIN]: 5,
+    [Roles.OWNER]: 4,
+    [Roles.MANAGER]: 3,
+    [Roles.BARISTA]: 2,
+    [Roles.USER]: 1
+  } as const;
 
   return roleHierarchy[roleResult.role] >= roleHierarchy[requiredRole];
 }
@@ -146,11 +149,12 @@ export function isAdmin(roleResult: RoleCheckResult): boolean {
  */
 export function quickRoleCheck(user: User | null): { role: UserRole; isAdmin: boolean } {
   if (!user) return { role: null, isAdmin: false };
-  
+
   // Quick check using metadata (for immediate UI decisions)
   const role = user.user_metadata?.role || user.app_metadata?.role || null;
+  const validRole = role && isRole(role) ? role : null;
   return {
-    role: role as UserRole,
-    isAdmin: role === 'admin'
+    role: validRole,
+    isAdmin: validRole === Roles.ADMIN
   };
 }

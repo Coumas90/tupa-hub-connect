@@ -2,11 +2,12 @@ import React, { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { ContextualLoading } from '@/components/ui/loading-states';
+import { Roles, Role } from '@/constants/roles';
 
 interface ClientRouteGuardProps {
   children: ReactNode;
   fallback?: ReactNode;
-  requireRole?: string;
+  requireRole?: Role;
 }
 
 /**
@@ -31,7 +32,7 @@ export function ClientRouteGuard({
   }
 
   // Admin users should not access client routes through this guard
-  if (auth.user?.user_metadata?.role === 'admin' || auth.user?.app_metadata?.role === 'admin') {
+  if (auth.user?.user_metadata?.role === Roles.ADMIN || auth.user?.app_metadata?.role === Roles.ADMIN) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -41,7 +42,7 @@ export function ClientRouteGuard({
   }
 
   // User doesn't have location access and it's required
-  if (!auth.locationContext && auth.userRole !== 'admin') {
+  if (!auth.locationContext && auth.userRole !== Roles.ADMIN) {
     return <Navigate to="/onboarding/location" replace />;
   }
 

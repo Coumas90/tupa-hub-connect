@@ -2,11 +2,12 @@ import React, { ReactNode } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useOrgAccess, useUserWithRole } from '@/hooks/useUserWithRole';
 import { ContextualLoading } from '@/components/ui/loading-states';
+import { Roles, Role } from '@/constants/roles';
 
 interface TenantRouteGuardProps {
   children: ReactNode;
   fallback?: ReactNode;
-  requiredRole?: 'owner' | 'manager' | 'barista';
+  requiredRole?: Role;
 }
 
 /**
@@ -62,7 +63,7 @@ export function TenantRouteGuard({
  */
 export function OwnerRouteGuard({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
-    <TenantRouteGuard requiredRole="owner" fallback={fallback}>
+    <TenantRouteGuard requiredRole={Roles.OWNER} fallback={fallback}>
       {children}
     </TenantRouteGuard>
   );
@@ -74,7 +75,7 @@ export function OwnerRouteGuard({ children, fallback }: { children: ReactNode; f
 export function StaffRouteGuard({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   const { role } = useUserWithRole();
   
-  if (role !== 'manager' && role !== 'barista') {
+  if (role !== Roles.MANAGER && role !== Roles.BARISTA) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Mail, User, Building, Coffee } from 'lucide-react';
+import { Roles, isRole } from '@/constants/roles';
 
 interface AddBaristaModalProps {
   open: boolean;
@@ -30,7 +31,7 @@ export const AddBaristaModal: React.FC<AddBaristaModalProps> = ({
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    role: 'barista',
+    role: Roles.BARISTA,
     phone: ''
   });
 
@@ -74,7 +75,7 @@ export const AddBaristaModal: React.FC<AddBaristaModalProps> = ({
         }
 
         // Reset form and close modal
-        setFormData({ fullName: '', email: '', role: 'barista', phone: '' });
+        setFormData({ fullName: '', email: '', role: Roles.BARISTA, phone: '' });
         onOpenChange(false);
         onSuccess?.();
       } else {
@@ -151,12 +152,12 @@ export const AddBaristaModal: React.FC<AddBaristaModalProps> = ({
               <Coffee className="h-4 w-4" />
               Rol
             </Label>
-            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: isRole(value) ? value : formData.role })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="barista">Barista</SelectItem>
+                <SelectItem value={Roles.BARISTA}>Barista</SelectItem>
                 <SelectItem value="barista_junior">Barista Junior</SelectItem>
                 <SelectItem value="barista_senior">Barista Senior</SelectItem>
                 <SelectItem value="encargado">Encargado</SelectItem>

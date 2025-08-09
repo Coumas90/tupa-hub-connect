@@ -1,3 +1,5 @@
+import { Roles, Role } from './roles';
+
 /**
  * Centralized route constants for type-safe navigation
  * Organized by functional domain with consistent naming conventions
@@ -99,22 +101,15 @@ export const LEGACY_ROUTES = {
 } as const;
 
 // ===== ROLE DEFINITIONS =====
-export const USER_ROLES = {
-  ADMIN: 'admin',
-  OWNER: 'owner',
-  MANAGER: 'manager',
-  BARISTA: 'barista',
-  USER: 'user',
-} as const;
+export const USER_ROLES = Roles;
 
 // ===== ROLE PERMISSIONS =====
 export const ROUTE_PERMISSIONS = {
   PUBLIC: [],
-  ALL_AUTHENTICATED: [USER_ROLES.ADMIN, USER_ROLES.OWNER, USER_ROLES.MANAGER, USER_ROLES.BARISTA, USER_ROLES.USER],
-  MANAGEMENT: [USER_ROLES.ADMIN, USER_ROLES.OWNER, USER_ROLES.MANAGER],
-  ADMIN_ONLY: [USER_ROLES.ADMIN],
-  OWNER_ONLY: [USER_ROLES.ADMIN, USER_ROLES.OWNER],
+  ALL_AUTHENTICATED: [Roles.ADMIN, Roles.OWNER, Roles.MANAGER, Roles.BARISTA, Roles.USER],
+  MANAGEMENT: [Roles.ADMIN, Roles.OWNER, Roles.MANAGER],
+  ADMIN_ONLY: [Roles.ADMIN],
+  OWNER_ONLY: [Roles.ADMIN, Roles.OWNER],
 } as const;
-
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+export type UserRole = Role;
 export type RoutePermission = typeof ROUTE_PERMISSIONS[keyof typeof ROUTE_PERMISSIONS];
