@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Roles } from '@/constants/roles';
 
 export interface UserRoleData {
   role: string | null;
@@ -25,7 +26,7 @@ export async function getUserRoleAndAdmin(userId: string): Promise<UserRoleData>
 
     // Extract role from user_metadata
     const role = user.user_metadata?.role || null;
-    const isAdmin = role === 'admin';
+    const isAdmin = role === Roles.ADMIN;
     
     console.info('✅ AuthQuery: Role from metadata:', { role, isAdmin, userId, metadata: user.user_metadata });
     return { role, isAdmin, userId };

@@ -9,6 +9,7 @@ import {
   Calendar, FileText, AlertTriangle, Activity, Home
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { Roles } from './roles';
 
 export interface AdminNavItem {
   title: string;
@@ -192,7 +193,7 @@ export const ADMIN_NAVIGATION: Record<string, AdminNavGroup> = {
   SYSTEM: {
     title: 'System',
     description: 'Configuración y administración del sistema',
-    roles: ['admin'],
+    roles: [Roles.ADMIN],
     items: [
       {
         title: 'Settings',

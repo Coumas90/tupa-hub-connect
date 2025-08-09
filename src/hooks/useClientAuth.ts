@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthMiddleware } from '@/middleware/authMiddleware';
+import { Roles } from '@/constants/roles';
 
 export interface ClientAuthResult {
   user: any;
@@ -45,7 +46,7 @@ export function useClientAuth(): ClientAuthResult {
         auth.user,
         auth.session,
         location.pathname,
-        { requireAuth: true, tenantOnly: true, allowedRoles: ['owner', 'manager', 'barista', 'user'] }
+        { requireAuth: true, tenantOnly: true, allowedRoles: [Roles.OWNER, Roles.MANAGER, Roles.BARISTA, Roles.USER] }
       ).then(validation => {
         if (validation.redirectTo && validation.redirectTo !== location.pathname) {
           navigate(validation.redirectTo, { replace: true });

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { TestingMode } from '@/lib/config';
+import { Roles } from '@/constants/roles';
 
 export interface EnhancedAuthState {
   // Auth state
@@ -32,11 +33,11 @@ export interface EnhancedAuthState {
 // Role hierarchy for comparison
 const ROLE_HIERARCHY = {
   'client': 1,
-  'barista': 2,
-  'manager': 3,
-  'owner': 4,
-  'admin': 5
-};
+  [Roles.BARISTA]: 2,
+  [Roles.MANAGER]: 3,
+  [Roles.OWNER]: 4,
+  [Roles.ADMIN]: 5
+} as const;
 
 /**
  * Enhanced auth hook with intelligent role checking and context awareness

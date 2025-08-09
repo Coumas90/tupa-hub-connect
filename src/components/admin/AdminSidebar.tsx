@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAVIGATION, getNavItemsForRole } from "@/constants/adminNavigation";
 import { useRequireAdmin } from "@/hooks/useOptimizedAuth";
+import { Roles } from "@/constants/roles";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -18,7 +19,7 @@ export function AdminSidebar() {
   const { isAdmin } = useRequireAdmin();
   
   // Mock user role - in real app this would come from auth context
-  const userRole = isAdmin ? 'admin' : 'user';
+  const userRole = isAdmin ? Roles.ADMIN : Roles.USER;
   const navGroups = getNavItemsForRole(userRole);
 
   const toggleGroup = (groupKey: string) => {

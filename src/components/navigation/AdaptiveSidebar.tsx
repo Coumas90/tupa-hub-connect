@@ -11,6 +11,7 @@ import {
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useSmartNavigation } from "@/utils/routing/redirects";
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { Roles } from '@/constants/roles';
 import { 
   Collapsible,
   CollapsibleContent,
@@ -65,9 +66,9 @@ export function AdaptiveSidebar() {
   const getRoleIcon = () => {
     if (isAdmin) return <Shield className="h-3 w-3" />;
     switch (userRole?.toLowerCase()) {
-      case 'owner': return <Crown className="h-3 w-3" />;
-      case 'manager': return <Users className="h-3 w-3" />;
-      case 'barista': return <Coffee className="h-3 w-3" />;
+      case Roles.OWNER: return <Crown className="h-3 w-3" />;
+      case Roles.MANAGER: return <Users className="h-3 w-3" />;
+      case Roles.BARISTA: return <Coffee className="h-3 w-3" />;
       default: return <Building className="h-3 w-3" />;
     }
   };
@@ -75,9 +76,9 @@ export function AdaptiveSidebar() {
   const getRoleLabel = () => {
     if (isAdmin) return 'Administrador';
     switch (userRole?.toLowerCase()) {
-      case 'owner': return 'Propietario';
-      case 'manager': return 'Encargado';
-      case 'barista': return 'Barista';
+      case Roles.OWNER: return 'Propietario';
+      case Roles.MANAGER: return 'Encargado';
+      case Roles.BARISTA: return 'Barista';
       case 'client': return 'Cliente';
       default: return 'Usuario';
     }
@@ -135,19 +136,19 @@ export function AdaptiveSidebar() {
       ];
 
       // Add role-specific dashboard views
-      if (userRole?.toLowerCase() === 'owner') {
+      if (userRole?.toLowerCase() === Roles.OWNER) {
         baseItems.push({
           title: "Vista Propietario",
           url: `/tenants/${currentTenantSlug}/dashboard/owner`,
           icon: Crown,
         });
-      } else if (userRole?.toLowerCase() === 'manager') {
+      } else if (userRole?.toLowerCase() === Roles.MANAGER) {
         baseItems.push({
           title: "Vista Encargado",
           url: `/tenants/${currentTenantSlug}/dashboard/manager`,
           icon: Users,
         });
-      } else if (userRole?.toLowerCase() === 'barista') {
+      } else if (userRole?.toLowerCase() === Roles.BARISTA) {
         baseItems.push({
           title: "Vista Barista",
           url: `/tenants/${currentTenantSlug}/dashboard/barista`,
@@ -169,7 +170,7 @@ export function AdaptiveSidebar() {
       ];
 
       // Add management-only items
-      if (['owner', 'manager'].includes(userRole?.toLowerCase() || '')) {
+      if ([Roles.OWNER, Roles.MANAGER].includes(userRole?.toLowerCase() as any)) {
         operationsItems.push(
           {
             title: "Mi Equipo",
@@ -209,7 +210,7 @@ export function AdaptiveSidebar() {
               title: "Academia",
               url: `/tenants/${currentTenantSlug}/academy`,
               icon: GraduationCap,
-              badge: userRole?.toLowerCase() === 'barista' ? "3" : undefined
+              badge: userRole?.toLowerCase() === Roles.BARISTA ? "3" : undefined
             }
           ]
         },

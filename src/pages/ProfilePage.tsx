@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { Roles } from '@/constants/roles';
 
 export function ProfilePage() {
   const { user, userRole, session } = useOptimizedAuth();
@@ -37,11 +38,11 @@ export function ProfilePage() {
 
   const getRoleBadgeColor = (role: string | null) => {
     switch (role) {
-      case 'admin':
+      case Roles.ADMIN:
         return 'bg-destructive text-destructive-foreground';
       case 'client':
         return 'bg-primary text-primary-foreground';
-      case 'barista':
+      case Roles.BARISTA:
         return 'bg-secondary text-secondary-foreground';
       default:
         return 'bg-muted text-muted-foreground';
@@ -239,7 +240,7 @@ export function ProfilePage() {
               
               <div className="text-center p-4 bg-muted/50 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
-                  {userRole === 'admin' ? 'Admin' : 'Usuario'}
+                  {userRole === Roles.ADMIN ? 'Admin' : 'Usuario'}
                 </div>
                 <div className="text-sm text-muted-foreground">Nivel de acceso</div>
               </div>

@@ -1,5 +1,6 @@
 import { User, Session } from '@supabase/supabase-js';
-import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from './authRoleUtils';
+import { getUserRole, getUserLocationContext, RoleCheckResult } from './authRoleUtils';
+import { Roles, Role } from '@/constants/roles';
 
 export interface AuthValidationResult {
   isValid: boolean;
@@ -12,7 +13,7 @@ export interface AuthValidationResult {
 export interface RedirectOptions {
   forceAdmin?: boolean;
   requireLocation?: boolean;
-  allowedRoles?: UserRole[];
+  allowedRoles?: Role[];
   fallbackRoute?: string;
 }
 
@@ -39,7 +40,7 @@ export async function validateAndRedirectUser(
   
   // Get location context if required
   let locationContext = null;
-  if (options.requireLocation || userRole.role !== 'admin') {
+  if (options.requireLocation || userRole.role !== Roles.ADMIN) {
     locationContext = await getUserLocationContext(user.id);
   }
 
@@ -55,8 +56,8 @@ export async function validateAndRedirectUser(
 
   // Role-based validation
   if (options.allowedRoles && options.allowedRoles.length > 0) {
-    const hasRequiredRole = options.allowedRoles.some(role => 
-      userRole.role === role || (userRole.isAdmin && role !== 'admin')
+    const hasRequiredRole = options.allowedRoles.some(role =>
+      userRole.role === role || (userRole.isAdmin && role !== Roles.ADMIN)
     );
     
     if (!hasRequiredRole) {
@@ -94,12 +95,9 @@ export async function validateAndRedirectUser(
  * Determine login route based on current path and options
  */
 function determineLoginRoute(currentPath: string, options: RedirectOptions): string {
-  // Admin routes should go to admin login
   if (currentPath.startsWith('/admin') || options.forceAdmin) {
     return '/admin/login';
   }
-  
-  // Default client login
   return '/login';
 }
 

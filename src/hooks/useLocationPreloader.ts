@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useEnhancedAuth } from './useEnhancedAuth';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Roles } from '@/constants/roles';
 
 interface LocationCacheEntry {
   data: any;
@@ -64,7 +65,7 @@ export function useLocationPreloader() {
     }
 
     // Skip preloading for admin users or if we already have an active location
-    if (userRole === 'admin' || activeLocation) return;
+    if (userRole === Roles.ADMIN || activeLocation) return;
 
     try {
       console.info('🔄 LocationPreloader: Preloading user location...', { userRole });
@@ -114,16 +115,16 @@ export function useLocationPreloader() {
 
       switch (userRole.toLowerCase()) {
         case 'client':
-        case 'manager':
-        case 'owner':
+        case Roles.MANAGER:
+        case Roles.OWNER:
           routesToPreload.push('/dashboard', '/app/consumo', '/app/recetas');
           break;
-      case 'barista':
-        routesToPreload.push('/recipes', '/app/academia');
-        break;
-      case 'admin':
-        routesToPreload.push('/admin/dashboard', '/admin/operations');
-        break;
+        case Roles.BARISTA:
+          routesToPreload.push('/recipes', '/app/academia');
+          break;
+        case Roles.ADMIN:
+          routesToPreload.push('/admin/dashboard', '/admin/operations');
+          break;
     }
 
     // Preload routes using link prefetch (browser native)

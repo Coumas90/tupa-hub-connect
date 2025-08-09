@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { ROUTE_PERMISSIONS, UserRole } from '@/constants/routes';
+import { Roles } from '@/constants/roles';
 import { ContextualLoading } from '@/components/ui/loading-states';
 import { ErrorState, RoleBasedError } from '@/components/ui/error-states';
 import { TestingMode } from '@/lib/config';
@@ -95,7 +96,7 @@ export function RoleGuard({
   // Check if user has any of the required roles (or testing mode is enabled)
   const hasAccess = TestingMode.enabled || hasAnyRole(roleStrings) || 
     // Allow 'user' role for basic access to authenticated routes
-    (roleStrings.includes('user') && ['client', 'barista', 'manager', 'owner'].includes(userRole?.toLowerCase() || ''));
+    (roleStrings.includes(Roles.USER) && ['client', Roles.BARISTA, Roles.MANAGER, Roles.OWNER].includes(userRole?.toLowerCase() || ''));
 
   if (!hasAccess) {
     return fallback || (
@@ -105,12 +106,12 @@ export function RoleGuard({
         onNavigateBack={() => {
           // Smart navigation based on user role
           switch (userRole?.toLowerCase()) {
-            case 'barista':
+            case Roles.BARISTA:
               navigate('/recipes');
               break;
             case 'client':
-            case 'manager':
-            case 'owner':
+            case Roles.MANAGER:
+            case Roles.OWNER:
               navigate('/dashboard');
               break;
             default:

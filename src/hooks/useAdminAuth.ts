@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/OptimizedAuthProvider';
 import { useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthMiddleware } from '@/middleware/authMiddleware';
+import { Roles } from '@/constants/roles';
 
 export interface AdminAuthResult {
   user: any;
@@ -34,7 +35,7 @@ export function useAdminAuth(): AdminAuthResult {
   // Admin-specific validation
   useEffect(() => {
     if (!auth.loading && auth.isInitialized) {
-      const quickAdminCheck = auth.user?.user_metadata?.role === 'admin' || auth.user?.app_metadata?.role === 'admin';
+      const quickAdminCheck = auth.user?.user_metadata?.role === Roles.ADMIN || auth.user?.app_metadata?.role === Roles.ADMIN;
 
       if (auth.user && !auth.isAdmin && !quickAdminCheck) {
         // Non-admin users should go to client app

@@ -11,6 +11,7 @@ import { Mail, Lock, Shield, AlertCircle, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Roles } from '@/constants/roles';
 
 export function AdminLoginPage() {
   const auth = useAuth();
@@ -38,7 +39,7 @@ export function AdminLoginPage() {
         .from('user_roles')
         .select('role')
         .eq('user_id', auth.user.id)
-        .eq('role', 'admin')
+        .eq('role', Roles.ADMIN)
         .single();
 
       if (error || !data) {
