@@ -37,7 +37,7 @@
 ✅ **EXCELENTE** - El proyecto sigue las mejores prácticas de seguridad:
 
 1. **Secrets Privados:** Manejados correctamente vía Supabase Secrets
-2. **Variables Públicas:** Solo en `src/lib/config.ts` 
+2. **Variables Públicas:** Solo en `src/lib/config/config.<env>.ts`
 3. **No Environment Variables:** Cumple con limitaciones de Lovable
 4. **Documentación:** Guía clara en `docs/ONBOARDING.md`
 

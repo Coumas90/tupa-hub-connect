@@ -46,7 +46,7 @@ npm install
 
 ### 3. Configurar Supabase (requerido)
 - El proyecto está conectado al proyecto Supabase: `hmmaubkxfewzlypywqff`
-- Las credenciales están configuradas en `src/lib/config.ts`
+- Las credenciales están configuradas en los archivos `src/lib/config/config.<env>.ts`
 - No se requiere configuración adicional para desarrollo
 
 ### 4. Ejecutar migraciones de base de datos (si es necesario)
