@@ -18,7 +18,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Ensure no Supabase tokens committed
+        run: |
+          if rg "eyJhbGci" -n --glob '!**/__tests__/**' --glob '!**/*.test.*' --glob '!**/*.spec.*'; then
+            echo "Supabase tokens detected in repository"
+            exit 1
+          fi
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
