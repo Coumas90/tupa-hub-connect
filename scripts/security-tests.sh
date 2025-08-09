@@ -84,6 +84,12 @@ else
     log_test "CSP_FRAME_SRC" "WARN" "CSP frame-src 'none' not found"
 fi
 
+if echo "$headers" | grep -qi "Content-Security-Policy.*frame-ancestors 'none'"; then
+    log_test "CSP_FRAME_ANCESTORS" "PASS" "CSP frame-ancestors 'none' directive present"
+else
+    log_test "CSP_FRAME_ANCESTORS" "WARN" "CSP frame-ancestors 'none' not found"
+fi
+
 # Test 3: CSP Blocks External Scripts
 echo ""
 echo "🧪 Test 3: CSP External Script Blocking"
