@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { buildTenantRoute, buildPublicRoute } from './helpers';
 
 /**
@@ -43,38 +44,41 @@ export function LegacyRouteRedirector() {
 }
 
 /**
- * Cafe-to-Location Route Redirector
- * Handles redirects from cafe-based routes to location-based routes
+ * Location ID to slug redirector
+ * Handles redirects from location-based routes to slug-based tenant routes
  */
-export function CafeRouteRedirector() {
+export function LocationRouteRedirector() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cafeId } = useParams<{ cafeId: string }>();
-  const { getLocationByCafeId } = useLocationContext();
+  const { locationId } = useParams<{ locationId: string }>();
+
+  const fetchLocation = async (id: string) => {
+    const { data } = await supabase.from('locations').select('slug').eq('id', id).single();
+    return data;
+  };
 
   useEffect(() => {
-    const handleCafeRedirect = async () => {
-      if (!cafeId) return;
+    const handleLocationRedirect = async () => {
+      if (!locationId) return;
 
       const currentPath = location.pathname;
-      
-      // Handle cafe dashboard redirects
-      if (currentPath.includes('/cafe/dashboard/')) {
+
+      if (currentPath.includes('/location/dashboard/')) {
         try {
-          const locationData = await getLocationByCafeId(cafeId);
-          if (locationData?.slug) {
-            const newPath = buildTenantRoute.dashboard.owner({ locationSlug: locationData.slug });
-            console.log(`Redirecting cafe dashboard from ${currentPath} to ${newPath}`);
+          const loc = await fetchLocation(locationId);
+          if (loc?.slug) {
+            const newPath = buildTenantRoute.dashboard.owner({ locationSlug: loc.slug });
+            console.log(`Redirecting location dashboard from ${currentPath} to ${newPath}`);
             navigate(newPath, { replace: true });
           }
         } catch (error) {
-          console.error('Error redirecting cafe route:', error);
+          console.error('Error redirecting location route:', error);
         }
       }
     };
 
-    handleCafeRedirect();
-  }, [cafeId, location.pathname, getLocationByCafeId, navigate]);
+    handleLocationRedirect();
+  }, [locationId, location.pathname, navigate]);
 
   return null;
 }

@@ -551,7 +551,7 @@ export type Database = {
       }
       feedbacks: {
         Row: {
-          cafe_id: string
+          location_id: string
           comment: string | null
           comment_status: string | null
           created_at: string | null
@@ -562,7 +562,7 @@ export type Database = {
           sentiment: string | null
         }
         Insert: {
-          cafe_id: string
+          location_id: string
           comment?: string | null
           comment_status?: string | null
           created_at?: string | null
@@ -573,7 +573,7 @@ export type Database = {
           sentiment?: string | null
         }
         Update: {
-          cafe_id?: string
+          location_id?: string
           comment?: string | null
           comment_status?: string | null
           created_at?: string | null
@@ -585,17 +585,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "feedbacks_cafe_id_fkey"
-            columns: ["cafe_id"]
+            foreignKeyName: "feedbacks_location_id_fkey"
+            columns: ["location_id"]
             isOneToOne: false
-            referencedRelation: "cafes"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
       }
       giveaway_participants: {
         Row: {
-          cafe_id: string
+          location_id: string
           campaign_id: string | null
           created_at: string | null
           customer_email: string
@@ -606,7 +606,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
-          cafe_id: string
+          location_id: string
           campaign_id?: string | null
           created_at?: string | null
           customer_email: string
@@ -617,7 +617,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
-          cafe_id?: string
+          location_id?: string
           campaign_id?: string | null
           created_at?: string | null
           customer_email?: string
@@ -629,17 +629,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "giveaway_participants_cafe_id_fkey"
-            columns: ["cafe_id"]
+            foreignKeyName: "giveaway_participants_location_id_fkey"
+            columns: ["location_id"]
             isOneToOne: false
-            referencedRelation: "cafes"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
       }
       giveaway_winners: {
         Row: {
-          cafe_id: string
+          location_id: string
           created_at: string
           created_by: string | null
           email_sent_at: string | null
@@ -655,7 +655,7 @@ export type Database = {
           week_of: string
         }
         Insert: {
-          cafe_id: string
+          location_id: string
           created_at?: string
           created_by?: string | null
           email_sent_at?: string | null
@@ -671,7 +671,7 @@ export type Database = {
           week_of: string
         }
         Update: {
-          cafe_id?: string
+          location_id?: string
           created_at?: string
           created_by?: string | null
           email_sent_at?: string | null
@@ -688,17 +688,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_giveaway_winners_cafe"
-            columns: ["cafe_id"]
-            isOneToOne: false
-            referencedRelation: "cafes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_giveaway_winners_participant"
             columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "giveaway_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_giveaway_winners_location"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]

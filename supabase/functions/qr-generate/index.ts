@@ -34,7 +34,7 @@ function generateQRCodeSVG(data: string, size: number = 200): string {
 }
 
 // Add branding to QR code
-function addBrandingToQR(qrSvg: string, cafeName: string, brandColor: string, logoUrl?: string): string {
+function addBrandingToQR(qrSvg: string, locationName: string, brandColor: string, logoUrl?: string): string {
   const size = 300;
   const qrSize = 200;
   const qrOffset = (size - qrSize) / 2;
@@ -49,7 +49,7 @@ function addBrandingToQR(qrSvg: string, cafeName: string, brandColor: string, lo
   brandedSvg += `<text x="150" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">TUPÁ HUB</text>`;
   
   // Cafe name
-  brandedSvg += `<text x="150" y="60" text-anchor="middle" fill="${brandColor}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${cafeName}</text>`;
+  brandedSvg += `<text x="150" y="60" text-anchor="middle" fill="${brandColor}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${locationName}</text>`;
   
   // QR Code (extract the inner content)
   const qrContent = qrSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
@@ -89,43 +89,46 @@ serve(async (req) => {
       });
     }
 
-    const { cafe_id, format = 'svg' } = await req.json();
+    const { location_id, format = 'svg' } = await req.json();
 
-    if (!cafe_id) {
-      return new Response(JSON.stringify({ error: 'cafe_id is required' }), {
+    if (!location_id) {
+      return new Response(JSON.stringify({ error: 'location_id is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-
-    // Get cafe information
-    const { data: cafe, error: cafeError } = await supabase
-      .from('cafes')
-      .select('*')
-      .eq('id', cafe_id)
+    // Get location and branding information
+    const { data: mapping, error: mappingError } = await supabase
+      .from('cafes_locations_mapping')
+      .select('cafe_id, location_name, brand_color, logo_url')
+      .eq('location_id', location_id)
       .single();
 
-    if (cafeError || !cafe) {
-      return new Response(JSON.stringify({ error: 'Cafe not found' }), {
+    if (mappingError || !mapping) {
+      return new Response(JSON.stringify({ error: 'Location not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     // Generate QR code data (URL to feedback form)
-    const qrData = `${supabaseUrl.replace('//', '//').replace(':3000', '.lovable.app')}/feedback/${cafe_id}`;
-    
-    console.log('Generating QR for cafe:', cafe.name, 'URL:', qrData);
+    const qrData = `${supabaseUrl.replace('//', '//').replace(':3000', '.lovable.app')}/feedback/${location_id}`;
+
+    console.log('Generating QR for location:', mapping.location_name, 'URL:', qrData);
 
     // Generate QR code
     const qrSvg = generateQRCodeSVG(qrData);
-    const brandedQR = addBrandingToQR(qrSvg, cafe.name, cafe.brand_color || '#8B5CF6', cafe.logo_url);
+    const brandedQR = addBrandingToQR(qrSvg, mapping.location_name, mapping.brand_color || '#8B5CF6', mapping.logo_url);
 
-    // Update cafe with QR generation timestamp
-    await supabase
-      .from('cafes')
-      .update({ qr_generated_at: new Date().toISOString() })
-      .eq('id', cafe_id);
+    // Update cafe with QR generation timestamp for backward compatibility
+    if (mapping.cafe_id) {
+      await supabase
+        .from('cafes')
+        .update({ qr_generated_at: new Date().toISOString() })
+        .eq('id', mapping.cafe_id);
+    }
+
+    const fileName = `qr-${mapping.location_name.replace(/\s+/g, '-').toLowerCase()}`;
 
     if (format === 'png') {
       const pngData = svgToPng(brandedQR);
@@ -133,7 +136,7 @@ serve(async (req) => {
         headers: {
           ...corsHeaders,
           'Content-Type': 'image/png',
-          'Content-Disposition': `attachment; filename="qr-${cafe.name.replace(/\s+/g, '-').toLowerCase()}.png"`
+          'Content-Disposition': `attachment; filename="${fileName}.png"`
         }
       });
     } else {
@@ -141,7 +144,7 @@ serve(async (req) => {
         headers: {
           ...corsHeaders,
           'Content-Type': 'image/svg+xml',
-          'Content-Disposition': `attachment; filename="qr-${cafe.name.replace(/\s+/g, '-').toLowerCase()}.svg"`
+          'Content-Disposition': `attachment; filename="${fileName}.svg"`
         }
       });
     }

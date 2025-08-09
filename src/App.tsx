@@ -14,7 +14,7 @@ import { useLocationPreloader } from '@/hooks/useLocationPreloader';
 import { productionGuard } from '@/lib/security/production-guard';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
-import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
+import { LegacyRouteRedirector, LocationRouteRedirector } from "./utils/routing/redirects";
 import { AdminGuard } from "./utils/routing/guards";
 import { MultiTenantRouter, AdminRouter } from './components/routing/MultiTenantRouter';
 import { SmartRedirectRouter } from './components/routing/SmartRedirectRouter';
@@ -45,7 +45,7 @@ import AdminCourses from "./pages/AdminCourses";
 import ClientLogs from "./pages/ClientLogs";
 import ClientConfiguration from "./pages/ClientConfiguration";
 import FeedbackForm from "./pages/FeedbackForm";
-import CafeDashboard from "./pages/CafeDashboard";
+import LocationDashboardPage from "./pages/LocationDashboard";
 import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -99,7 +99,7 @@ const App = () => {
               
               {/* Legacy route redirectors */}
               <LegacyRouteRedirector />
-              <CafeRouteRedirector />
+              <LocationRouteRedirector />
               
               <Routes>
                 {/* Public Routes */}
@@ -149,8 +149,8 @@ const App = () => {
                 <Route path="public/feedback/:locationSlug" element={<FeedbackForm />} />
                 
                 {/* Legacy Routes (will redirect via middleware) */}
-                <Route path="feedback/:cafeId" element={<FeedbackForm />} />
-                <Route path="cafe/dashboard/:cafeId" element={<CafeDashboard />} />
+                <Route path="feedback/:locationId" element={<FeedbackForm />} />
+                <Route path="location/dashboard/:locationId" element={<LocationDashboardPage />} />
                 
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />

@@ -158,8 +158,6 @@ export const sentryUtils = {
     groupName?: string;
     locationId?: string;
     locationName?: string;
-    cafeId?: string;
-    cafeName?: string;
   }) => {
     Sentry.withScope((scope) => {
       scope.setContext('tenant', {
@@ -167,15 +165,12 @@ export const sentryUtils = {
         group_name: tenantInfo.groupName,
         location_id: tenantInfo.locationId,
         location_name: tenantInfo.locationName,
-        cafe_id: tenantInfo.cafeId,
-        cafe_name: tenantInfo.cafeName,
         timestamp: new Date().toISOString(),
       });
-      
+
       // Set tags for filtering in Sentry
       if (tenantInfo.groupId) scope.setTag('tenant.group_id', tenantInfo.groupId);
       if (tenantInfo.locationId) scope.setTag('tenant.location_id', tenantInfo.locationId);
-      if (tenantInfo.cafeId) scope.setTag('tenant.cafe_id', tenantInfo.cafeId);
     });
   },
 

@@ -38,12 +38,12 @@ interface RecentFeedback {
   has_response?: boolean;
 }
 
-interface CafeOwnerDashboardProps {
-  cafeId: string;
+interface LocationDashboardProps {
+  locationId: string;
   className?: string;
 }
 
-export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashboardProps) {
+export default function LocationDashboard({ locationId, className }: LocationDashboardProps) {
   const [recentFeedbacks, setRecentFeedbacks] = useState<RecentFeedback[]>([]);
   const [newFeedbackAnimation, setNewFeedbackAnimation] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
@@ -52,13 +52,13 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
 
   // Fetch dashboard stats
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['cafe-stats', cafeId],
+    queryKey: ['location-stats', locationId],
     queryFn: async (): Promise<DashboardStats> => {
       // Get feedback stats
       const { data: feedbacks, error: feedbackError } = await supabase
         .from('feedbacks')
         .select('rating')
-        .eq('cafe_id', cafeId)
+        .eq('location_id', locationId)
         .eq('comment_status', 'approved');
 
       if (feedbackError) throw feedbackError;
@@ -67,7 +67,7 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
       const { data: participants, error: participantError } = await supabase
         .from('giveaway_participants')
         .select('id')
-        .eq('cafe_id', cafeId);
+        .eq('location_id', locationId);
 
       if (participantError) throw participantError;
 
@@ -88,12 +88,12 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
 
   // Fetch recent feedbacks
   const { data: feedbacks, isLoading: feedbacksLoading } = useQuery({
-    queryKey: ['recent-feedbacks', cafeId],
+    queryKey: ['recent-feedbacks', locationId],
     queryFn: async (): Promise<RecentFeedback[]> => {
       const { data, error } = await supabase
         .from('feedbacks')
         .select('id, rating, comment, customer_name, created_at')
-        .eq('cafe_id', cafeId)
+        .eq('location_id', locationId)
         .eq('comment_status', 'approved')
         .not('comment', 'is', null)
         .order('created_at', { ascending: false })
@@ -107,17 +107,17 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
 
   // Set up real-time subscription for new feedbacks
   useEffect(() => {
-    if (!cafeId) return;
+    if (!locationId) return;
 
     const channel = supabase
-      .channel('cafe-feedbacks')
+      .channel('location-feedbacks')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'feedbacks',
-          filter: `cafe_id=eq.${cafeId}`
+          filter: `location_id=eq.${locationId}`
         },
         (payload) => {
           console.log('New feedback received:', payload);
@@ -127,8 +127,8 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
           setTimeout(() => setNewFeedbackAnimation(null), 3000);
 
           // Refresh data
-          queryClient.invalidateQueries({ queryKey: ['cafe-stats', cafeId] });
-          queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', cafeId] });
+          queryClient.invalidateQueries({ queryKey: ['location-stats', locationId] });
+          queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', locationId] });
 
           // Show toast notification
           toast({
@@ -143,11 +143,11 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
           event: 'UPDATE',
           schema: 'public',
           table: 'feedbacks',
-          filter: `cafe_id=eq.${cafeId}`
+          filter: `location_id=eq.${locationId}`
         },
         (payload) => {
           console.log('Feedback updated:', payload);
-          queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', cafeId] });
+          queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', locationId] });
         }
       )
       .subscribe();
@@ -155,7 +155,7 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [cafeId, queryClient]);
+  }, [locationId, queryClient]);
 
   // Update recent feedbacks when query data changes
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function CafeOwnerDashboard({ cafeId, className }: CafeOwnerDashb
       });
       setResponseText('');
       setSelectedFeedbackId(null);
-      queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', cafeId] });
+      queryClient.invalidateQueries({ queryKey: ['recent-feedbacks', locationId] });
     },
     onError: (error) => {
       toast({

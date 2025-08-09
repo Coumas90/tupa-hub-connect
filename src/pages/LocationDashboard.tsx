@@ -1,15 +1,15 @@
 import { useParams } from 'react-router-dom';
-import CafeOwnerDashboard from '@/components/cafe/CafeOwnerDashboard';
+import LocationDashboard from '@/components/location/LocationDashboard';
 
-export default function CafeDashboard() {
-  const { cafeId } = useParams<{ cafeId: string }>();
+export default function LocationDashboardPage() {
+  const { locationId } = useParams<{ locationId: string }>();
 
-  if (!cafeId) {
+  if (!locationId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">Error</h1>
-          <p className="text-muted-foreground">ID de café no válido</p>
+          <p className="text-muted-foreground">ID de ubicación no válido</p>
         </div>
       </div>
     );
@@ -17,7 +17,7 @@ export default function CafeDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <CafeOwnerDashboard cafeId={cafeId} />
+      <LocationDashboard locationId={locationId} />
     </div>
   );
 }
