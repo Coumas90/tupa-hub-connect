@@ -5,9 +5,9 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in; frame-src 'none'; frame-ancestors 'self' https://partner.example.com; object-src 'none'; base-uri 'self'; form-action 'self'"
         },
-        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Frame-Options", "value": "ALLOW-FROM https://partner.example.com" },
         { 
           "key": "Strict-Transport-Security", 
           "value": "max-age=63072000; includeSubDomains; preload" 
