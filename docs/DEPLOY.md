@@ -150,7 +150,7 @@ Email Invitations: Enabled
 **Production CSP** (`public/_headers`):
 ```
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://your-project-id.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://your-project-id.supabase.co wss://your-project-id.supabase.co; font-src 'self' data:;
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-__CSP_NONCE__' https://your-project-id.supabase.co; style-src 'self' 'nonce-__CSP_NONCE__'; img-src 'self' data: https:; connect-src 'self' https://your-project-id.supabase.co wss://your-project-id.supabase.co; font-src 'self' data:; frame-ancestors 'none';
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -159,7 +159,7 @@ Email Invitations: Enabled
 **Development CSP** (more permissive):
 ```
 /*
-  Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https: wss:;
+  Content-Security-Policy: default-src 'self'; connect-src 'self' https: wss:;
 ```
 
 ### Row Level Security (RLS)

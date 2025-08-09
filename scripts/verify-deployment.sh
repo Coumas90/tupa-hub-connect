@@ -68,6 +68,7 @@ check_header "/" "X-Frame-Options" "DENY"
 check_header "/" "X-Content-Type-Options" "nosniff"
 check_header "/" "Strict-Transport-Security" "CONTAINS:max-age=63072000"
 check_header "/" "Content-Security-Policy" "CONTAINS:default-src 'self'"
+check_header "/" "Content-Security-Policy" "CONTAINS:frame-ancestors 'none'"
 
 # Test /consumo specific headers
 echo ""
@@ -85,15 +86,16 @@ check_header "/recetas" "Content-Security-Policy" "CONTAINS:default-src 'self'"
 echo ""
 echo "🚫 Checking for security anti-patterns..."
 
-# Check if unsafe-inline is minimized
+# Check if unsafe-inline is present and required domains
 response=$(curl -s -I "$URL" 2>/dev/null || echo "CURL_FAILED")
 if [[ "$response" != "CURL_FAILED" ]]; then
     csp_header=$(echo "$response" | grep -i "content-security-policy:" | tr -d '\r\n' || echo "")
-    
-    if [[ "$csp_header" == *"'unsafe-eval'"* ]] && [[ "$csp_header" == *"'unsafe-inline'"* ]]; then
-        echo "⚠️  WARNING: Both unsafe-eval and unsafe-inline detected - consider reducing usage"
+
+    if [[ "$csp_header" == *"'unsafe-inline'"* ]]; then
+        echo "❌ FAILED: unsafe-inline detected in CSP"
+        FAILED=1
     fi
-    
+
     if [[ "$csp_header" != *"*.supabase.co"* ]]; then
         echo "❌ FAILED: Supabase domains not found in CSP"
         FAILED=1

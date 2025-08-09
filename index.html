@@ -8,7 +8,10 @@
     <meta name="author" content="Lovable" />
     
     <!-- Security: CSP meta for dev/preview; production uses platform headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://*.supabase.co https://browser.sentry-cdn.com https://*.sentry.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in https://*.sentry.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'nonce-__CSP_NONCE__' https://*.supabase.co https://browser.sentry-cdn.com https://*.sentry.io; style-src 'self' 'nonce-__CSP_NONCE__'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in https://*.sentry.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+    />
 
     <meta property="og:title" content="51755b21-d1e2-4111-b2e7-45cc94c5ce93" />
     <meta property="og:description" content="Lovable Generated Project" />
@@ -22,6 +25,6 @@
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" nonce="__CSP_NONCE__" src="/src/main.tsx"></script>
   </body>
 </html>

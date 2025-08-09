@@ -65,6 +65,9 @@ jobs:
       
       - name: Build project
         run: npm run build
+
+      - name: Validate CSP headers and meta
+        run: ./scripts/validate-csp.sh
       
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4

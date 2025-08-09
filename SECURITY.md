@@ -20,28 +20,23 @@ Este documento contiene el reporte de auditoría de seguridad para TUPÁ Hub, in
 
 ## Content Security Policy (CSP)
 
-### Estado Actual
-⚠️ **TEMPORAL**: CSP configurada como permisiva para deployment
-```html
-<meta http-equiv="Content-Security-Policy" content="default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * ws: wss:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline' *;">
-```
-
-### ⚠️ Acción Requerida Post-Deploy
-Una vez completado el deployment exitoso, **DEBE** reemplazarse por una CSP estricta:
+### Política Actual
+La aplicación aplica la siguiente CSP estricta:
 
 ```html
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  connect-src 'self' https://*.supabase.co https://*.lovableproject.com https://api.openweathermap.org wss://realtime.supabase.co;
-  script-src 'self' https://cdn.jsdelivr.net;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' data: blob: https://*.supabase.co https://lovable.dev;
-  font-src 'self' https://fonts.gstatic.com;
+  script-src 'self' 'nonce-__CSP_NONCE__' https://*.supabase.co https://browser.sentry-cdn.com https://*.sentry.io;
+  style-src 'self' 'nonce-__CSP_NONCE__';
+  img-src 'self' data: https:;
+  connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in https://*.sentry.io;
+  font-src 'self';
+  frame-src 'none';
   object-src 'none';
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'none';
-">
+" />
 ```
 
 ## Headers de Seguridad

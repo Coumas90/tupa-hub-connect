@@ -92,8 +92,8 @@ CREATE TABLE role_audit_log (
 ```
 Content-Security-Policy: 
   default-src 'self'; 
-  script-src 'self' https://*.supabase.co; 
-  style-src 'self' 'unsafe-inline'; 
+  script-src 'self' 'nonce-__CSP_NONCE__' https://*.supabase.co;
+  style-src 'self' 'nonce-__CSP_NONCE__';
   object-src 'none'; 
   base-uri 'self'; 
   form-action 'self'
