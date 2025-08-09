@@ -40,7 +40,7 @@ Una vez completado el deployment exitoso, **DEBE** reemplazarse por una CSP estr
   object-src 'none';
   base-uri 'self';
   form-action 'self';
-  frame-ancestors 'none';
+  frame-ancestors 'self' https://partner.example.com;
 ">
 ```
 
@@ -48,10 +48,19 @@ Una vez completado el deployment exitoso, **DEBE** reemplazarse por una CSP estr
 
 ### Implementados ✅
 - `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
+- `X-Frame-Options: ALLOW-FROM https://partner.example.com`
 - `X-XSS-Protection: 1; mode=block`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+
+## Embebido en Iframes
+
+### Casos de uso permitidos
+- Portal de socios en `https://partner.example.com`
+
+### Riesgos y mitigaciones
+- **Clickjacking**: mitigado mediante `frame-ancestors` limitando dominios autorizados.
+- **Ataques de inyección**: validar origen del iframe antes de autenticar.
 
 ## Autenticación y Autorización
 
