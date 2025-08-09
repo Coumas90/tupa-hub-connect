@@ -2,14 +2,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { config } from '@/lib/config';
+import { cookieStorage, AUTH_COOKIE_NAME } from '@/utils/authCookies';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(config.supabase.url, config.supabase.anonKey, {
   auth: {
-    storage: localStorage,
+    storage: cookieStorage,
+    storageKey: AUTH_COOKIE_NAME,
     persistSession: true,
     autoRefreshToken: true,
+    cookieOptions: {
+      name: AUTH_COOKIE_NAME,
+      sameSite: 'lax',
+      secure: true
+    }
   }
 });
