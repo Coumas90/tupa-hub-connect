@@ -222,6 +222,34 @@ npm run test:ui
 npm test -- --coverage
 ```
 
+### Smoke de login (Cypress)
+
+Requisitos: tener un usuario de prueba y URL base accesible (dev o preview).
+
+Variables de entorno (Cypress lee CYPRESS_*):
+- `CYPRESS_E2E_EMAIL` y `CYPRESS_E2E_PASSWORD` para credenciales
+- `CYPRESS_baseUrl` (opcional) si no usás el default `http://localhost:4173`
+
+Comandos sugeridos (sin modificar package.json):
+```bash
+# 1) Levantar la app en dev
+npm run dev
+# en otra terminal, abrir Cypress apuntando al dev server (ajusta puerto si es necesario)
+CYPRESS_baseUrl=http://localhost:5173 \
+CYPRESS_E2E_EMAIL=usuario@test.com \
+CYPRESS_E2E_PASSWORD=secret \
+npx cypress open
+
+# Para ejecutar en modo headless
+CYPRESS_baseUrl=http://localhost:5173 \
+CYPRESS_E2E_EMAIL=usuario@test.com \
+CYPRESS_E2E_PASSWORD=secret \
+npx cypress run --browser chrome
+```
+
+El test se encuentra en `cypress/e2e/auth_login.cy.ts` y valida login → `/dashboard`.
+
+
 ### Estructura de Tests
 - **UI Components**: `src/__tests__/components/`
 - **Pages**: `src/__tests__/pages/`  
