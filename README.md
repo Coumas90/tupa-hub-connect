@@ -538,3 +538,20 @@ curl -X POST https://your-project.supabase.co/functions/v1/backfill-audit-fields
 ## 📧 Soporte
 
 Para soporte técnico o preguntas sobre el proyecto, consulta la documentación en la carpeta `docs/` o contacta al equipo de desarrollo.
+
+---
+
+## ℹ️ ENV en dev/preview/prod (sin pantallas blancas)
+
+- Safe client: si faltan `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`, el cliente de Supabase usa defaults seguros (no crashea en import).
+- Local (opcional): copia `.env.example` a `.env.local` y completa:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+- Preview/Prod: usar Secrets en Supabase/GitHub y configurar Auth → URL Configuration con `/auth/callback` para los dominios app/admin.
+- CI: `.github/workflows/ci-auth-smoke.yml` corre `landing.cy.ts` + `auth_login.cy.ts` usando `CYPRESS_E2E_EMAIL`/`CYPRESS_E2E_PASSWORD`.
+
+Checklist rápido
+- `/` renderiza siempre
+- `/dashboard` sin sesión → `/login`
+- Login → `/auth/callback` → `/dashboard` sin loops
+- Post-login: `(await supabase.auth.getSession()).data.session !== null`
