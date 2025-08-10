@@ -186,9 +186,10 @@ export const AdminMonitoringHub: React.FC = () => {
 
       // Create CSV content
       const csvHeader = 'Email,Name,Phone,Cafe,Participated Date\n';
-      const csvRows = participants?.map(p => 
-        `"${p.customer_email}","${p.customer_name}","${p.phone || ''}","${p.cafes?.name || ''}","${new Date(p.participated_at).toLocaleDateString()}"`
-      ).join('\n') || '';
+      const csvRows = participants?.map((p: any) => {
+        const cafeName = Array.isArray(p.cafes) ? p.cafes[0]?.name : p.cafes?.name;
+        return `"${p.customer_email}","${p.customer_name}","${p.phone || ''}","${cafeName || ''}","${new Date(p.participated_at).toLocaleDateString()}"`;
+      }).join('\n') || '';
 
       const csvContent = csvHeader + csvRows;
       const blob = new Blob([csvContent], { type: 'text/csv' });
