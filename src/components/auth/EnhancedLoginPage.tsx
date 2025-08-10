@@ -37,7 +37,7 @@ export default function EnhancedLoginPage() {
   // Redirect when ready
   React.useEffect(() => {
     if (isAuthenticated && isReady) {
-      navigate('/dashboard');
+      navigate('/admin/dashboard');
     }
   }, [isAuthenticated, isReady, navigate]);
 

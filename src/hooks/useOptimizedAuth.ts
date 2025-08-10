@@ -1,29 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { addAuthListener } from '@/lib/auth-effects';
 import { useAuthCache } from './useAuthCache';
 import { useSessionMonitor } from './useSessionMonitor';
-import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '@/utils/authRoleUtils';
-import { AuthMiddleware } from '@/middleware/authMiddleware';
-import { toast } from '@/hooks/use-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { sentryUtils } from '@/lib/sentry';
+
 interface OptimizedAuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
   error: string | null;
   isInitialized: boolean;
-  
-  // Enhanced state from FriendlyAuthProvider
-  userRole: UserRole;
-  roleSource: 'user_roles_table' | 'user_metadata' | 'app_metadata' | 'none';
-  isAdmin: boolean;
-  locationContext: any;
-  authProgress: number;
-  statusMessage: string;
-  isReady: boolean;
 }
 
 export function useOptimizedAuth() {
@@ -32,91 +18,24 @@ export function useOptimizedAuth() {
     session: null,
     loading: true,
     error: null,
-    isInitialized: false,
-    userRole: null,
-    roleSource: 'none',
-    isAdmin: false,
-    locationContext: null,
-    authProgress: 0,
-    statusMessage: 'Inicializando...',
-    isReady: false
+    isInitialized: false
   });
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const progressIntervalRef = useRef<NodeJS.Timeout>();
 
   const cache = useAuthCache();
   const sessionMonitor = useSessionMonitor();
   const initializationRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  // Progress animation helper
-  const animateProgress = useCallback((target: number, message: string, duration: number = 1500) => {
-    setState(prev => ({ ...prev, statusMessage: message }));
-    
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    const startProgress = state.authProgress;
-    const step = (target - startProgress) / (duration / 50);
-
-    progressIntervalRef.current = setInterval(() => {
-      setState(prev => {
-        const newProgress = Math.min(prev.authProgress + step, target);
-        if (newProgress >= target) {
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-          }
-        }
-        return { ...prev, authProgress: newProgress };
-      });
-    }, 50);
-  }, [state.authProgress]);
-
-  const updateAuthState = useCallback(async (session: Session | null, user: User | null = null) => {
+  const updateAuthState = useCallback((session: Session | null, user: User | null = null) => {
     const finalUser = user || session?.user || null;
     
-    if (finalUser) {
-      // Get comprehensive role information
-      const roleResult = await getUserRole(finalUser);
-      const locationContext = await getUserLocationContext(finalUser.id);
-      
-      setState(prev => ({
-        ...prev,
-        session,
-        user: finalUser,
-        userRole: roleResult.role,
-        roleSource: roleResult.source,
-        isAdmin: roleResult.isAdmin,
-        locationContext,
-        loading: false,
-        error: null,
-        isReady: true
-      }));
-
-      sentryUtils.setUser({ id: finalUser.id, email: finalUser.email || undefined });
-      sentryUtils.setTag('user.role', roleResult.role || 'unknown');
-      sentryUtils.addBreadcrumb('Auth state updated','auth',{ role: roleResult.role, source: roleResult.source });
-
-      // Redirection handled outside via SmartRedirectRouter
-
-    } else {
-      setState(prev => ({
-        ...prev,
-        session: null,
-        user: null,
-        userRole: null,
-        roleSource: 'none',
-        isAdmin: false,
-        locationContext: null,
-        loading: false,
-        authProgress: 0,
-        statusMessage: 'Sin sesión',
-        isReady: false
-      }));
-    }
+    setState(prev => ({
+      ...prev,
+      session,
+      user: finalUser,
+      loading: false,
+      error: null
+    }));
 
     // Update cache
     if (session) {
@@ -127,7 +46,7 @@ export function useOptimizedAuth() {
       cache.setUserCache(finalUser);
       cache.preloadUserData(finalUser.id);
     }
-  }, [cache, sessionMonitor, location.pathname, navigate]);
+  }, [cache, sessionMonitor]);
 
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
@@ -149,37 +68,28 @@ export function useOptimizedAuth() {
         sessionMonitor.startMonitoring(cachedSession);
       }
 
-      // Set up centralized auth events listener
-      const removeAuthListener = addAuthListener((event, session) => {
-        console.log('Auth event:', event, session?.user?.email);
-        sentryUtils.addBreadcrumb(`Auth event: ${event}`,'auth',{ email: session?.user?.email });
-        if (event === 'SIGNED_OUT') {
-          cache.clearCache();
-          sessionMonitor.stopMonitoring();
-          setState(prev => ({
-            ...prev,
-            user: null,
-            session: null,
-            userRole: null,
-            roleSource: 'none',
-            isAdmin: false,
-            locationContext: null,
-            loading: false,
-            error: null,
-            authProgress: 0,
-            statusMessage: 'Desconectado',
-            isReady: false
-          }));
-          navigate('/login', { replace: true });
-        } else if (session) {
-          // Defer async fetches to avoid deadlocks in callback
-          setTimeout(() => {
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('Auth event:', event, session?.user?.email);
+          
+          if (event === 'SIGNED_OUT') {
+            cache.clearCache();
+            sessionMonitor.stopMonitoring();
+            setState(prev => ({
+              ...prev,
+              user: null,
+              session: null,
+              loading: false,
+              error: null
+            }));
+          } else if (session) {
             updateAuthState(session);
-          }, 0);
+          }
         }
-      });
+      );
 
-      unsubscribeRef.current = removeAuthListener;
+      unsubscribeRef.current = subscription.unsubscribe;
 
       // Get current session if not cached
       if (!cachedSession) {
@@ -213,7 +123,6 @@ export function useOptimizedAuth() {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      sentryUtils.addBreadcrumb('Sign in attempt','auth',{ email });
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -221,7 +130,6 @@ export function useOptimizedAuth() {
 
       if (error) {
         setState(prev => ({ ...prev, error: error.message, loading: false }));
-        sentryUtils.captureMessage(`Sign in failed: ${error.message}`,'error',{ email });
         return { error };
       }
 
@@ -241,7 +149,7 @@ export function useOptimizedAuth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/`
         }
       });
 
@@ -274,14 +182,7 @@ export function useOptimizedAuth() {
           session: null,
           loading: false,
           error: null,
-          isInitialized: true,
-          userRole: null,
-          roleSource: 'none',
-          isAdmin: false,
-          locationContext: null,
-          authProgress: 0,
-          statusMessage: 'Desconectado',
-          isReady: false
+          isInitialized: true
         });
       }
     } catch (error) {
@@ -308,26 +209,10 @@ export function useOptimizedAuth() {
     };
   }, [initializeAuth, sessionMonitor]);
 
-  // Session utilities for backward compatibility
+  // Computed properties for backward compatibility
+  const userRole = state.user?.user_metadata?.role || state.user?.app_metadata?.role || null;
+  const isAdmin = userRole === 'admin';
   const isAuthenticated = !!state.user;
-  const isSessionExpired = useCallback(() => {
-    if (!state.session?.expires_at) return true;
-    return (state.session.expires_at * 1000) <= (Date.now() + 60000);
-  }, [state.session?.expires_at]);
-
-  const getSessionTimeLeft = useCallback(() => {
-    if (!state.session?.expires_at) return 0;
-    return Math.max(0, (state.session.expires_at * 1000) - Date.now());
-  }, [state.session?.expires_at]);
-
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
 
   return {
     ...state,
@@ -339,9 +224,11 @@ export function useOptimizedAuth() {
     cacheStats: cache.cacheStats,
     clearError: () => setState(prev => ({ ...prev, error: null })),
     // Backward compatibility properties
+    userRole,
+    isAdmin,
     isAuthenticated,
-    getSessionTimeLeft,
-    isSessionExpired,
+    getSessionTimeLeft: () => sessionMonitor.sessionHealth.expiresIn,
+    isSessionExpired: () => !sessionMonitor.sessionHealth.isHealthy,
     refreshUserData: async () => {
       if (state.user) {
         await cache.preloadUserData(state.user.id);

@@ -57,7 +57,7 @@ export function RoleGuard({
     return fallback || (
       <ErrorState
         type="auth"
-        onAction={() => navigate('/login')}
+        onAction={() => navigate('/auth')}
       />
     );
   }
@@ -111,7 +111,7 @@ export function RoleGuard({
             case 'client':
             case 'manager':
             case 'owner':
-              navigate('/dashboard');
+              navigate('/app');
               break;
             default:
               navigate('/');
@@ -256,7 +256,7 @@ export function SmartGuard({
     return (
       <ErrorState
         type="auth"
-        onAction={() => navigate('/login')}
+        onAction={() => navigate('/auth')}
       />
     );
   }
@@ -268,7 +268,7 @@ export function SmartGuard({
         title="Ubicación No Configurada"
         message="Necesitas tener acceso a una ubicación para usar esta funcionalidad."
         actionLabel="Ir al Dashboard"
-        onAction={() => navigate('/dashboard')}
+        onAction={() => navigate('/app')}
         userRole={userRole || 'unknown'}
       />
     );

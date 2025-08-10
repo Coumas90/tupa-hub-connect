@@ -29,14 +29,10 @@ interface OptimizedAuthContextType {
   sessionHealth: SessionHealth;
   cacheStats: CacheStats;
   clearError: () => void;
-  // Enhanced auth properties
+  // Backward compatibility properties
   userRole: string | null;
   isAdmin: boolean;
   isAuthenticated: boolean;
-  locationContext: any;
-  authProgress: number;
-  statusMessage: string;
-  isReady: boolean;
   getSessionTimeLeft: () => number;
   isSessionExpired: () => boolean;
   refreshUserData: () => Promise<void>;

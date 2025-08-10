@@ -112,12 +112,12 @@ export function useLocationPreloader() {
 
     const routesToPreload = [];
 
-      switch (userRole.toLowerCase()) {
-        case 'client':
-        case 'manager':
-        case 'owner':
-          routesToPreload.push('/dashboard', '/app/consumo', '/app/recetas');
-          break;
+    switch (userRole.toLowerCase()) {
+      case 'client':
+      case 'manager':
+      case 'owner':
+        routesToPreload.push('/app', '/app/consumo', '/app/recetas');
+        break;
       case 'barista':
         routesToPreload.push('/recipes', '/app/academia');
         break;

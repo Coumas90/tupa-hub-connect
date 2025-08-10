@@ -41,7 +41,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
         description: 'Familiarízate con las métricas y controles principales',
         icon: BarChart3,
         action: 'Ver Dashboard',
-        href: '/dashboard'
+        href: '/admin/dashboard'
       },
       {
         id: 'manage-users',
@@ -77,7 +77,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
       description: 'Descubre todas las herramientas disponibles',
       icon: Coffee,
       action: 'Ver Funciones',
-      href: '/dashboard'
+      href: '/app'
     },
     {
       id: 'first-task',
@@ -85,7 +85,7 @@ const getOnboardingSteps = (userRole: string, isAdmin: boolean): OnboardingStep[
       description: 'Comienza a usar la plataforma con una tarea simple',
       icon: Target,
       action: 'Empezar',
-      href: '/dashboard'
+      href: '/app'
     }
   ];
 };

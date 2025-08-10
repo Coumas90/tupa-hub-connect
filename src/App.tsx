@@ -6,23 +6,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from 'react';
+import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { useLocationPreloader } from '@/hooks/useLocationPreloader';
 import { productionGuard } from '@/lib/security/production-guard';
-import { registerAuthEffectsOnce, registerProfileUpsertEffectOnce } from '@/lib/auth-effects';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
 import { AdminGuard } from "./utils/routing/guards";
-import { MultiTenantRouter, AdminRouter } from './components/routing/MultiTenantRouter';
-import { SmartRedirectRouter } from './components/routing/SmartRedirectRouter';
-import { UnauthorizedAccess } from './components/auth/UnauthorizedAccess';
-import { OnboardingPage } from './pages/OnboardingPage';
-import { OnboardingLocationPage } from './pages/OnboardingLocationPage';
-import { AdminRouteGuard } from './components/guards/AdminRouteGuard';
-import { ClientRouteGuard } from './components/guards/ClientRouteGuard';
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import Recetas from "./pages/Recetas";
@@ -35,7 +28,7 @@ import BaristaPool from "./pages/BaristaPool";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import ActivateAccount from "./pages/ActivateAccount";
-import { ClientLoginPage } from "./pages/ClientLoginPage";
+import FriendlyLoginPage from "./pages/FriendlyLoginPage";
 import PasswordResetPage from "./pages/PasswordResetPage";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
@@ -50,9 +43,6 @@ import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
-import AuthCallback from "./pages/auth/Callback";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { FriendlyErrorHandler } from "@/components/auth/FriendlyErrorHandler";
 
 const queryClient = new QueryClient();
 
@@ -68,15 +58,16 @@ const App = () => {
   
   // Initialize auth listeners and production security monitoring
   useEffect(() => {
-    const off1 = registerAuthEffectsOnce();
-    const off2 = registerProfileUpsertEffectOnce();
+    const cleanup = initializeAuthListeners();
+    
     // Start production security monitoring
     productionGuard.startProductionMonitoring();
-    return () => { off1?.(); off2?.(); };
+    
+    return cleanup;
   }, []);
 
   return (
-    <SentryErrorBoundary fallback={<FriendlyErrorHandler error="Ocurrió un error en la aplicación" type="network" onRetry={() => window.location.reload()} onGoHome={() => { window.location.href = '/'; }} />} >
+    <SentryErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <LocationProvider>
@@ -106,42 +97,41 @@ const App = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<ClientLoginPage />} />
-                <Route path="/login" element={<ClientLoginPage />} />
-                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/auth" element={<FriendlyLoginPage />} />
+                <Route path="/admin/auth" element={<AdminLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
                 
-                {/* Onboarding routes */}
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route path="/onboarding/location" element={<OnboardingLocationPage />} />
-                
-                {/* Smart Auto-Redirect */}
-                <Route path="/dashboard" element={<ProtectedRoute><SmartRedirectRouter /></ProtectedRoute>} />
-                
-                {/* New Multi-Tenant Routes */}
-                <Route path="/org/*" element={<ProtectedRoute><MultiTenantRouter /></ProtectedRoute>} />
+                {/* New Tenant Routes */}
+                <Route path="/tenants/*" element={<TenantRoutes />} />
                 
                 {/* Admin Routes - Protected */}
-                <Route path="/admin/*" element={<ProtectedRoute requireAdmin><AdminRouter /></ProtectedRoute>} />
-                
-                {/* Unauthorized Access */}
-                <Route path="/unauthorized" element={<UnauthorizedAccess />} />
+                <Route path="/admin" element={
+                  <AdminGuard>
+                    <Layout />
+                  </AdminGuard>
+                }>
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="dashboard" element={<AdminDashboardPage />} />
+                  <Route path="operations/:section?" element={<AdminOperationsPage />} />
+                  <Route path="academy/courses" element={<AdminCourses />} />
+                  <Route path="advisory" element={<AdvisoryAdmin />} />
+                  <Route path="integrations/logs/:clientId" element={<ClientLogs />} />
+                  <Route path="integrations/:clientId" element={<ClientConfiguration />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  
+                  {/* Legacy redirects */}
+                  <Route path="integrations" element={<Navigate to="/admin/operations/pos" replace />} />
+                  <Route path="courses" element={<Navigate to="/admin/academy/courses" replace />} />
+                </Route>
                 
                 {/* Legacy Routes (will be redirected) */}
                 <Route path="/recipes" element={<Layout />}>
                   <Route index element={<Recetas />} />
                 </Route>
                 
-                <Route
-                  path="/app"
-                  element={
-                    <ProtectedRoute>
-                      <Layout />
-                    </ProtectedRoute>
-                  }
-                >
+                <Route path="/app" element={<Layout />}>
                   <Route index element={<Dashboard />} />
                   <Route path="recetas" element={<Recetas />} />
                   <Route path="academia" element={<Academia />} />

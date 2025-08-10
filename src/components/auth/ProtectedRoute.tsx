@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { checkAndRefreshSession } from '@/utils/authGuard';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, AlertTriangle } from 'lucide-react';
@@ -22,7 +22,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   fallback,
-  redirectTo = '/login',
+  redirectTo = '/auth',
   requireAdmin = false,
   showLoadingFallback = true
 }: ProtectedRouteProps) {
@@ -33,31 +33,6 @@ export function ProtectedRoute({
   const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  // Local auth init to prevent white screen if getSession fails
-  useEffect(() => {
-    let active = true;
-    supabase.auth.getSession()
-      .then(({ data }) => {
-        if (!active) return;
-        setSession(data.session);
-        setReady(true);
-      })
-      .catch(() => {
-        if (!active) return;
-        setReady(true);
-      });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (!active) return;
-      setSession(s);
-      setReady(true);
-    });
-    return () => {
-      active = false;
-      sub?.subscription?.unsubscribe?.();
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;

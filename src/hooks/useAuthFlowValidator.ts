@@ -214,7 +214,7 @@ export function useAuthFlowValidator() {
       // Validate expected redirect paths based on role
       const expectedPaths = {
         admin: ['/admin'],
-        client: ['/dashboard'],
+        client: ['/app', '/dashboard'],
         barista: ['/recipes', '/barista']
       };
 

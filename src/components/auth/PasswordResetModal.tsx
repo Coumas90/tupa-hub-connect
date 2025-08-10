@@ -125,7 +125,7 @@ export default function PasswordResetModal({ token, open, onOpenChange }: Passwo
 
       // Close modal and redirect to login
       onOpenChange(false);
-      navigate('/login');
+      navigate('/auth');
       
     } catch (error: any) {
       console.error('Error updating password:', error);
@@ -143,7 +143,7 @@ export default function PasswordResetModal({ token, open, onOpenChange }: Passwo
 
   const handleClose = () => {
     onOpenChange(false);
-    navigate('/login');
+    navigate('/auth');
   };
 
   return (

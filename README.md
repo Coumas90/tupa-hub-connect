@@ -47,7 +47,6 @@ npm install
 ### 3. Configurar Supabase (requerido)
 - El proyecto está conectado al proyecto Supabase: `hmmaubkxfewzlypywqff`
 - Las credenciales están configuradas en `src/lib/config.ts`
-- Agregar `/auth/callback` en Authentication → URL Configuration → Redirect URLs
 - No se requiere configuración adicional para desarrollo
 
 ### 4. Ejecutar migraciones de base de datos (si es necesario)
@@ -129,20 +128,11 @@ npm run test:e2e    # Tests end-to-end con Cypress
 
 ## 🔒 Seguridad
 
-- Ver “Profiles & RLS” más abajo para evitar 403 en `/profiles`.
-
-
 - **Row Level Security (RLS)**: Políticas de acceso a nivel de base de datos
 - **Content Security Policy**: Headers de seguridad configurados
 - **Autenticación JWT**: Sistema de tokens con rotación automática
 - **Auditoría**: Campos automáticos de creación y modificación
 - **Validación**: Esquemas Zod para validación de datos
-
-### Profiles & RLS
-- Onboarding automático pos‑login (upsert `profiles.{id,email}`)
-- Políticas RLS recomendadas: ver `docs/sql/policies_profiles.sql`
-- PK: `profiles.id` = `auth.users.id`
-- Verificación rápida: evitar 403 al leer `/rest/v1/profiles` autenticado
 
 ## 📊 Diagrama de Arquitectura
 
@@ -221,34 +211,6 @@ npm run test:ui
 # Generar coverage report
 npm test -- --coverage
 ```
-
-### Smoke de login (Cypress)
-
-Requisitos: tener un usuario de prueba y URL base accesible (dev o preview).
-
-Variables de entorno (Cypress lee CYPRESS_*):
-- `CYPRESS_E2E_EMAIL` y `CYPRESS_E2E_PASSWORD` para credenciales
-- `CYPRESS_baseUrl` (opcional) si no usás el default `http://localhost:4173`
-
-Comandos sugeridos (sin modificar package.json):
-```bash
-# 1) Levantar la app en dev
-npm run dev
-# en otra terminal, abrir Cypress apuntando al dev server (ajusta puerto si es necesario)
-CYPRESS_baseUrl=http://localhost:5173 \
-CYPRESS_E2E_EMAIL=usuario@test.com \
-CYPRESS_E2E_PASSWORD=secret \
-npx cypress open
-
-# Para ejecutar en modo headless
-CYPRESS_baseUrl=http://localhost:5173 \
-CYPRESS_E2E_EMAIL=usuario@test.com \
-CYPRESS_E2E_PASSWORD=secret \
-npx cypress run --browser chrome
-```
-
-El test se encuentra en `cypress/e2e/auth_login.cy.ts` y valida login → `/dashboard`.
-
 
 ### Estructura de Tests
 - **UI Components**: `src/__tests__/components/`
@@ -538,20 +500,3 @@ curl -X POST https://your-project.supabase.co/functions/v1/backfill-audit-fields
 ## 📧 Soporte
 
 Para soporte técnico o preguntas sobre el proyecto, consulta la documentación en la carpeta `docs/` o contacta al equipo de desarrollo.
-
----
-
-## ℹ️ ENV en dev/preview/prod (sin pantallas blancas)
-
-- Safe client: si faltan `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`, el cliente de Supabase usa defaults seguros (no crashea en import).
-- Local (opcional): copia `.env.example` a `.env.local` y completa:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-- Preview/Prod: usar Secrets en Supabase/GitHub y configurar Auth → URL Configuration con `/auth/callback` para los dominios app/admin.
-- CI: `.github/workflows/ci-auth-smoke.yml` corre `landing.cy.ts` + `auth_login.cy.ts` usando `CYPRESS_E2E_EMAIL`/`CYPRESS_E2E_PASSWORD`.
-
-Checklist rápido
-- `/` renderiza siempre
-- `/dashboard` sin sesión → `/login`
-- Login → `/auth/callback` → `/dashboard` sin loops
-- Post-login: `(await supabase.auth.getSession()).data.session !== null`
