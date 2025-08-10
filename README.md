@@ -129,11 +129,20 @@ npm run test:e2e    # Tests end-to-end con Cypress
 
 ## 🔒 Seguridad
 
+- Ver “Profiles & RLS” más abajo para evitar 403 en `/profiles`.
+
+
 - **Row Level Security (RLS)**: Políticas de acceso a nivel de base de datos
 - **Content Security Policy**: Headers de seguridad configurados
 - **Autenticación JWT**: Sistema de tokens con rotación automática
 - **Auditoría**: Campos automáticos de creación y modificación
 - **Validación**: Esquemas Zod para validación de datos
+
+### Profiles & RLS
+- Onboarding automático pos‑login (upsert `profiles.{id,email}`)
+- Políticas RLS recomendadas: ver `docs/sql/policies_profiles.sql`
+- PK: `profiles.id` = `auth.users.id`
+- Verificación rápida: evitar 403 al leer `/rest/v1/profiles` autenticado
 
 ## 📊 Diagrama de Arquitectura
 

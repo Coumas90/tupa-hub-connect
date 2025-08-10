@@ -11,7 +11,7 @@ import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { useLocationPreloader } from '@/hooks/useLocationPreloader';
 import { productionGuard } from '@/lib/security/production-guard';
-import { registerAuthEffectsOnce } from '@/lib/auth-effects';
+import { registerAuthEffectsOnce, registerProfileUpsertEffectOnce } from '@/lib/auth-effects';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
@@ -67,10 +67,11 @@ const App = () => {
   
   // Initialize auth listeners and production security monitoring
   useEffect(() => {
-    const off = registerAuthEffectsOnce();
+    const off1 = registerAuthEffectsOnce();
+    const off2 = registerProfileUpsertEffectOnce();
     // Start production security monitoring
     productionGuard.startProductionMonitoring();
-    return () => { off?.(); };
+    return () => { off1?.(); off2?.(); };
   }, []);
 
   return (

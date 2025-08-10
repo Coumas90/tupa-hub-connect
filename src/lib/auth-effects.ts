@@ -27,3 +27,27 @@ export function addAuthListener(cb: AuthListener) {
   listeners.add(cb);
   return () => listeners.delete(cb);
 }
+
+// Profile onboarding effect (singleton, built on top of the central dispatcher)
+let profileUpsertOnce = false;
+let removeProfileListener: (() => void) | null = null;
+
+export function registerProfileUpsertEffectOnce() {
+  if (profileUpsertOnce) return removeProfileListener || (() => {});
+
+  removeProfileListener = addAuthListener(async (event, session) => {
+    try {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await supabase.from('profiles').upsert(
+          { id: session.user.id, email: session.user.email },
+          { onConflict: 'id' }
+        );
+      }
+    } catch (e) {
+      console.error('Profile upsert failed:', e);
+    }
+  });
+
+  profileUpsertOnce = true;
+  return removeProfileListener;
+}
