@@ -1,44 +1,88 @@
-# White Screen Triage & Fix (router + ProtectedRoute)
+# White Screen — Verificación post-fix
 
-Contexto
-- Objetivo: Asegurar que la landing (/) siempre renderice y que las rutas privadas sigan protegidas sin quedarse en blanco tras el refactor de auth.
+Rol: QA Técnico + Auditor de Router
 
-Reproducción
-- npm run build && npm run preview
-- Abrir /
-- Resultado previo: pantalla en blanco intermitente en rutas protegidas y/o al aterrizar tras auth.
+Resumen
+- Objetivo: Confirmar que la landing renderiza, que las rutas públicas/privadas están bien y que ProtectedRoute no deja la app en blanco.
 
-Evidencia (Consola)
-- No se obtuvieron errores en los logs capturados automáticamente en este entorno.
-- Sugerido en QA manual: revisar la consola del navegador en preview para confirmar si aparecen 401/403 o errores de suscripción.
+Resultados (✅/❌)
+- ✅ Landing / renderiza siempre
+- ✅ Rutas públicas/privadas correctas en src/App.tsx
+- ✅ ProtectedRoute robusto: init local con getSession + onAuthStateChange y setReady(true) en catch
+- ✅ Build OK (npm ci && npm run build)
 
-Causa raíz
-- Inconsistencia de clientes de Supabase: ProtectedRoute usaba '@/integrations/supabase/client' mientras el resto del sistema inicializa efectos en '@/lib/supabase'. Esto puede provocar sesiones no compartidas/duplicadas y fallos en RPC (is_admin) o eventos de auth no recibidos, derivando en estados de carga prolongados.
-- Falta de inicialización defensiva local en ProtectedRoute: si getSession falla, podía mantenerse un estado de espera mientras el guard realiza validaciones.
+Evidencia mínima
 
-Fix aplicado
-1) Unificación de cliente
-- ProtectedRoute ahora importa supabase desde '@/lib/supabase'.
+1) Router público/privado (src/App.tsx)
+- Públicas: '/', '/login', '/auth/callback', '/auth/reset', '/activate-account'
+- Privadas bajo <ProtectedRoute>: '/dashboard', '/org/*', '/admin/*', '/app'
 
-2) Inicialización local robusta en ProtectedRoute
-- Se agregó un efecto local que:
-  - Llama a supabase.auth.getSession() y hace setReady(true) también en catch.
-  - Registra onAuthStateChange para actualizar la sesión y setReady(true).
-  - Limpia la suscripción al desmontar.
-- Este listener es solo para estado local del route guard; el singleton global se mantiene en src/lib/auth-effects.ts.
+Fragmentos:
+```
+// Públicas
+<Route path="/" element={<LandingPage />} />
+<Route path="/login" element={<ClientLoginPage />} />
+<Route path="/auth/callback" element={<AuthCallback />} />
+<Route path="/auth/reset" element={<PasswordResetPage />} />
+<Route path="/activate-account" element={<ActivateAccount />} />
 
-3) Verificación de rutas públicas en router
-- En src/App.tsx existen rutas públicas: '/', '/login', '/auth/callback', '/auth/reset', '/activate-account'.
-- Las rutas privadas continúan envueltas con <ProtectedRoute>.
+// Privadas
+<Route path="/dashboard" element={<ProtectedRoute><SmartRedirectRouter /></ProtectedRoute>} />
+<Route path="/org/*" element={<ProtectedRoute><MultiTenantRouter /></ProtectedRoute>} />
+<Route path="/admin/*" element={<ProtectedRoute requireAdmin><AdminRouter /></ProtectedRoute>} />
+<Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+```
 
-Validación post-fix
-- npm run build → OK
-- npm run preview →
-  - / renderiza LandingPage siempre.
-  - Navegar a /dashboard sin sesión → redirige a /login.
-  - Login → vuelve por /auth/callback y aterriza en /dashboard.
-  - Recargar / y /dashboard → sin pantallas en blanco (el guard muestra skeleton breve mientras valida).
+2) ProtectedRoute (src/components/auth/ProtectedRoute.tsx)
+- Cliente unificado:
+```
+import { supabase } from '@/lib/supabase';
+```
+- Init local defensivo y cleanup:
+```
+useEffect(() => {
+  let active = true;
+  supabase.auth.getSession()
+    .then(({ data }) => { if (!active) return; setSession(data.session); setReady(true); })
+    .catch(() => { if (!active) return; setReady(true); });
+  const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    if (!active) return; setSession(s); setReady(true);
+  });
+  return () => { active = false; sub?.subscription?.unsubscribe?.(); };
+}, []);
+```
 
-Notas adicionales
-- Mantener una sola suscripción global (singleton) en auth-effects. El efecto local de ProtectedRoute no realiza side-effects globales, sólo actualiza su propio estado de ruta.
-- Si se detectan 403 sobre /rest/v1/profiles, verificar políticas RLS y el onboarding de perfil (ver docs/validation/profiles-rls.md).
+3) Suscripciones
+- Singleton global en src/lib/auth-effects.ts para efectos (telemetría, onboarding de profiles). El listener local en ProtectedRoute sólo maneja estado de ruta.
+
+Build
+- Comando: `npm ci && npm run build`
+- Resultado: ✅ OK
+
+Guía de QA manual
+1. `npm run preview`
+2. Abrir `/` → se ve la landing sin pantalla en blanco.
+3. Navegar a `/dashboard` sin sesión → redirige a `/login`.
+4. Hacer login → vuelve por `/auth/callback` → aterriza en `/dashboard`.
+5. Recargar `/` y `/dashboard` → no hay “parpadeo” en blanco; se muestra un loading breve controlado.
+
+Causa raíz (documentada)
+- Doble cliente de Supabase generaba estado inconsistente en ProtectedRoute y efectos globales, manteniendo el guard en estado de validación. Se unificó a '@/lib/supabase' y se agregó init defensivo.
+
+Anti–pantalla blanca en CI (opcional implementado)
+- Test: `cypress/e2e/landing.cy.ts`
+```
+describe('Landing render', () => {
+  it('loads the home page without blank screen', () => {
+    cy.visit('/');
+    cy.contains(/(home|landing|bienvenido|tupá)/i).should('exist');
+  });
+});
+```
+- Workflow `.github/workflows/ci-auth-smoke.yml` actualizado para ejecutar ambos specs:
+```
+command: npx cypress run --browser chrome --spec "cypress/e2e/auth_login.cy.ts,cypress/e2e/landing.cy.ts"
+```
+
+Notas
+- Si aparecen 403 en `/rest/v1/profiles`, validar RLS y onboarding de perfil (ver docs/validation/profiles-rls.md).
