@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { addAuthListener } from '@/lib/auth-effects';
 import { useAuthCache } from './useAuthCache';
 import { useSessionMonitor } from './useSessionMonitor';
 import { getUserRole, getUserLocationContext, UserRole, RoleCheckResult } from '@/utils/authRoleUtils';
@@ -148,39 +149,37 @@ export function useOptimizedAuth() {
         sessionMonitor.startMonitoring(cachedSession);
       }
 
-      // Set up auth state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('Auth event:', event, session?.user?.email);
-          sentryUtils.addBreadcrumb(`Auth event: ${event}`,'auth',{ email: session?.user?.email });
-          if (event === 'SIGNED_OUT') {
-            cache.clearCache();
-            sessionMonitor.stopMonitoring();
-            setState(prev => ({
-              ...prev,
-              user: null,
-              session: null,
-              userRole: null,
-              roleSource: 'none',
-              isAdmin: false,
-              locationContext: null,
-              loading: false,
-              error: null,
-              authProgress: 0,
-              statusMessage: 'Desconectado',
-              isReady: false
-            }));
-            navigate('/login', { replace: true });
-          } else if (session) {
-            // Defer async fetches to avoid deadlocks in callback
-            setTimeout(() => {
-              updateAuthState(session);
-            }, 0);
-          }
+      // Set up centralized auth events listener
+      const removeAuthListener = addAuthListener((event, session) => {
+        console.log('Auth event:', event, session?.user?.email);
+        sentryUtils.addBreadcrumb(`Auth event: ${event}`,'auth',{ email: session?.user?.email });
+        if (event === 'SIGNED_OUT') {
+          cache.clearCache();
+          sessionMonitor.stopMonitoring();
+          setState(prev => ({
+            ...prev,
+            user: null,
+            session: null,
+            userRole: null,
+            roleSource: 'none',
+            isAdmin: false,
+            locationContext: null,
+            loading: false,
+            error: null,
+            authProgress: 0,
+            statusMessage: 'Desconectado',
+            isReady: false
+          }));
+          navigate('/login', { replace: true });
+        } else if (session) {
+          // Defer async fetches to avoid deadlocks in callback
+          setTimeout(() => {
+            updateAuthState(session);
+          }, 0);
         }
-      );
+      });
 
-      unsubscribeRef.current = subscription.unsubscribe;
+      unsubscribeRef.current = removeAuthListener;
 
       // Get current session if not cached
       if (!cachedSession) {
@@ -242,7 +241,7 @@ export function useOptimizedAuth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
 

@@ -6,12 +6,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from 'react';
-import { initializeAuthListeners } from '@/utils/authConfig';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { SentryErrorBoundary } from '@/lib/sentry';
 import { useSecurityMonitor } from '@/hooks/useSecurityMonitor';
 import { useLocationPreloader } from '@/hooks/useLocationPreloader';
 import { productionGuard } from '@/lib/security/production-guard';
+import { registerAuthEffectsOnce } from '@/lib/auth-effects';
 import { Layout } from "./components/Layout";
 import { TenantRoutes } from "./utils/routing/tenantRoutes";
 import { LegacyRouteRedirector, CafeRouteRedirector } from "./utils/routing/redirects";
@@ -50,6 +50,7 @@ import { OptimizedAuthProvider } from "./contexts/OptimizedAuthProvider";
 import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
+import AuthCallback from "./pages/auth/Callback";
 
 const queryClient = new QueryClient();
 
@@ -65,12 +66,10 @@ const App = () => {
   
   // Initialize auth listeners and production security monitoring
   useEffect(() => {
-    const cleanup = initializeAuthListeners();
-    
+    const off = registerAuthEffectsOnce();
     // Start production security monitoring
     productionGuard.startProductionMonitoring();
-    
-    return cleanup;
+    return () => { off?.(); };
   }, []);
 
   return (
@@ -108,6 +107,7 @@ const App = () => {
                 <Route path="/login" element={<ClientLoginPage />} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/auth/reset" element={<PasswordResetPage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/activate-account" element={<ActivateAccount />} />
                 
                 {/* Onboarding routes */}
