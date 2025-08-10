@@ -52,6 +52,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import AuthCallback from "./pages/auth/Callback";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { FriendlyErrorHandler } from "@/components/auth/FriendlyErrorHandler";
 
 const queryClient = new QueryClient();
 
@@ -75,7 +76,7 @@ const App = () => {
   }, []);
 
   return (
-    <SentryErrorBoundary>
+    <SentryErrorBoundary fallback={<FriendlyErrorHandler error="Ocurrió un error en la aplicación" type="network" onRetry={() => window.location.reload()} onGoHome={() => { window.location.href = '/'; }} />} >
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <LocationProvider>
