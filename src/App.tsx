@@ -51,6 +51,7 @@ import AdvisoryAdmin from "./pages/AdvisoryAdmin";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import AuthCallback from "./pages/auth/Callback";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -115,13 +116,13 @@ const App = () => {
                 <Route path="/onboarding/location" element={<OnboardingLocationPage />} />
                 
                 {/* Smart Auto-Redirect */}
-                <Route path="/dashboard" element={<SmartRedirectRouter />} />
+                <Route path="/dashboard" element={<ProtectedRoute><SmartRedirectRouter /></ProtectedRoute>} />
                 
                 {/* New Multi-Tenant Routes */}
-                <Route path="/org/*" element={<MultiTenantRouter />} />
+                <Route path="/org/*" element={<ProtectedRoute><MultiTenantRouter /></ProtectedRoute>} />
                 
                 {/* Admin Routes - Protected */}
-                <Route path="/admin/*" element={<AdminRouter />} />
+                <Route path="/admin/*" element={<ProtectedRoute requireAdmin><AdminRouter /></ProtectedRoute>} />
                 
                 {/* Unauthorized Access */}
                 <Route path="/unauthorized" element={<UnauthorizedAccess />} />
@@ -131,7 +132,14 @@ const App = () => {
                   <Route index element={<Recetas />} />
                 </Route>
                 
-                <Route path="/app" element={<Layout />}>
+                <Route
+                  path="/app"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
                   <Route index element={<Dashboard />} />
                   <Route path="recetas" element={<Recetas />} />
                   <Route path="academia" element={<Academia />} />
