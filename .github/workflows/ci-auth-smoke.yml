@@ -1,0 +1,36 @@
+name: CI Auth Smoke
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  e2e-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start preview server (background)
+        run: npm run preview &
+
+      - name: Wait for preview
+        run: npx wait-on http://localhost:4173
+
+      - name: Run Cypress smoke
+        uses: cypress-io/github-action@v6
+        with:
+          command: npx cypress run --browser chrome --spec "cypress/e2e/auth_login.cy.ts"
+        env:
+          CYPRESS_baseUrl: http://localhost:4173
+          CYPRESS_E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          CYPRESS_E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
