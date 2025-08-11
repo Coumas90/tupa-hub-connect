@@ -264,11 +264,11 @@ export default function Academia() {
 
   return (
     <ModuleAccessGuard module="Academia" requiredRole="barista">
-      <div className="p-6 space-y-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6">
         {!selectedCourse ? (
           <>
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Academia TUPÁ</h1>
                 <p className="text-muted-foreground">Desarrolla tus habilidades como barista profesional</p>

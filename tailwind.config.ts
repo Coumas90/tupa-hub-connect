@@ -9,15 +9,22 @@ export default {
 		"./src/**/*.{ts,tsx}",
 	],
 	prefix: "",
-	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
+		theme: {
+			container: {
+				center: true,
+				padding: '2rem',
+				screens: {
+					'2xl': '1400px'
+				}
+			},
 			screens: {
-				'2xl': '1400px'
-			}
-		},
-		extend: {
+				sm: '30em',
+				md: '48em',
+				lg: '62em',
+				xl: '80em',
+				'2xl': '87.5em'
+			},
+			extend: {
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

@@ -162,14 +162,14 @@ Generado por TUPÁ Hub
 
   return (
     <ModuleAccessGuard module="Recetas" requiredRole="barista">
-      <div className="p-6 space-y-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Recetas</h1>
             <p className="text-muted-foreground">Parámetros de preparación para cada método</p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="bg-gradient-primary hover:bg-primary/90">
+          <Button onClick={() => setShowForm(true)} className="w-full md:w-auto bg-gradient-primary hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Receta
           </Button>
@@ -179,7 +179,7 @@ Generado por TUPÁ Hub
         {activeRecipe && (
           <Card className="shadow-glow border-accent/20">
             <CardHeader className="bg-gradient-light rounded-t-lg">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <div className="p-3 bg-accent/10 rounded-lg">
                     <Coffee className="h-6 w-6 text-accent" />
@@ -195,7 +195,7 @@ Generado por TUPÁ Hub
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => downloadRecipe(activeRecipe)}>
+                <Button variant="outline" onClick={() => downloadRecipe(activeRecipe)} className="w-full md:w-auto">
                   <Download className="h-4 w-4 mr-2" />
                   Descargar
                 </Button>
@@ -299,13 +299,13 @@ Generado por TUPÁ Hub
 
                   <Separator />
 
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col md:flex-row gap-2">
                     {!recipe.isActive && (
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => setAsActive(recipe)}
-                        className="flex-1"
+                        className="w-full md:flex-1"
                       >
                         <Check className="h-3 w-3 mr-1" />
                         Activar
@@ -315,7 +315,7 @@ Generado por TUPÁ Hub
                       variant="outline" 
                       size="sm" 
                       onClick={() => downloadRecipe(recipe)}
-                      className={recipe.isActive ? "flex-1" : ""}
+                      className="w-full md:flex-1"
                     >
                       <Download className="h-3 w-3 mr-1" />
                       PDF
@@ -435,16 +435,16 @@ Generado por TUPÁ Hub
                   />
                 </div>
 
-                <div className="flex space-x-2 pt-4">
+                <div className="flex flex-col md:flex-row gap-2 pt-4">
                   <Button 
                     onClick={handleCreateRecipe} 
-                    className="flex-1 bg-gradient-primary hover:bg-primary/90"
+                    className="w-full md:flex-1 bg-gradient-primary hover:bg-primary/90"
                     disabled={!newRecipe.method || !newRecipe.name}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Crear Receta
                   </Button>
-                  <Button variant="outline" onClick={() => setShowForm(false)}>
+                  <Button variant="outline" onClick={() => setShowForm(false)} className="w-full md:w-auto">
                     Cancelar
                   </Button>
                 </div>

@@ -13,10 +13,10 @@ export function Layout() {
       <AdaptiveSidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-background border-b">
+        <header className="bg-background border-b px-4 sm:px-6">
           <SmartBreadcrumbs />
           
-          <div className="flex items-center justify-end px-6 py-2 space-x-4">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4 px-0 py-2">
             {canAccessTenantFeatures && <LocationSwitcher />}
             <UserMenu />
           </div>

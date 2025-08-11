@@ -39,10 +39,10 @@ export default function Dashboard() {
   }
 
   const DashboardContent = () => (
-    <div className="container mx-auto px-6 py-8 space-y-8">
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
       {/* Header Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               {isInTenantContext ? (
@@ -69,13 +69,13 @@ export default function Dashboard() {
           </div>
           
           {activeCafe && (
-            <div className="text-right">
+            <div className="w-full md:w-auto text-left md:text-right">
               <Badge variant="secondary" className="mb-2">
                 <Building className="h-3 w-3 mr-1" />
                 {activeCafe.cafe_name}
               </Badge>
               <AdvisoryRequestModal cafeId={activeCafe.cafe_id}>
-                <Button className="bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary">
+                <Button className="w-full md:w-auto bg-gradient-to-r from-warm-primary to-warm-earth hover:from-warm-earth hover:to-warm-primary">
                   <Calendar className="h-4 w-4 mr-2" />
                   Programar Asesoría
                 </Button>
