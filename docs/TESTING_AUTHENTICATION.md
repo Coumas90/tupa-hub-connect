@@ -29,15 +29,15 @@ npm run test:ui
 # Ejecutar tests con coverage
 npm test -- --coverage
 
-# Ejecutar solo tests de LoginPage
-npm test -- LoginPage
+# Ejecutar solo tests de FriendlyLoginPage
+npm test -- FriendlyLoginPage
 ```
 
 ### Estructura de Tests
 
 Los tests del proceso de autenticación se encuentran en:
 ```
-src/__tests__/pages/LoginPage.test.tsx
+src/__tests__/pages/FriendlyLoginPage.test.tsx
 ```
 
 ## Tests Implementados
