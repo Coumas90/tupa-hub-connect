@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,10 @@ export default function FriendlyLoginPage() {
     clearError,
     isAuthenticated
   } = useAuth();
+
+  if (isAuthenticated && user) {
+    return <Navigate to="/app" replace />;
+  }
 
   // Create simple loading states for compatibility
   const authProgress = loading ? 75 : 0;
