@@ -30,6 +30,38 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+// Mock de navegación y auth context
+const mockNavigate = vi.fn();
+const mockSignInWithEmail = vi.fn();
+const mockSignInWithGoogle = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+vi.mock('@/contexts/OptimizedAuthProvider', () => ({
+  useOptimizedAuth: () => ({
+    signInWithEmail: mockSignInWithEmail,
+    signInWithGoogle: mockSignInWithGoogle,
+    loading: false,
+    error: null,
+    clearError: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/useUserWithRole', () => ({
+  useUserRedirectUrl: () => '/profile',
+}));
+
+mockSignInWithEmail.mockImplementation(async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  return data;
+});
+
+mockSignInWithGoogle.mockResolvedValue({});
+
 // Mock de funciones de sanitización
 vi.mock('@/utils/sanitize', () => ({
   sanitizeEmail: (value: string) => value,
@@ -283,69 +315,83 @@ describe('LoginPage - Testing Automatizado de Autenticación', () => {
     });
   });
 
-  describe('Flujo de autenticación exitosa', () => {
-    it('debe simular inicio de sesión exitoso y llamar onLoginSuccess', async () => {
-      const mockOnLoginSuccess = vi.fn();
-      
-      // Mock para simular login exitoso
-      vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
-        data: { 
-          user: { 
-            id: '123', 
-            email: 'test@example.com',
-            aud: 'authenticated',
-            role: 'authenticated',
-            created_at: new Date().toISOString(),
-            confirmed_at: new Date().toISOString(),
-            last_sign_in_at: new Date().toISOString(),
-            app_metadata: {},
-            user_metadata: {}
-          } as any, 
-          session: { 
-            access_token: 'token123',
-            refresh_token: 'refresh123',
-            user: {} as any,
-            token_type: 'bearer',
-            expires_in: 3600,
-            expires_at: Math.floor(Date.now() / 1000) + 3600
-          } 
-        },
-        error: null
+    describe('Flujo de autenticación exitosa', () => {
+      it('debe redirigir al perfil tras inicio de sesión exitoso', async () => {
+        // Mock para simular login exitoso
+        vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
+          data: {
+            user: {
+              id: '123',
+              email: 'test@example.com',
+              aud: 'authenticated',
+              role: 'authenticated',
+              created_at: new Date().toISOString(),
+              confirmed_at: new Date().toISOString(),
+              last_sign_in_at: new Date().toISOString(),
+              app_metadata: {},
+              user_metadata: {}
+            } as any,
+            session: {
+              access_token: 'token123',
+              refresh_token: 'refresh123',
+              user: {} as any,
+              token_type: 'bearer',
+              expires_in: 3600,
+              expires_at: Math.floor(Date.now() / 1000) + 3600
+            }
+          },
+          error: null
+        });
+
+        const { getByRole, getByLabelText } = render(
+          <TestWrapper>
+            <LoginPage />
+          </TestWrapper>
+        );
+
+        const emailInput = getByLabelText(/email/i);
+        const passwordInput = getByLabelText(/contraseña/i);
+
+        await user.type(emailInput, 'usuario@ejemplo.com');
+        await user.type(passwordInput, 'contraseña123');
+
+        const submitButton = getByRole('button', { name: /iniciar sesión/i });
+        await user.click(submitButton);
+
+        // Esperar a que se resuelva el debounce y la navegación
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        // Verificar que se realizó la redirección al perfil
+        expect(mockNavigate).toHaveBeenCalledWith('/profile', { replace: true });
+
+        // Verificar que se llamó a Supabase con los datos correctos
+        expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+          email: 'usuario@ejemplo.com',
+          password: 'contraseña123',
+        });
       });
 
-      const { getByRole, getByLabelText } = render(
-        <TestWrapper>
-          <LoginPage onLoginSuccess={mockOnLoginSuccess} />
-        </TestWrapper>
-      );
+      it('debe redirigir al perfil tras login con Google', async () => {
+        const { getByRole } = render(
+          <TestWrapper>
+            <LoginPage />
+          </TestWrapper>
+        );
 
-      const emailInput = getByLabelText(/email/i);
-      const passwordInput = getByLabelText(/contraseña/i);
+        const googleButton = getByRole('button', { name: /continuar con google/i });
+        await user.click(googleButton);
 
-      await user.type(emailInput, 'usuario@ejemplo.com');
-      await user.type(passwordInput, 'contraseña123');
+        // Esperar a que se ejecute la redirección
+        await new Promise(resolve => setTimeout(resolve, 0));
 
-      const submitButton = getByRole('button', { name: /iniciar sesión/i });
-      await user.click(submitButton);
-
-      // Esperar un poco para que las promesas se resuelvan
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Verificar que se llamó al callback de éxito
-      expect(mockOnLoginSuccess).toHaveBeenCalled();
-      expect(mockToastNotifications.showLoginSuccess).toHaveBeenCalled();
-
-      // Verificar que se llamó a Supabase con los datos correctos
-      expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-        email: 'usuario@ejemplo.com',
-        password: 'contraseña123',
+        expect(mockSignInWithGoogle).toHaveBeenCalled();
+        expect(mockNavigate).toHaveBeenCalledWith('/profile', { replace: true });
       });
-    });
 
-    it('debe simular registro exitoso y mostrar mensaje de confirmación', async () => {
-      // Mock para simular signup exitoso
-      vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({
-        data: { 
+      it('debe simular registro exitoso y mostrar mensaje de confirmación', async () => {
+        // Mock para simular signup exitoso
+        vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({
+          data: {
           user: { 
             id: '123', 
             email: 'nuevo@ejemplo.com',

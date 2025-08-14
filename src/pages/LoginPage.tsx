@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useToast } from '@/hooks/use-toast';
 import { useOptimizedAuth } from '@/contexts/OptimizedAuthProvider';
+import { useUserRedirectUrl } from '@/hooks/useUserWithRole';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginPageProps {
@@ -31,6 +32,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { toast } = useToast();
   const { signInWithEmail, signInWithGoogle, loading: authLoading, error: authError, clearError } = useOptimizedAuth();
   const navigate = useNavigate();
+  const profileUrl = useUserRedirectUrl();
   
   // Rate limiting hook
   const { 
@@ -152,6 +154,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         title: "Login exitoso",
         description: "Bienvenido a TUPÁ Hub",
       });
+      if (profileUrl) {
+        navigate(profileUrl, { replace: true });
+      }
     } else {
       console.error('Auth error:', result.error);
       
@@ -212,6 +217,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         title: "Login exitoso",
         description: "Bienvenido a TUPÁ Hub",
       });
+      if (profileUrl) {
+        navigate(profileUrl, { replace: true });
+      }
     } catch (error: any) {
       console.error('Google login error:', error);
       
