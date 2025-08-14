@@ -28,25 +28,25 @@ interface Feedback {
 }
 
 interface PublicFeedbackDisplayProps {
-  cafeId: string;
+  locationId: string;
   className?: string;
 }
 
 type FilterType = 'all' | 'positive' | 'with_response' | 'recent';
 
-export default function PublicFeedbackDisplay({ cafeId, className }: PublicFeedbackDisplayProps) {
+export default function PublicFeedbackDisplay({ locationId, className }: PublicFeedbackDisplayProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState<FilterType>('all');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const itemsPerPage = 10;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['public-feedbacks', cafeId, currentPage, filter],
+    queryKey: ['public-feedbacks', locationId, currentPage, filter],
     queryFn: async () => {
       let query = supabase
         .from('feedbacks')
         .select('id, rating, comment, customer_name, created_at, comment_status')
-        .eq('cafe_id', cafeId)
+        .eq('location_id', locationId)
         .eq('comment_status', 'approved')
         .not('comment', 'is', null)
         .order('created_at', { ascending: false });
@@ -67,7 +67,7 @@ export default function PublicFeedbackDisplay({ cafeId, className }: PublicFeedb
       const { count } = await supabase
         .from('feedbacks')
         .select('*', { count: 'exact', head: true })
-        .eq('cafe_id', cafeId)
+        .eq('location_id', locationId)
         .eq('comment_status', 'approved')
         .not('comment', 'is', null);
 
@@ -83,7 +83,7 @@ export default function PublicFeedbackDisplay({ cafeId, className }: PublicFeedb
         totalPages: Math.ceil((count || 0) / itemsPerPage)
       };
     },
-    enabled: !!cafeId,
+    enabled: !!locationId,
   });
 
   const renderStars = (rating: number) => {
@@ -307,7 +307,7 @@ export default function PublicFeedbackDisplay({ cafeId, className }: PublicFeedb
 
       {/* History Modal */}
       <FeedbackHistoryModal
-        cafeId={cafeId}
+        locationId={locationId}
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
       />

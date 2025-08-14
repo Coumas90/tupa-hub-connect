@@ -11,9 +11,9 @@ interface Participant {
   id: string;
   customer_name: string;
   customer_email: string;
-  cafe_id: string;
+  location_id: string;
   participated_at: string;
-  cafes: {
+  locations: {
     id: string;
     name: string;
     address: string;
@@ -22,13 +22,13 @@ interface Participant {
 
 interface Winner {
   participant_id: string;
-  cafe_id: string;
+  location_id: string;
   region: string;
   prize_code: string;
   week_of: string;
   participant_name: string;
   participant_email: string;
-  cafe_name: string;
+  location_name: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -91,9 +91,9 @@ const handler = async (req: Request): Promise<Response> => {
         id,
         customer_name,
         customer_email,
-        cafe_id,
+        location_id,
         participated_at,
-        cafes!inner (
+        locations!inner (
           id,
           name,
           address
@@ -120,11 +120,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`👥 Found ${participants.length} participants for selection`);
 
-    // Group participants by region (using cafe address as region approximation)
+    // Group participants by region (using location address as region approximation)
     const regionMap = new Map<string, Participant[]>();
-    
+
     participants.forEach((participant: any) => {
-      const region = participant.cafes.address?.split(',').slice(-2).join(',').trim() || 'Unknown Region';
+      const region = participant.locations.address?.split(',').slice(-2).join(',').trim() || 'Unknown Region';
       if (!regionMap.has(region)) {
         regionMap.set(region, []);
       }
@@ -153,23 +153,23 @@ const handler = async (req: Request): Promise<Response> => {
       
       const winner: Winner = {
         participant_id: selectedParticipant.id,
-        cafe_id: selectedParticipant.cafe_id,
+        location_id: selectedParticipant.location_id,
         region: region,
         prize_code: prizeCodeData,
         week_of: weekOfDate,
         participant_name: selectedParticipant.customer_name,
         participant_email: selectedParticipant.customer_email,
-        cafe_name: selectedParticipant.cafes.name
+        location_name: selectedParticipant.locations.name
       };
-      
+
       winners.push(winner);
-      console.log(`🏆 Selected winner for ${region}: ${winner.participant_name} from ${winner.cafe_name}`);
+      console.log(`🏆 Selected winner for ${region}: ${winner.participant_name} from ${winner.location_name}`);
     }
 
     // Insert winners into database
     const winnersToInsert = winners.map(winner => ({
       participant_id: winner.participant_id,
-      cafe_id: winner.cafe_id,
+      location_id: winner.location_id,
       region: winner.region,
       prize_code: winner.prize_code,
       week_of: winner.week_of,
@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <h2 style="color: #333; margin: 0 0 15px 0; font-size: 20px;">Hola ${winner.participant_name},</h2>
                   <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0;">
                     ¡Eres el ganador del sorteo semanal TUPÁ! Te has ganado un café gratis y un postre sorpresa en 
-                    <strong style="color: #8B5CF6;">${winner.cafe_name}</strong>.
+                    <strong style="color: #8B5CF6;">${winner.location_name}</strong>.
                   </p>
                 </div>
 
@@ -231,7 +231,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <div style="background: #fef3c7; border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 6px solid #f59e0b;">
                   <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px;">📋 Instrucciones:</h3>
                   <ul style="color: #92400e; margin: 0; padding-left: 20px;">
-                    <li style="margin-bottom: 8px;">Dirígete a <strong>${winner.cafe_name}</strong></li>
+                    <li style="margin-bottom: 8px;">Dirígete a <strong>${winner.location_name}</strong></li>
                     <li style="margin-bottom: 8px;">Muestra este código al personal</li>
                     <li style="margin-bottom: 8px;">Válido hasta el próximo domingo a las 11:59 PM</li>
                     <li>No transferible ni canjeable por dinero</li>
@@ -297,7 +297,7 @@ const handler = async (req: Request): Promise<Response> => {
       emails_failed: failedEmails,
       winners: winners.map(w => ({
         name: w.participant_name,
-        cafe: w.cafe_name,
+        location: w.location_name,
         region: w.region,
         prize_code: w.prize_code
       }))

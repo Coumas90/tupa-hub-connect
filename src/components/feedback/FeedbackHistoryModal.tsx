@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface FeedbackHistoryModalProps {
-  cafeId: string;
+  locationId: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -30,18 +30,18 @@ interface Feedback {
   comment_status: string;
 }
 
-export function FeedbackHistoryModal({ cafeId, isOpen, onClose }: FeedbackHistoryModalProps) {
+export function FeedbackHistoryModal({ locationId, isOpen, onClose }: FeedbackHistoryModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const { data: feedbacks, isLoading } = useQuery({
-    queryKey: ['feedback-history', cafeId, searchTerm, startDate, endDate],
+    queryKey: ['feedback-history', locationId, searchTerm, startDate, endDate],
     queryFn: async () => {
       let query = supabase
         .from('feedbacks')
         .select('id, rating, comment, customer_name, customer_email, created_at, comment_status')
-        .eq('cafe_id', cafeId)
+        .eq('location_id', locationId)
         .eq('comment_status', 'approved')
         .not('comment', 'is', null)
         .order('created_at', { ascending: false });
@@ -72,7 +72,7 @@ export function FeedbackHistoryModal({ cafeId, isOpen, onClose }: FeedbackHistor
 
       return filteredData;
     },
-    enabled: isOpen && !!cafeId,
+    enabled: isOpen && !!locationId,
   });
 
   const renderStars = (rating: number) => {

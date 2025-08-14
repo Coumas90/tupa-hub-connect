@@ -11,7 +11,7 @@ import { Star, MessageSquare, Gift, Coffee, Users, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface Cafe {
+interface Location {
   id: string;
   name: string;
   description?: string;
@@ -28,8 +28,8 @@ interface FeedbackFormData {
 }
 
 export default function FeedbackForm() {
-  const { cafeId } = useParams<{ cafeId: string }>();
-  const [cafe, setCafe] = useState<Cafe | null>(null);
+  const { locationId, locationSlug } = useParams<{ locationId?: string; locationSlug?: string }>();
+  const [location, setLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
@@ -48,31 +48,55 @@ export default function FeedbackForm() {
   const participateInGiveaway = watch("participateInGiveaway");
 
   useEffect(() => {
-    if (cafeId) {
-      loadCafe();
+    if (locationId || locationSlug) {
+      loadLocation();
     }
-  }, [cafeId]);
+  }, [locationId, locationSlug]);
 
-  const loadCafe = async () => {
+  const loadLocation = async () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('cafes')
-        .select('*')
-        .eq('id', cafeId)
-        .single();
+      let data;
+      let error;
+      if (locationId) {
+        ({ data, error } = await supabase
+          .from('cafes_locations_mapping')
+          .select('location_id, location_name, brand_color')
+          .eq('location_id', locationId)
+          .single());
+      } else if (locationSlug) {
+        const { data: loc, error: locError } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('slug', locationSlug)
+          .single();
+        error = locError;
+        if (loc) {
+          ({ data } = await supabase
+            .from('cafes_locations_mapping')
+            .select('location_id, location_name, brand_color')
+            .eq('location_id', loc.id)
+            .single());
+        }
+      }
 
-      if (error) {
-        console.error('Error loading cafe:', error);
-        toast.error("Café no encontrado");
+      if (error || !data) {
+        console.error('Error loading location:', error);
+        toast.error("Ubicación no encontrada");
         return;
       }
 
-      setCafe(data);
+      if (data) {
+        setLocation({
+          id: data.location_id,
+          name: data.location_name,
+          brand_color: data.brand_color || '#8B5CF6',
+        });
+      }
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Error al cargar información del café");
+      toast.error("Error al cargar información de la ubicación");
     } finally {
       setLoading(false);
     }
@@ -83,8 +107,8 @@ export default function FeedbackForm() {
   };
 
   const onSubmit = async (data: FeedbackFormData) => {
-    if (!cafe) {
-      toast.error("Error: información del café no disponible");
+    if (!location) {
+      toast.error("Error: información de la ubicación no disponible");
       return;
     }
 
@@ -98,10 +122,10 @@ export default function FeedbackForm() {
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedbacks')
         .insert({
-          cafe_id: cafe.id,
+          location_id: location.id,
           customer_name: data.customerName.trim(),
           customer_email: data.customerEmail?.trim() || null,
-          rating: Math.round((data.coffeeRating + data.serviceRating) / 2), // Average rating
+          rating: Math.round((data.coffeeRating + data.serviceRating) / 2),
           comment: data.ambianceComment.trim() || null
         })
         .select('id')
@@ -146,7 +170,7 @@ export default function FeedbackForm() {
         const { error: giveawayError } = await supabase
           .from('giveaway_participants')
           .insert({
-            cafe_id: cafe.id,
+            location_id: location.id,
             customer_name: data.customerName.trim(),
             customer_email: data.customerEmail.trim(),
             campaign_id: `feedback-${Date.now()}`
@@ -183,14 +207,14 @@ export default function FeedbackForm() {
     );
   }
 
-  if (!cafe) {
+  if (!location) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
               <Coffee className="mx-auto h-12 w-12 mb-4" />
-              <p>Café no encontrado</p>
+              <p>Ubicación no encontrada</p>
             </div>
           </CardContent>
         </Card>
@@ -205,13 +229,13 @@ export default function FeedbackForm() {
           <CardHeader className="text-center">
             <div 
               className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-white mb-4"
-              style={{ backgroundColor: cafe.brand_color }}
+              style={{ backgroundColor: location.brand_color }}
             >
               <MessageSquare className="h-8 w-8" />
             </div>
             <CardTitle>¡Gracias por tu feedback!</CardTitle>
             <CardDescription>
-              Tu opinión es muy importante para {cafe.name}
+              Tu opinión es muy importante para {location.name}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
@@ -238,11 +262,11 @@ export default function FeedbackForm() {
         <CardHeader className="text-center">
           <div 
             className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-white mb-4"
-            style={{ backgroundColor: cafe.brand_color }}
+            style={{ backgroundColor: location.brand_color }}
           >
             <Coffee className="h-8 w-8" />
           </div>
-          <CardTitle>{cafe.name}</CardTitle>
+          <CardTitle>{location.name}</CardTitle>
           <CardDescription>
             Comparte tu experiencia con nosotros
           </CardDescription>
@@ -395,7 +419,7 @@ export default function FeedbackForm() {
               type="submit"
               disabled={isSubmitting}
               className="w-full"
-              style={{ backgroundColor: cafe.brand_color }}
+              style={{ backgroundColor: location.brand_color }}
             >
               {isSubmitting ? "Enviando..." : "Enviar Feedback"}
             </Button>
